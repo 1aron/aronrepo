@@ -1,8 +1,5 @@
 {
     "name": "commitlint-config-aron",
-    "scripts": {
-        "lint": "eslint ./src"
-    },
     "license": "MIT",
     "description": "Aron's commitlint config",
     "author": {

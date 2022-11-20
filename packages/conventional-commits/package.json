@@ -1,8 +1,5 @@
 {
     "name": "aron-conventional-commits",
-    "scripts": {
-        "lint": "eslint ./src"
-    },
     "license": "MIT",
     "description": "Aron's conventional commits and version rules",
     "author": {

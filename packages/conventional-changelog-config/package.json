@@ -1,8 +1,7 @@
 {
     "name": "conventional-changelog-aron",
     "scripts": {
-        "test": "jest",
-        "lint": "eslint ./src"
+        "test": "jest"
     },
     "license": "MIT",
     "description": "Aron's conventional changelog preset",

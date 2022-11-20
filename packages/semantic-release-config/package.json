@@ -1,8 +1,7 @@
 {
     "name": "semantic-release-config-aron",
     "scripts": {
-        "test": "jest",
-        "lint": "eslint ./src"
+        "test": "jest"
     },
     "license": "MIT",
     "description": "Aron's semantic release config",

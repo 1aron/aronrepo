@@ -1,8 +1,5 @@
 {
     "name": "eslint-config-aron",
-    "scripts": {
-        "lint": "eslint ./src"
-    },
     "license": "MIT",
     "description": "Aron's eslint config",
     "author": {
