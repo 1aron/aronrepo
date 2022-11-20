@@ -1,10 +1,6 @@
 {
     "name": "conventional-changelog-aron",
     "scripts": {
-        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --platform=node",
-        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --platform=node",
-        "build": "concurrently 'npm:build:* -- --minify --sourcemap' 'tsc --emitDeclarationOnly'",
-        "dev": "concurrently 'npm:build:* -- --watch'",
         "test": "jest",
         "lint": "eslint ./src"
     },
@@ -31,19 +27,9 @@
         "aron",
         "preset"
     ],
-    "main": "./dist/index.cjs",
-    "browser": "./dist/index.browser.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs",
-            "types": "./dist/index.d.ts"
-        }
-    },
+    "main": "index.js",
     "files": [
-        "dist"
+        "index.js"
     ],
     "dependencies": {
         "aron-conventional-commits": "*",
