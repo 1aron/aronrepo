@@ -1,0 +1,36 @@
+{
+    "scripts": {
+        "build": "turbo run build",
+        "build:force": "turbo run build --force --no-cache",
+        "check": "turbo run test lint --parallel",
+        "test": "turbo run test --parallel",
+        "lint": "turbo run lint --parallel",
+        "dev": "turbo run dev --parallel --no-cache",
+        "release": "semantic-release",
+        "clean:build": "rm -rf ./packages/**/*dist",
+        "link:status": "npm ls --link=true",
+        "analyze:commit": "semantic-release --debug"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/repo.git"
+    },
+    "workspaces": [
+        "packages/*"
+    ],
+    "devDependencies": {
+        "concurrently": "^7.5.0",
+        "dedent": "^0.7.0",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "jest-environment-jsdom": "^29.3.1",
+        "jest-puppeteer": "^6.1.1",
+        "puppeteer": "^19.2.2",
+        "tmp": "^0.2.1"
+    },
+    "dependencies": {
+        "aronrepo": "*"
+    },
+    "engines": {
+        "node": "^18"
+    }
+}

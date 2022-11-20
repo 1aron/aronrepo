@@ -1,0 +1,35 @@
+{
+    "name": "aronrepo",
+    "license": "MIT",
+    "description": "Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows 📦",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/repo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/repo.git",
+        "directory": "packages/repo"
+    },
+    "peerDependencies": {
+        "@swc/core": "*",
+        "@swc/jest": "*",
+        "@types/jest": "*",
+        "@types/node": "*",
+        "esbuild": "*",
+        "jest": "*",
+        "turbo": "*",
+        "typescript": "*"
+    },
+    "dependencies": {
+        "eslint-config-aron": "*",
+        "commitlint-config-aron": "*",
+        "conventional-changelog-aron": "*",
+        "semantic-release-config-aron": "*"
+    }
+}

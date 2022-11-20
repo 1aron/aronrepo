@@ -1,0 +1,55 @@
+{
+    "name": "eslint-config-aron",
+    "scripts": {
+        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --platform=node",
+        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --platform=node",
+        "build": "concurrently 'npm:build:* -- --minify --sourcemap' 'tsc --emitDeclarationOnly'",
+        "dev": "concurrently 'npm:build:* -- --watch'",
+        "lint": "eslint ./src"
+    },
+    "license": "MIT",
+    "description": "Aron's eslint config",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/repo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/repo.git",
+        "directory": "packages/eslint-config"
+    },
+    "keywords": [
+        "aron",
+        "lint",
+        "styleguide",
+        "stylelint",
+        "eslint",
+        "eslintconfig",
+        "preset",
+        "config",
+        "typescript"
+    ],
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "@typescript-eslint/eslint-plugin": "*",
+        "@typescript-eslint/parser": "*",
+        "eslint": "*"
+    }
+}
