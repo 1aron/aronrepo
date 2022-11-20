@@ -1,6 +1,6 @@
-import dedent from 'dedent'
+const dedent = require('dedent')
 
-export default /* html */ dedent`
+module.exports = /* html */ dedent`
     {{#each commitGroups}}
         {{#if title}}
             ### {{title}}

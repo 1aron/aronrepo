@@ -5,7 +5,7 @@ import exec from '../../../utils/exec'
 import commit from '../../../utils/commit'
 import initFakeGit from '../../../utils/init-fake-git'
 
-const config = require('.')
+const config = require('../')
 
 const conventionalChangelogCore = require('conventional-changelog-core')
 

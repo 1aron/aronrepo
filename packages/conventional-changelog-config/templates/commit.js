@@ -1,6 +1,6 @@
-import dedent from 'dedent'
+const dedent = require('dedent')
 
-export default /* html */ dedent`
+module.exports = /* html */ dedent`
 -{{#if scope}} **{{scope}}** -
 {{~/if}} {{#if subject}}
 {{~subject}}
