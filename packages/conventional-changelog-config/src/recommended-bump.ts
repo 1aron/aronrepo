@@ -1,5 +1,5 @@
 import parserOpts from './parser-opts'
-import conventionalCommits from 'aron-conventional-commits'
+const conventionalCommits = require('aron-conventional-commits')
 
 export default {
     parserOpts,

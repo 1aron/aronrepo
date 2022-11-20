@@ -1,13 +1,6 @@
 {
     "name": "aron-conventional-commits",
     "scripts": {
-        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --platform=node",
-        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --platform=node",
-        "build:types.cjs": "esbuild src/types.ts --bundle --outfile=dist/types.cjs --format=cjs --platform=node",
-        "build:types.esm": "esbuild src/types.ts --bundle --outfile=dist/types.mjs --format=esm --platform=node",
-        "build": "concurrently 'npm:build:* -- --minify --sourcemap' 'tsc --emitDeclarationOnly'",
-        "dev": "concurrently 'npm:build:* -- --watch'",
-        "test": "jest",
         "lint": "eslint ./src"
     },
     "license": "MIT",
@@ -37,22 +30,9 @@
         "aron",
         "preset"
     ],
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs",
-            "types": "./dist/index.d.ts"
-        },
-        "./types": {
-            "require": "./dist/types.cjs",
-            "import": "./dist/types.mjs",
-            "types": "./dist/types.d.ts"
-        }
-    },
+    "main": "index.js",
     "files": [
-        "dist"
+        "index.js",
+        "types.js"
     ]
 }
