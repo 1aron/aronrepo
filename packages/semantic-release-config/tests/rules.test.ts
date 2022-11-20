@@ -1,6 +1,7 @@
 import { analyzeCommits } from '@semantic-release/commit-analyzer'
 import commitFalsely from '../../../utils/commit-falsely'
-import { releaseRules } from './rules'
+import releaseRules from '../rules'
+console.log(releaseRules)
 
 const createLogSpy = () => jest.spyOn(console, 'log').mockImplementation(() => null)
 
