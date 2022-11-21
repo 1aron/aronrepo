@@ -6,7 +6,7 @@ module.exports = [
     { type: 'Feat', release: 'minor', group: 'New Features' },
     { type: 'New', release: 'minor', group: 'New Features' },
 
-    { type: 'Perf', release: 'patch', group: 'Performance Improvements' },
+    { type: 'Perf', release: 'patch', group: 'Performance Upgrades' },
 
     { type: 'Add', release: 'patch', group: 'Additions' },
 
