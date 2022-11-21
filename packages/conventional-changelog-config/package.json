@@ -36,7 +36,7 @@
         "templates"
     ],
     "dependencies": {
-        "aron-conventional-commits": "*",
+        "aron-conventional-commits": "",
         "compare-func": "^2.0.0"
     },
     "devDependencies": {

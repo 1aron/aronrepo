@@ -27,9 +27,9 @@
         "typescript": "*"
     },
     "dependencies": {
-        "eslint-config-aron": "*",
-        "commitlint-config-aron": "*",
-        "conventional-changelog-aron": "*",
-        "semantic-release-config-aron": "*"
+        "eslint-config-aron": "",
+        "commitlint-config-aron": "",
+        "conventional-changelog-aron": "",
+        "semantic-release-config-aron": ""
     }
 }

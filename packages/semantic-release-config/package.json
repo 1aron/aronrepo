@@ -34,12 +34,13 @@
         "rules.js",
         "configure.js"
     ],
-    "peerDependencies": {
-        "conventional-changelog-aron": "*"
-    },
     "dependencies": {
-        "@semantic-release/exec": "*",
-        "aron-conventional-commits": "*",
-        "semantic-release": "*"
+        "@semantic-release/exec": "^6.0.3",
+        "argv": "^0.0.2",
+        "aron-conventional-commits": "",
+        "conventional-changelog-aron": "",
+        "fast-glob": "^3.2.12",
+        "fs-extra": "^10.1.0",
+        "semantic-release": "^19.0.5"
     }
 }
