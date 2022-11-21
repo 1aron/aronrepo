@@ -38,7 +38,7 @@
     },
     "dependencies": {
         "@semantic-release/exec": "*",
-        "semantic-release": "*",
-        "aron-conventional-commits": "*"
+        "aron-conventional-commits": "*",
+        "semantic-release": "*"
     }
 }

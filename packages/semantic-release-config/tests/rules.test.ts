@@ -1,7 +1,6 @@
 import { analyzeCommits } from '@semantic-release/commit-analyzer'
 import commitFalsely from '../../../utils/commit-falsely'
 import releaseRules from '../rules'
-console.log(releaseRules)
 
 const createLogSpy = () => jest.spyOn(console, 'log').mockImplementation(() => null)
 
@@ -36,12 +35,14 @@ test('Docs(README) -> +0.0.1 Patch', async () => {
 })
 
 test('Bump(Major) -> +1.0.0 Major', async () => {
+    const logSpy = createLogSpy()
     const commits = commitFalsely('Bump(Major): Master CSS `v2.0.0`')
     const releaseType = await analyzeCommits(
         { preset: 'aron', releaseRules },
         { cwd: process.cwd(), commits, logger: console }
     )
     expect(releaseType).toBe('major')
+    logSpy.mockRestore()
 })
 
 test('Exclude commits if they have a matching revert commits', async () => {
@@ -82,6 +83,7 @@ test('Return "patch" if there is only types set to "patch"', async () => {
 })
 
 test('Return "null" if no rule match', async () => {
+    const logSpy = createLogSpy()
     const commits = commitFalsely(
         'Docs: Change',
         'Chore: Misc',
@@ -92,4 +94,5 @@ test('Return "null" if no rule match', async () => {
         { cwd: process.cwd(), commits, logger: console }
     )
     expect(releaseType).toBe(null)
+    logSpy.mockRestore()
 })
