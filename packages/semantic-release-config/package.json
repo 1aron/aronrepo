@@ -31,7 +31,8 @@
     "main": "release.config.js",
     "files": [
         "release.config.js",
-        "rules.js"
+        "rules.js",
+        "configure.js"
     ],
     "peerDependencies": {
         "conventional-changelog-aron": "*"
