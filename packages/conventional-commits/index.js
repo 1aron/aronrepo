@@ -23,7 +23,7 @@ module.exports = [
     { type: 'Upgrade', release: 'patch', group: 'Dependency Upgrades' },
     { type: 'Deps', release: 'patch', group: 'Dependency Upgrades' },
 
-    { type: 'Revert', release: 'patch', group: 'Change Reversions' },
+    { type: 'Revert', release: 'patch', group: 'Reversions' },
 
     { type: 'Example', release: false, group: 'Others' },
     { type: 'Test', release: false, group: 'Others' },
