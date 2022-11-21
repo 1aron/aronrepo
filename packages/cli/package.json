@@ -21,7 +21,6 @@
     },
     "dependencies": {
         "commander": "^9.4.1",
-        "argv": "^0.0.2",
         "fast-glob": "^3.2.12",
         "fs-extra": "^10.1.0"
     }
