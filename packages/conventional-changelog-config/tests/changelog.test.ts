@@ -35,6 +35,7 @@ describe('aron preset', () => {
                 ['Perf(`ngOptions`): Make it faster', ' #1, #2'],
                 'Docs: Add `font-size` demo',
                 'Revert(`ngOptions`): Bad commit',
+                'Revert \\"Fix(Repo): PeerDependencies -> Dependencies\\"\n\nThis reverts commit 123.\n',
                 'Chore: Move directory',
                 'Misc: Delete unused file',
                 'Upgrade: Bump `@dummy/package` from 7.1.2 to 8.0.0',
@@ -94,10 +95,14 @@ export function testAronChangelog(commits, handle: (changelog: string) => void, 
         })
             .on('data', changelogChunk => {
                 const changelog = changelogChunk.toString()
+                console.log(changelog)
                 fs.writeFileSync(path.join(__dirname, '../.dev', changelogFileName), dedent(changelog))
                 handle(changelog)
             })
-            .on('error', () => resolve())
+            .on('error', (error) => {
+                console.log(error)
+                resolve()
+            })
             .on('close', () => resolve())
     })
 }

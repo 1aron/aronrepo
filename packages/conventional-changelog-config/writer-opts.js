@@ -3,13 +3,13 @@ const mainTemplate = require('./templates/template')
 const footerPartial = require('./templates/footer')
 const commitPartial = require('./templates/commit')
 const conventionalCommits = require('aron-conventional-commits')
-
+console.log(conventionalCommits)
 module.exports = {
     transform: (commit, context) => {
         const issues = []
         const conventionalCommit = conventionalCommits.find(({ type }) => commit.type === type)
         if (commit.type === 'Revert' || commit.revert) {
-            commit.type = conventionalCommits.find(({ type }) => commit.type === type).group
+            commit.type = conventionalCommits.find(({ type }) => type === 'Revert').group
         } else if (conventionalCommit && !conventionalCommit.hidden && conventionalCommit.group) {
             commit.type = conventionalCommit.group
         } else {

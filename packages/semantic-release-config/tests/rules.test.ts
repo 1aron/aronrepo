@@ -45,6 +45,17 @@ test('Bump(Major) -> +1.0.0 Major', async () => {
     logSpy.mockRestore()
 })
 
+test('Revert commit and +0.0.1', async () => {
+    const logSpy = createLogSpy()
+    const commits = commitFalsely('Revert "Fix(Repo): PeerDependencies -> Dependencies"\n\nThis reverts commit 779347237eef77e9137f88095e1fb813e5101c2b.\n')
+    const releaseType = await analyzeCommits(
+        { preset: 'aron', releaseRules },
+        { cwd: process.cwd(), commits, logger: console }
+    )
+    expect(releaseType).toBe('patch')
+    logSpy.mockRestore()
+})
+
 test('Exclude commits if they have a matching revert commits', async () => {
     const logSpy = createLogSpy()
     const commits = commitFalsely(
