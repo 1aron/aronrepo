@@ -8,6 +8,8 @@ module.exports = [
 
     { type: 'Perf', release: 'patch', group: 'Performance Improvements' },
 
+    { type: 'Add', release: 'patch', group: 'Additions' },
+
     { type: 'Update', release: 'patch', group: 'Updates' },
 
     { type: 'Improve', release: 'patch', group: 'Improvements' },
