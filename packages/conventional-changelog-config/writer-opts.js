@@ -3,13 +3,19 @@ const mainTemplate = require('./templates/template')
 const footerPartial = require('./templates/footer')
 const commitPartial = require('./templates/commit')
 const conventionalCommits = require('aron-conventional-commits')
-console.log(conventionalCommits)
+
 module.exports = {
     transform: (commit, context) => {
+        console.log(commit)
         const issues = []
         const conventionalCommit = conventionalCommits.find(({ type }) => commit.type === type)
         if (commit.type === 'Revert' || commit.revert) {
             commit.type = conventionalCommits.find(({ type }) => type === 'Revert').group
+            /**
+             * From    Revert: "Feat(Scope): First feature"
+             * To      Revert: `Feat(Scope): First feature`
+             */
+            commit.header = commit.header.replace(/(Revert|Revert:)\s"([\s\S]+?)"(.*)/, '$1 `$2`$3')
         } else if (conventionalCommit && !conventionalCommit.hidden && conventionalCommit.group) {
             commit.type = conventionalCommit.group
         } else {

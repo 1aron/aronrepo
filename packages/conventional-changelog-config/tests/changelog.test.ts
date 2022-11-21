@@ -95,7 +95,6 @@ export function testAronChangelog(commits, handle: (changelog: string) => void, 
         })
             .on('data', changelogChunk => {
                 const changelog = changelogChunk.toString()
-                console.log(changelog)
                 fs.writeFileSync(path.join(__dirname, '../.dev', changelogFileName), dedent(changelog))
                 handle(changelog)
             })
