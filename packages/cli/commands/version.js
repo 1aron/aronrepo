@@ -27,14 +27,16 @@ program.command('version <version>')
         }
 
         // Read package.json by workspaces
-        fg.sync(workspacePackagePaths)
-            .forEach((eachWorkspacePackageJSONPath) => {
-                const eachWorkspacePackage = fs.readJSONSync(eachWorkspacePackageJSONPath)
+        for (const eachWorkspacePackageJSONPath of fg.sync(workspacePackagePaths)) {
+            const eachWorkspacePackage = fs.readJSONSync(eachWorkspacePackageJSONPath)
+            // Prevent version bumps of private package
+            if (!eachWorkspacePackage.private) {
                 workspacePackagesOfPath[eachWorkspacePackageJSONPath] = eachWorkspacePackage
                 workspacePackagesOfName[eachWorkspacePackage.name] = eachWorkspacePackage
                 // Bump to next verion
                 eachWorkspacePackage.version = version
-            })
+            }
+        }
 
         for (const eachWorkspacePackageJSONPath in workspacePackagesOfPath) {
             const eachWorkspacePackage = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
