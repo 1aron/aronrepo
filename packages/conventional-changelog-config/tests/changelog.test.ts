@@ -30,6 +30,7 @@ describe('aron preset', () => {
                 'Perf(`ngOptions`): Make it faster, #1, #2',
                 'Drop(Syntax): Use `fg:color` instead of ~~`font:color`~~',
                 'Update(Contact): Address and tel',
+                'Drop(Commitlint Config): Remove `header-max-length` rule',
                 'Improve(UI): Call to action',
                 ['Perf(`ngOptions`): Make it faster', ' #1, #2'],
                 'Docs: Add `font-size` demo',
