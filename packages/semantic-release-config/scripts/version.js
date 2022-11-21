@@ -5,21 +5,23 @@ const argv = require('minimist')(process.argv.slice(2))
 const { workspaces } = fs.readJSONSync('./package.json')
 const { prefix } = argv
 const nextVersion = argv._[0]
-const workspacePackages = {}
+const workspacePackagesOfPath = {}
+const workspacePackagesOfName = {}
 const workspacePackagePaths = workspaces.map((eachWorkspace) => path.join(eachWorkspace, '*package.json'))
 
 // Read package.json by workspaces
 fg.sync(workspacePackagePaths)
     .forEach((eachWorkspacePackageJSONPath) => {
         const eachWorkspacePackage = fs.readJSONSync(eachWorkspacePackageJSONPath)
-        workspacePackages[eachWorkspacePackageJSONPath] = eachWorkspacePackage
+        workspacePackagesOfPath[eachWorkspacePackageJSONPath] = eachWorkspacePackage
+        workspacePackagesOfName[eachWorkspacePackage.name] = eachWorkspacePackage
         // Bump to next verion
         eachWorkspacePackage.version = nextVersion
     })
 
-for (const eachWorkspacePackageJSONPath in workspacePackages) {
-    const eachWorkspacePackage = workspacePackages[eachWorkspacePackageJSONPath]
-    const { dependencies, peerDependencies } = workspacePackages[eachWorkspacePackageJSONPath]
+for (const eachWorkspacePackageJSONPath in workspacePackagesOfPath) {
+    const eachWorkspacePackage = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
+    const { dependencies, peerDependencies } = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
     if (
         dependencies && updateDependencies(dependencies)
         || (peerDependencies) && updateDependencies(peerDependencies)
@@ -31,11 +33,12 @@ for (const eachWorkspacePackageJSONPath in workspacePackages) {
 function updateDependencies(dependencies) {
     let updated = false
     for (const dependencyName in dependencies) {
-        if (dependencyName in workspacePackages) {
-            const dependency = dependencies[dependencyName]
-            if (dependency === '') {
+        if (dependencyName in workspacePackagesOfName) {
+            const dependencyVersion = dependencies[dependencyName]
+            if (dependencyVersion === '') {
                 dependencies[dependencyName] = prefix + nextVersion
                 updated = true
+
             }
         }
     }
