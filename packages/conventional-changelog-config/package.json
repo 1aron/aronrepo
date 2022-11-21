@@ -28,7 +28,11 @@
     ],
     "main": "index.js",
     "files": [
-        "index.js"
+        "index.js",
+        "changelog.js",
+        "parser-opts.js",
+        "writer-opts.js",
+        "recommended-bump.js"
     ],
     "dependencies": {
         "aron-conventional-commits": "*",
