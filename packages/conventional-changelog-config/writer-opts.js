@@ -6,7 +6,6 @@ const conventionalCommits = require('aron-conventional-commits')
 
 module.exports = {
     transform: (commit, context) => {
-        console.log(commit)
         const issues = []
         const conventionalCommit = conventionalCommits.find(({ type }) => commit.type === type)
         if (commit.type === 'Revert' || commit.revert) {

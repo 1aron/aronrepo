@@ -52,7 +52,7 @@ describe('aron preset', () => {
                 expect(changelog).toMatch(', [#1](https://github.com/conventional-changelog/conventional-changelog/issues/1) [#2](https://github.com/conventional-changelog/conventional-changelog/issues/2)')
                 expect(changelog).toMatch('New Features')
                 expect(changelog).toMatch('Bug Fixes')
-                expect(changelog).toMatch('Performance Improvements')
+                expect(changelog).toMatch('Performance Upgrades')
                 expect(changelog).toMatch('**`ngOptions`** - Bad commit')
                 expect(changelog).not.toMatch('Delete unused file')
                 expect(changelog).not.toMatch('First build setup')
