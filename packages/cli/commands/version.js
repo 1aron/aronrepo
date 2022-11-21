@@ -18,7 +18,7 @@ program.command('version <version>')
                     const dependencyVersion = dependencies[dependencyName]
                     if (dependencyVersion === '') {
                         dependencies[dependencyName] = prefix + version
-                        console.log('Bump:', dependencyName, '→', prefix + version, `(${dependencyName} ${title})`)
+                        console.log('→', dependencyName, prefix + version, `(${dependencyName} ${title})`)
                         updated = true
                     }
                 }
@@ -41,6 +41,7 @@ program.command('version <version>')
         for (const eachWorkspacePackageJSONPath in workspacePackagesOfPath) {
             const eachWorkspacePackage = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
             const { dependencies, peerDependencies } = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
+            console.log('Package:', eachWorkspacePackage.name, `(${eachWorkspacePackageJSONPath})`)
             if (
                 dependencies && updateDependencies(dependencies, 'dependencies')
                 || (peerDependencies) && updateDependencies(peerDependencies, 'peerDependencies')
