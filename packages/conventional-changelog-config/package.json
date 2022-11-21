@@ -32,7 +32,8 @@
         "changelog.js",
         "parser-opts.js",
         "writer-opts.js",
-        "recommended-bump.js"
+        "recommended-bump.js",
+        "templates"
     ],
     "dependencies": {
         "aron-conventional-commits": "*",
