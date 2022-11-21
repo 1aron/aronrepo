@@ -34,6 +34,9 @@
         "rules.js",
         "configure.js"
     ],
+    "peerDependencies": {
+        "aron-cli": ""
+    },
     "dependencies": {
         "@semantic-release/exec": "^6.0.3",
         "semantic-release": "^19.0.5",

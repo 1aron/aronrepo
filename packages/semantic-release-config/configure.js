@@ -5,7 +5,7 @@ module.exports = ({
     assets = [],
     scripts = {
         prepare: 'npm run check && npm run build',
-        publish: 'npm version ${nextRelease.version} --workspaces && npm publish --workspaces --access public'
+        publish: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
     },
     branches = [
         '+([0-9])?(.{+([0-9]),x}).x',

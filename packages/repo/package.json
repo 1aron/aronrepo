@@ -27,6 +27,7 @@
         "typescript": "*"
     },
     "dependencies": {
+        "aron-cli": "",
         "eslint-config-aron": "",
         "commitlint-config-aron": "",
         "conventional-changelog-aron": "",
