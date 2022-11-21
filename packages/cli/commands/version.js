@@ -11,15 +11,15 @@ program.command('version <version>')
         const workspacePackagesOfPath = {}
         const workspacePackagesOfName = {}
         const workspacePackagePaths = workspaces.map((eachWorkspace) => path.join(eachWorkspace, '*package.json'))
-        const updateDependencies = (dependencies) => {
+        const updateDependencies = (dependencies, title) => {
             let updated = false
             for (const dependencyName in dependencies) {
                 if (dependencyName in workspacePackagesOfName) {
                     const dependencyVersion = dependencies[dependencyName]
                     if (dependencyVersion === '') {
                         dependencies[dependencyName] = prefix + version
+                        console.log('Bump:', dependencyName, '→', prefix + version, `(${dependencyName} ${title})`)
                         updated = true
-
                     }
                 }
             }
@@ -42,8 +42,8 @@ program.command('version <version>')
             const eachWorkspacePackage = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
             const { dependencies, peerDependencies } = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
             if (
-                dependencies && updateDependencies(dependencies)
-                || (peerDependencies) && updateDependencies(peerDependencies)
+                dependencies && updateDependencies(dependencies, 'dependencies')
+                || (peerDependencies) && updateDependencies(peerDependencies, 'peerDependencies')
             ) {
                 fs.writeJSONSync(eachWorkspacePackageJSONPath, eachWorkspacePackage)
             }

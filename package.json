@@ -6,7 +6,6 @@
         "test": "turbo run test --parallel",
         "lint": "turbo run lint --parallel",
         "dev": "turbo run dev --parallel --no-cache",
-        "release": "semantic-release",
         "clean:build": "rm -rf ./packages/**/*dist",
         "link:status": "npm ls --link=true",
         "analyze:commit": "semantic-release --debug"
