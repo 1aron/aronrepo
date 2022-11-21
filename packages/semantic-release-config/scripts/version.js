@@ -6,27 +6,38 @@ const { workspaces } = fs.readJSONSync('./package.json')
 const { prefix } = argv
 const nextVersion = argv._[0]
 const workspacePackages = {}
+const workspacePackagePaths = workspaces.map((eachWorkspace) => path.join(eachWorkspace, '*package.json'))
 
-fg.sync(workspaces.map((eachWorkspace) => path.join(eachWorkspace, '*package.json')))
-    .forEach((packageJSONPath) => {
-        const eachWorkspacePackage = fs.readJSONSync(packageJSONPath)
-        workspacePackages[eachWorkspacePackage.name] = eachWorkspacePackage
+// Read package.json by workspaces
+fg.sync(workspacePackagePaths)
+    .forEach((eachWorkspacePackageJSONPath) => {
+        const eachWorkspacePackage = fs.readJSONSync(eachWorkspacePackageJSONPath)
+        workspacePackages[eachWorkspacePackageJSONPath] = eachWorkspacePackage
+        // Bump to next verion
+        eachWorkspacePackage.version = nextVersion
     })
 
-for (const workspacePackageName in workspacePackages) {
-    const { dependencies, peerDependencies } = workspacePackages[workspacePackageName]
-    if (dependencies) updateDependencies(dependencies)
-    if (peerDependencies) updateDependencies(peerDependencies)
+for (const eachWorkspacePackageJSONPath in workspacePackages) {
+    const eachWorkspacePackage = workspacePackages[eachWorkspacePackageJSONPath]
+    const { dependencies, peerDependencies } = workspacePackages[eachWorkspacePackageJSONPath]
+    if (
+        dependencies && updateDependencies(dependencies)
+        || (peerDependencies) && updateDependencies(peerDependencies)
+    ) {
+        fs.writeJSONSync(eachWorkspacePackageJSONPath, eachWorkspacePackage)
+    }
 }
 
 function updateDependencies(dependencies) {
+    let updated = false
     for (const dependencyName in dependencies) {
         if (dependencyName in workspacePackages) {
             const dependency = dependencies[dependencyName]
             if (dependency === '') {
                 dependencies[dependencyName] = prefix + nextVersion
-                console.log(dependencyName, dependencies[dependencyName])
+                updated = true
             }
         }
     }
+    return updated
 }
