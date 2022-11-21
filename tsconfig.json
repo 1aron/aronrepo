@@ -14,9 +14,6 @@
             "dom"
         ]
     },
-    "include": [
-        "**/*.{ts,tsx}"
-    ],
     "typeAcquisition": {
         "enable": true
     }

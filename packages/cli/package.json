@@ -1,0 +1,28 @@
+{
+    "name": "aron-cli",
+    "license": "MIT",
+    "description": "Aron's command-line programs ✍🏻",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/repo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/repo.git",
+        "directory": "packages/cli"
+    },
+    "bin": {
+        "aron": "bin/aron.js"
+    },
+    "dependencies": {
+        "commander": "^9.4.1",
+        "argv": "^0.0.2",
+        "fast-glob": "^3.2.12",
+        "fs-extra": "^10.1.0"
+    }
+}
