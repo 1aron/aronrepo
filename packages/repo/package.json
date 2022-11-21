@@ -16,7 +16,11 @@
         "url": "https://github.com/1aron/repo.git",
         "directory": "packages/repo"
     },
-    "peerDependencies": {
+    "dependencies": {
+        "eslint-config-aron": "*",
+        "commitlint-config-aron": "*",
+        "conventional-changelog-aron": "*",
+        "semantic-release-config-aron": "*",
         "@swc/core": "*",
         "@swc/jest": "*",
         "@types/jest": "*",
@@ -25,11 +29,5 @@
         "jest": "*",
         "turbo": "*",
         "typescript": "*"
-    },
-    "dependencies": {
-        "eslint-config-aron": "*",
-        "commitlint-config-aron": "*",
-        "conventional-changelog-aron": "*",
-        "semantic-release-config-aron": "*"
     }
 }
