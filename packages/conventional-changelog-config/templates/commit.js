@@ -10,56 +10,56 @@ module.exports = /* html */ dedent`
 
 {{~!-- commit link --}} {{#if @root.linkReferences~}}
 <sub><sup>[{{shortHash}}](
-        {{~#if @root.repository}}
-            {{~#if @root.host}}
-                {{~@root.host}}/
-            {{~/if}}
-            {{~#if @root.owner}}
-                {{~@root.owner}}/
-            {{~/if}}
-            {{~@root.repository}}
-        {{~else}}
-            {{~@root.repoUrl}}
-        {{~/if}}/
-        {{~@root.commit}}/{{hash}})</sup></sub>
+{{~#if @root.repository}}
+{{~#if @root.host}}
+{{~@root.host}}/
+{{~/if}}
+{{~#if @root.owner}}
+{{~@root.owner}}/
+{{~/if}}
+{{~@root.repository}}
+{{~else}}
+{{~@root.repoUrl}}
+{{~/if}}/
+{{~@root.commit}}/{{hash}})</sup></sub>
 {{~else}}
 <sub><sup>{{~shortHash}}</sup></sub>
 {{~/if}}
 
 {{~!-- commit references --}}
 {{~#if references~}}
-    ,
-    {{~#each references}} {{#if @root.linkReferences~}}
-            [
-            {{~#if this.owner}}
-                {{~this.owner}}/
-            {{~/if}}
-            {{~this.repository}}#{{this.issue}}](
-            {{~#if @root.repository}}
-                {{~#if @root.host}}
-                    {{~@root.host}}/
-                {{~/if}}
-                {{~#if this.repository}}
-                    {{~#if this.owner}}
-                        {{~this.owner}}/
-                    {{~/if}}
-                    {{~this.repository}}
-                {{~else}}
-                    {{~#if @root.owner}}
-                        {{~@root.owner}}/
-                    {{~/if}}
-                    {{~@root.repository}}
-                {{~/if}}
-            {{~else}}
-                {{~@root.repoUrl}}
-            {{~/if}}/
-            {{~@root.issue}}/{{this.issue}})
-        {{~else}}
-            {{~#if this.owner}}
-                {{~this.owner}}/
-            {{~/if}}
-            {{~this.repository}}#{{this.issue}}
-        {{~/if}}{{/each}}
+,
+{{~#each references}} {{#if @root.linkReferences~}}
+[
+{{~#if this.owner}}
+{{~this.owner}}/
+{{~/if}}
+{{~this.repository}}#{{this.issue}}](
+{{~#if @root.repository}}
+{{~#if @root.host}}
+{{~@root.host}}/
+{{~/if}}
+{{~#if this.repository}}
+{{~#if this.owner}}
+{{~this.owner}}/
+{{~/if}}
+{{~this.repository}}
+{{~else}}
+{{~#if @root.owner}}
+{{~@root.owner}}/
+{{~/if}}
+{{~@root.repository}}
+{{~/if}}
+{{~else}}
+{{~@root.repoUrl}}
+{{~/if}}/
+{{~@root.issue}}/{{this.issue}})
+{{~else}}
+{{~#if this.owner}}
+{{~this.owner}}/
+{{~/if}}
+{{~this.repository}}#{{this.issue}}
+{{~/if}}{{/each}}
 {{~/if}}
 \n
 `
