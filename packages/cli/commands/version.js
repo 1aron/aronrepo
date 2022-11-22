@@ -42,12 +42,9 @@ program.command('version <version>')
             const eachWorkspacePackage = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
             const { dependencies, peerDependencies } = workspacePackagesOfPath[eachWorkspacePackageJSONPath]
             console.log('Package:', eachWorkspacePackage.name, `(${eachWorkspacePackageJSONPath})`)
-            if (
-                dependencies && updateDependencies(dependencies, 'dependencies')
-                || (peerDependencies) && updateDependencies(peerDependencies, 'peerDependencies')
-            ) {
-                fs.writeJSONSync(eachWorkspacePackageJSONPath, eachWorkspacePackage)
-            }
+            dependencies && updateDependencies(dependencies, 'dependencies')
+            peerDependencies && updateDependencies(peerDependencies, 'peerDependencies')
+            fs.writeJSONSync(eachWorkspacePackageJSONPath, eachWorkspacePackage)
         }
     })
 
