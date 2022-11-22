@@ -1,7 +1,7 @@
 {
     "name": "aron-cli",
     "license": "MIT",
-    "description": "Aron's command-line programs ✍🏻",
+    "description": "Aron's command-line programs",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",
