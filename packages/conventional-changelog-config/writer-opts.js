@@ -2,14 +2,14 @@ const compareFunc = require('compare-func')
 const mainTemplate = require('./templates/template')
 const footerPartial = require('./templates/footer')
 const commitPartial = require('./templates/commit')
-const conventionalCommits = require('aron-conventional-commits')
+const { commits } = require('aron-conventional-commits')
 
 module.exports = {
     transform: (commit, context) => {
         const issues = []
-        const conventionalCommit = conventionalCommits.find(({ type }) => commit.type === type)
+        const conventionalCommit = commits.find(({ type }) => commit.type === type)
         if (commit.type === 'Revert' || commit.revert) {
-            commit.type = conventionalCommits.find(({ type }) => type === 'Revert').group
+            commit.type = commits.find(({ type }) => type === 'Revert').group
             /**
              * From    Revert: "Feat(Scope): First feature"
              * To      Revert: `Feat(Scope): First feature`
@@ -66,7 +66,7 @@ module.exports = {
     },
     groupBy: 'type',
     commitGroupsSort: (a, b) => {
-        const commitGroupOrder = conventionalCommits
+        const commitGroupOrder = commits
             .map(({ group }) => group)
             .reverse()
         const gRankA = commitGroupOrder.indexOf(a.title)

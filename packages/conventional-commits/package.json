@@ -47,6 +47,6 @@
         }
     },
     "files": [
-        "dist/index.js"
+        "dist"
     ]
 }

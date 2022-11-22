@@ -36,8 +36,11 @@ const commits = [
     { type: 'Misc', release: false, hidden: true }
 ]
 
-export const types = [
+const types = [
     ...new Set(commits.map(({ type }) => type))
 ]
 
-export default commits
+export {
+    commits,
+    types
+}

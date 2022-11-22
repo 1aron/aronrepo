@@ -1,9 +1,9 @@
-const conventionalCommits = require('aron-conventional-commits').default
+const { commits } = require('aron-conventional-commits')
 
 module.exports = [
     { breaking: true, release: 'major' },
     { revert: true, release: 'patch' },
-    ...JSON.parse(JSON.stringify(conventionalCommits))
+    ...JSON.parse(JSON.stringify(commits))
         .map((eachReleaseRule) => {
             delete eachReleaseRule.group
             return eachReleaseRule

@@ -1,5 +1,5 @@
 const parserOpts = require('./parser-opts')
-const conventionalCommits = require('aron-conventional-commits')
+const { commits: aronCommits } = require('aron-conventional-commits')
 
 module.exports = {
     parserOpts,
@@ -9,7 +9,7 @@ module.exports = {
         let MinorCount = 0
         let patchCount = 0
         commits.forEach(({ type }) => {
-            const conventionalCommit = conventionalCommits.find(({ type: eachType }) => eachType === type)
+            const conventionalCommit = aronCommits.find(({ type: eachType }) => eachType === type)
             if (conventionalCommit) {
                 switch (conventionalCommit.release) {
                     case 'major':
