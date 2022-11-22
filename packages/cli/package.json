@@ -19,6 +19,10 @@
     "bin": {
         "aron": "bin/aron.js"
     },
+    "files": [
+        "bin",
+        "commands"
+    ],
     "dependencies": {
         "commander": "^9.4.1",
         "fast-glob": "^3.2.12",
