@@ -1,4 +1,4 @@
-const conventionalCommits = require('aron-conventional-commits')
+const conventionalCommits = require('aron-conventional-commits').default
 
 module.exports = [
     { breaking: true, release: 'major' },

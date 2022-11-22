@@ -5,10 +5,10 @@
         "outDir": "dist",
     },
     "include": [
-        "src/**/*.ts",
-        "src/**/*.d.ts"
+        "lib/**/*.ts",
+        "lib/**/*.d.ts"
     ],
     "exclude": [
-        "src/**/*.test.ts"
+        "lib/**/*.test.ts"
     ]
 }
