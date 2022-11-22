@@ -1,10 +1,10 @@
-const compareFunc = require('compare-func')
-const mainTemplate = require('./templates/template')
-const footerPartial = require('./templates/footer')
-const commitPartial = require('./templates/commit')
-const { commits } = require('aron-conventional-commits')
+import compareFunc from 'compare-func'
+import mainTemplate from './templates/template'
+import footerPartial from './templates/footer'
+import commitPartial from './templates/commit'
+import { commits } from 'aron-conventional-commits'
 
-module.exports = {
+export default {
     transform: (commit, context) => {
         const issues = []
         const conventionalCommit = commits.find(({ type }) => commit.type === type)

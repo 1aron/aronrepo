@@ -1,7 +1,7 @@
 const parserOpts = require('./parser-opts')
 const writerOpts = require('./writer-opts')
 
-module.exports = {
+export default {
     parserOpts,
     writerOpts
 }

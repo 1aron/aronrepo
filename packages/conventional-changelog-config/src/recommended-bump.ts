@@ -1,7 +1,7 @@
 const parserOpts = require('./parser-opts')
 const { commits: aronCommits } = require('aron-conventional-commits')
 
-module.exports = {
+export default {
     parserOpts,
     whatBump: (commits) => {
         let level = null

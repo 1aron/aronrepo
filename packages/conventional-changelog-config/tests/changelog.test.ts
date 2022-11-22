@@ -6,7 +6,7 @@ import commit from '../../../utils/commit'
 import initFakeGit from '../../../utils/init-fake-git'
 
 const config = require('../')
-
+console.log(config)
 const conventionalChangelogCore = require('conventional-changelog-core')
 
 if (!fs.existsSync(path.join(__dirname, '../.dev'))) {

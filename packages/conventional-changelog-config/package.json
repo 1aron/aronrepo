@@ -1,6 +1,11 @@
 {
     "name": "conventional-changelog-aron",
     "scripts": {
+        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --minify --sourcemap --platform=node",
+        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --minify --sourcemap --platform=node",
+        "build:type": "tsc --emitDeclarationOnly --preserveWatchOutput",
+        "build": "conc 'npm:build:*'",
+        "dev": "conc 'npm:build:* -- --watch'",
         "test": "jest"
     },
     "license": "MIT",
@@ -26,14 +31,20 @@
         "aron",
         "preset"
     ],
-    "main": "index.js",
+    "main": "./dist/index.cjs",
+    "jsnext:main": "./dist/index.mjs",
+    "esnext": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "files": [
-        "index.js",
-        "changelog.js",
-        "parser-opts.js",
-        "writer-opts.js",
-        "recommended-bump.js",
-        "templates"
+        "dist"
     ],
     "dependencies": {
         "aron-conventional-commits": "",
