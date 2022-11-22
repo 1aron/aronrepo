@@ -1,4 +1,4 @@
-module.exports = [
+const commits = [
     { type: 'Bump', scope: 'Major', release: 'major' },
     { type: 'Bump', scope: 'Minor', release: 'minor' },
     { type: 'Bump', scope: 'Patch', release: 'patch' },
@@ -35,3 +35,9 @@ module.exports = [
     { type: 'Chore', release: false, hidden: true },
     { type: 'Misc', release: false, hidden: true }
 ]
+
+export const types = [
+    ...new Set(commits.map(({ type }) => type))
+]
+
+export default commits

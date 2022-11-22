@@ -1,5 +1,4 @@
-const conventionalCommits = require('aron-conventional-commits')
-const types = require('aron-conventional-commits/types')
+const { types } = require('aron-conventional-commits')
 
 module.exports = {
     parserPreset: 'conventional-changelog-aron',

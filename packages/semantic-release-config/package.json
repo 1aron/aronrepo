@@ -1,6 +1,11 @@
 {
     "name": "semantic-release-config-aron",
     "scripts": {
+        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --minify --sourcemap --platform=node --external:@master/css --external:@master/css.compiler",
+        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --minify --sourcemap --platform=node --external:@master/css --external:@master/css.compiler",
+        "build:type": "tsc --emitDeclarationOnly --preserveWatchOutput",
+        "build": "conc 'npm:build:*'",
+        "dev": "conc 'npm:build:* -- --watch'",
         "test": "jest"
     },
     "license": "MIT",
@@ -28,11 +33,20 @@
         "aron",
         "preset"
     ],
-    "main": "release.config.js",
+    "main": "./dist/index.cjs",
+    "jsnext:main": "./dist/index.mjs",
+    "esnext": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "files": [
-        "release.config.js",
-        "rules.js",
-        "configure.js"
+        "dist/index.js"
     ],
     "peerDependencies": {
         "aron-cli": ""

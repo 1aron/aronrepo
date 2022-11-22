@@ -2,8 +2,9 @@
     "$schema": "https://turbo.build/schema.json",
     "pipeline": {
         "dev": {
-            "outputs": [
-                "dist/**"
+            "cache": false,
+            "dependsOn": [
+                "^build"
             ]
         },
         "build": {
