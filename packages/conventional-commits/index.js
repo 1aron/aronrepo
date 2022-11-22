@@ -27,8 +27,10 @@ module.exports = [
 
     { type: 'Revert', release: 'patch', group: 'Reversions' },
 
-    { type: 'Example', release: false, group: 'Others' },
-    { type: 'Test', release: false, group: 'Others' },
+    { type: 'Example', release: false, group: 'Examples' },
+
+    { type: 'Test', release: false, group: 'Tests' },
+
     { type: 'Refactor', release: false, group: 'Others' },
     { type: 'Chore', release: false, hidden: true },
     { type: 'Misc', release: false, hidden: true }
