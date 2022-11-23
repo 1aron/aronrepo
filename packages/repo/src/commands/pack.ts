@@ -1,10 +1,11 @@
 import program from 'commander'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
+import { execSync } from 'child_process'
 import esbuild from 'esbuild'
 import parallel from 'run-parallel'
+import consola from 'consola'
 
-const build = esbuild.buildSync
 const { dependencies, peerDependencies } = fs.readJSONSync('./package.json')
 
 /** Extract external dependencies to prevent bundling */
@@ -25,14 +26,37 @@ program.command('pack [entryPaths...]')
             entry = ['src/index.{js,ts}']
         }
         parallel(
-            formats.map((format) => () => {
-                build({
-                    entryPoints: fg.sync(entry),
-                    outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[format] },
-                    external: externalDependencies,
-                    bundle, minify, watch, outdir, format
-                } as esbuild.BuildOptions)
-            })
+            [
+                ...formats.map((format) => async () => {
+                    const entryPoints = fg.sync(entry)
+                    await esbuild.build({
+                        entryPoints,
+                        outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[format] },
+                        external: externalDependencies,
+                        watch: watch ? {
+                            onRebuild(error: string, result) {
+                                if (error) consola.error(`[${format}] watch build failed`, new Error(error))
+                                else consola.success(`[${format}] watch rebuild succeeded`)
+                            }
+                        } : false,
+                        bundle, minify, outdir, format
+                    } as esbuild.BuildOptions)
+                        .then(result => {
+                            consola.start(`[${format}] watching ${reveal(entryPoints, 'entries')}`)
+                        })
+                }),
+                () => execSync('npm exec tsc --emitDeclarationOnly --preserveWatchOutput', {
+                    stdio: 'pipe',
+                    encoding: 'utf-8'
+                })
+            ]
         )
     })
 
+function reveal(arr: string[], target) {
+    if (arr.length > 2) {
+        return `${arr.slice(0, 2).join(', ')}, and ${arr.length - 2} other ${target} ...`
+    } else {
+        return `${arr.join(', ')} ${target} ...`
+    }
+}

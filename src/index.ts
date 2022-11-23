@@ -1,1 +1,5 @@
-alert('test')
+alert()
+
+export interface Test {
+    a: string
+}
