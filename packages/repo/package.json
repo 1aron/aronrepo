@@ -1,6 +1,12 @@
 {
     "name": "aronrepo",
     "license": "MIT",
+    "scripts": {
+        "build:cjs": "esbuild src/index.ts --bundle --outdir=dist --out-extension:.js=.cjs --format=cjs --minify --sourcemap --platform=node",
+        "build:esm": "esbuild src/index.ts --bundle --outdir=dist --out-extension:.js=.mjs --format=esm --minify --sourcemap --platform=node",
+        "build": "conc 'npm:build:*'",
+        "dev": "conc 'npm:build:* -- --watch'"
+    },
     "description": "Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows 📦",
     "author": {
         "name": "Aron",
@@ -16,6 +22,13 @@
         "url": "https://github.com/1aron/repo.git",
         "directory": "packages/repo"
     },
+    "bin": {
+        "aron": "./dist/index"
+    },
+    "main": "./dist/bind/index",
+    "files": [
+        "dist"
+    ],
     "peerDependencies": {
         "@swc/core": "*",
         "@swc/jest": "*",
@@ -27,7 +40,6 @@
         "typescript": "*"
     },
     "dependencies": {
-        "aron-cli": "",
         "eslint-config-aron": "",
         "commitlint-config-aron": "",
         "conventional-changelog-aron": "",
