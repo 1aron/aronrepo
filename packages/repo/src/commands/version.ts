@@ -1,7 +1,8 @@
-const program = require('commander')
-const fg = require('fast-glob')
-const fs = require('fs-extra')
-const path = require('path')
+import program from 'commander'
+import fg from 'fast-glob'
+import fs from 'fs-extra'
+import path from 'path'
+
 const { workspaces } = fs.readJSONSync('./package.json')
 
 program.command('version <version>')

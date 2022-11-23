@@ -32,8 +32,8 @@
         ".eslintrc.js"
     ],
     "dependencies": {
-        "@typescript-eslint/eslint-plugin": "*",
-        "@typescript-eslint/parser": "*",
-        "eslint": "*"
+        "@typescript-eslint/eslint-plugin": "",
+        "@typescript-eslint/parser": "",
+        "eslint": ""
     }
 }

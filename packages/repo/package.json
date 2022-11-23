@@ -2,8 +2,8 @@
     "name": "aronrepo",
     "license": "MIT",
     "scripts": {
-        "build:cjs": "esbuild src/index.ts --bundle --outdir=dist --out-extension:.js=.cjs --format=cjs --minify --sourcemap --platform=node",
-        "build:esm": "esbuild src/index.ts --bundle --outdir=dist --out-extension:.js=.mjs --format=esm --minify --sourcemap --platform=node",
+        "build:cjs": "esbuild src/bin/index.ts --bundle --outdir=dist/bin --format=cjs --minify --sourcemap --platform=node --external:esbuild",
+        "build:esm": "esbuild src/bin/index.ts --bundle --outdir=dist/bin --out-extension:.js=.mjs --format=esm --minify --sourcemap --platform=node --external:esbuild",
         "build": "conc 'npm:build:*'",
         "dev": "conc 'npm:build:* -- --watch'"
     },
@@ -23,26 +23,26 @@
         "directory": "packages/repo"
     },
     "bin": {
-        "aron": "./dist/index"
+        "aron": "./dist/bin/index"
     },
-    "main": "./dist/index",
     "files": [
         "dist"
     ],
     "peerDependencies": {
-        "@swc/core": "*",
-        "@swc/jest": "*",
-        "@types/jest": "*",
-        "@types/node": "*",
-        "esbuild": "*",
-        "jest": "*",
-        "turbo": "*",
-        "typescript": "*"
+        "@swc/core": "",
+        "@swc/jest": "",
+        "@types/jest": "",
+        "@types/node": "",
+        "esbuild": "",
+        "jest": "",
+        "turbo": "",
+        "typescript": ""
     },
     "dependencies": {
-        "eslint-config-aron": "",
         "commitlint-config-aron": "",
         "conventional-changelog-aron": "",
+        "eslint-config-aron": "",
+        "run-parallel": "^1.2.0",
         "semantic-release-config-aron": ""
     }
 }

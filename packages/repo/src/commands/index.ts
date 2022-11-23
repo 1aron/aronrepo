@@ -1,1 +1,2 @@
 import './version'
+import './pack'

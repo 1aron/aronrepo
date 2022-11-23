@@ -27,8 +27,8 @@
         ".commitlintrc.js"
     ],
     "dependencies": {
-        "@commitlint/cli": "*",
-        "husky": "*",
+        "@commitlint/cli": "",
+        "husky": "",
         "conventional-changelog-aron": "",
         "aron-conventional-commits": ""
     }

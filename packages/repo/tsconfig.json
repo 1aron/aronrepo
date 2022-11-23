@@ -2,12 +2,12 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "baseUrl": ".",
-        "outDir": "dist"
+        "outDir": "dist",
     },
     "include": [
         "src/**/*.ts",
         "src/**/*.d.ts"
-, "aron.ts"    ],
+    ],
     "exclude": [
         "src/**/*.test.ts"
     ]

@@ -4,7 +4,7 @@ import program from 'commander'
 import path from 'path'
 import '../commands'
 
-const { version, name, description } = fs.readJSONSync(path.join(__dirname, '../package.json'))
+const { version, name, description } = fs.readJSONSync(path.join(__dirname, '../../package.json'))
 
 program
     .name(name)

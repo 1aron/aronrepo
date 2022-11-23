@@ -27,7 +27,7 @@
         "tmp": "^0.2.1"
     },
     "dependencies": {
-        "aronrepo": "*"
+        "aronrepo": ""
     },
     "engines": {
         "node": "^18"
