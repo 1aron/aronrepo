@@ -1,0 +1,48 @@
+{
+    "name": "aronlog",
+    "license": "MIT",
+    "scripts": {
+        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --minify --sourcemap --platform=node",
+        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --minify --sourcemap --platform=node",
+        "build:type": "tsc --emitDeclarationOnly --preserveWatchOutput",
+        "build": "conc 'npm:build:*'",
+        "dev": "conc 'npm:build:* -- --watch'"
+    },
+    "description": "Aron's colorful semantic logs",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/repo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/repo.git",
+        "directory": "packages/log"
+    },
+    "keywords": [
+        "console",
+        "log",
+        "chalk",
+        "semantic",
+        "aron"
+    ],
+    "main": "./dist/index.cjs",
+    "jsnext:main": "./dist/index.mjs",
+    "esnext": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist"
+    ]
+}

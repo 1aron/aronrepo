@@ -1,12 +1,18 @@
 import program from 'commander'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
 import esbuild from 'esbuild'
 import parallel from 'run-parallel'
-import consola from 'consola'
+import log from 'aronlog'
 
-const { dependencies, peerDependencies } = fs.readJSONSync('./package.json')
+const packageJSON = fs.readJSONSync('./package.json')
+const { dependencies, peerDependencies } = packageJSON
+const defaultFormats = []
+
+packageJSON.main && defaultFormats.push('cjs')
+packageJSON.module && defaultFormats.push('mjs')
+packageJSON.browser && defaultFormats.push('iife')
 
 /** Extract external dependencies to prevent bundling */
 const externalDependencies = []
@@ -15,15 +21,16 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     // .allowUnknownOption()
-    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', 'cjs,esm')
+    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', defaultFormats.join(',') || 'esm,cjs')
     .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
     .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
+    .option('-t, --type', 'Emit typescript declarations', !!packageJSON.types)
     .option('--outdir <path>', 'The output directory for the build operation', 'dist')
     .action((entry: string[], { format, bundle, minify, watch, outdir }) => {
         const formats = format.split(',')
         if (!entry.length) {
-            entry = ['src/index.{js,ts}']
+            entry = ['src/index.ts']
         }
         parallel(
             [
@@ -35,20 +42,28 @@ program.command('pack [entryPaths...]')
                         external: externalDependencies,
                         watch: watch ? {
                             onRebuild(error: string, result) {
-                                if (error) consola.error(`[${format}] watch build failed`, new Error(error))
-                                else consola.success(`[${format}] watch rebuild succeeded`)
+                                if (error) log.error`${format} watch build failed ${new Error(error)}`
+                                else log.watch`${format} rebuild succeeded`
                             }
                         } : false,
                         bundle, minify, outdir, format
                     } as esbuild.BuildOptions)
                         .then(result => {
-                            consola.start(`[${format}] watching ${reveal(entryPoints, 'entries')}`)
+                            log.watch`${format} ${reveal(entryPoints, 'entries')}`
                         })
                 }),
-                () => execSync('npm exec tsc --emitDeclarationOnly --preserveWatchOutput', {
-                    stdio: 'pipe',
-                    encoding: 'utf-8'
-                })
+                async () => {
+                    const childProcess = await exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${outdir} ${watch && ' --watch'}`)
+                    childProcess.stdout.on('data', (data: string) => {
+                        log.success`${type} ${data.trim()}`
+                    })
+                    childProcess.stderr.on('data', (data: string) => {
+                        log.error`${new Error(data.trim())}`
+                    })
+                    childProcess.on('close', (code) => {
+                        log.i`tsc child process exited with code ${code}`
+                    })
+                }
             ]
         )
     })

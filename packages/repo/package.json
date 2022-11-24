@@ -39,8 +39,8 @@
         "typescript": ""
     },
     "dependencies": {
+        "aronlog": "",
         "commitlint-config-aron": "",
-        "consola": "^2.15.3",
         "conventional-changelog-aron": "",
         "eslint-config-aron": "",
         "run-parallel": "^1.2.0",
