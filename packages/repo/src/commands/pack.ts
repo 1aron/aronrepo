@@ -27,7 +27,7 @@ program.command('pack [entryPaths...]')
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-t, --type', 'Emit typescript declarations', !!packageJSON.types)
     .option('--outdir <path>', 'The output directory for the build operation', 'dist')
-    .action((entry: string[], { format, bundle, minify, watch, outdir }) => {
+    .action((entry: string[], { format, bundle, minify, watch, outdir, type }) => {
         const formats = format.split(',')
         if (!entry.length) {
             entry = ['src/index.ts']
@@ -58,7 +58,7 @@ program.command('pack [entryPaths...]')
                         log.success`${type} ${data.trim()}`
                     })
                     childProcess.stderr.on('data', (data: string) => {
-                        log.error`${new Error(data.trim())}`
+                        log.error`${data.trim()}`
                     })
                     childProcess.on('close', (code) => {
                         log.i`tsc child process exited with code ${code}`

@@ -1,0 +1,23 @@
+{
+    "name": "example",
+    "license": "MIT",
+    "scripts": {
+        "aron pack": "node ../dist/bind pack"
+    },
+    "main": "./dist/index.cjs",
+    "jsnext:main": "./dist/index.mjs",
+    "browser": "./dist/index.browser.js",
+    "esnext": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist"
+    ]
+}

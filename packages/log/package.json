@@ -44,5 +44,8 @@
     },
     "files": [
         "dist"
-    ]
+    ],
+    "dependencies": {
+        "object-treeify": "^3.3.1"
+    }
 }

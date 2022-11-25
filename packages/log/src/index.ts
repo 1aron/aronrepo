@@ -1,9 +1,10 @@
 import chalk from 'chalk'
+import treeify from 'object-treeify'
 
-type Log = (strings: string[], ...messages: string[]) => void
+type Log = (strings: TemplateStringsArray, ...messages: any[]) => void
 
 const log = <{
-    (strings, ...messages: string[]): void
+    (strings: TemplateStringsArray, ...messages: any[]): void
     error: Log,
     conflict: Log,
     pass: Log,
@@ -21,6 +22,8 @@ const log = <{
     check: Log,
     d: Log, delete: Log, remove: Log,
     a: Log, add: Log
+
+    tree: (object: object | JSON) => void
 }>((strings, ...slots) => {
     handleMessage({ strings, slots })
 })
@@ -133,8 +136,19 @@ log.pass = (strings, ...slots) => {
     })
 }
 
+log.tree = (object) => {
+    console.log(
+        treeify(object, {
+            spacerNeighbour: mark('.│  .'),
+            keyNoNeighbour: mark('.└─ .'),
+            keyNeighbour: mark('.├─ .'),
+            separator: mark('.: .')
+        })
+    )
+}
+
 function handleMessage({ strings, slots, message = '', header, event, markEvent }: {
-    strings: string[],
+    strings: TemplateStringsArray,
     slots: string[],
     event?: string,
     header?: string,
@@ -167,15 +181,15 @@ export function mark(event: string) {
 
     const newSlot = event
         .toString()
-        .replace(/\*(.*?)\*/g, chalk.cyan('$1'))
-        .replace(/_(.*?)_/g, chalk.underline('$1'))
-        .replace(/\/(.*?)\//g, chalk.italic('$1'))
-        .replace(/-(.*?)-/g, chalk.red('$1'))
-        .replace(/~(.*?)~/g, chalk.strikethrough('$1'))
-        .replace(/!(.*?)!/g, chalk.yellow('$1'))
-        .replace(/\+(.*?)\+/g, chalk.green('$1'))
-        .replace(/\.(.*?)\./g, chalk.dim('$1'))
-        .replace(/`(.*?)`/g, chalk.cyan('`$1`'))
+        .replace(/^\*(.*?)\*$/g, chalk.cyan('$1'))
+        .replace(/^_(.*?)_$/g, chalk.underline('$1'))
+        .replace(/^\/(.*?)\/$/g, chalk.italic('$1'))
+        .replace(/^-(.*?)-$/g, chalk.red('$1'))
+        .replace(/^~(.*?)~$/g, chalk.strikethrough('$1'))
+        .replace(/^!(.*?)!$/g, chalk.yellow('$1'))
+        .replace(/^\+(.*?)\+$/g, chalk.green('$1'))
+        .replace(/^\.(.*?)\.$/g, chalk.dim('$1'))
+        .replace(/^`(.*?)`$/g, chalk.cyan('`$1`'))
     if (event === newSlot) {
         return chalk.cyan(event)
     } else {
