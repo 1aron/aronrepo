@@ -5,14 +5,23 @@ import { exec } from 'child_process'
 import esbuild from 'esbuild'
 import pAll from 'p-all'
 import log from 'aronlog'
+import path from 'path'
 
-const packageJSON = fs.readJSONSync('./package.json')
-const { dependencies, peerDependencies } = packageJSON
-const defaultFormats = []
+const pkg = fs.readJSONSync('./package.json', { throws: false })
+const { dependencies, peerDependencies } = pkg
 
-packageJSON.main && defaultFormats.push('cjs')
-packageJSON.module && defaultFormats.push('esm')
-packageJSON.browser && defaultFormats.push('iife')
+console.log(pkg)
+
+const defaults = {
+    formats: [],
+    output: path.dirname((pkg.main || pkg.module || pkg.browser)) || 'dist'
+}
+
+console.log(defaults)
+
+pkg.main && defaults.formats.push('cjs')
+pkg.module && defaults.formats.push('esm')
+pkg.browser && defaults.formats.push('iife')
 
 /** Extract external dependencies to prevent bundling */
 const externalDependencies = []
@@ -21,13 +30,13 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     // .allowUnknownOption()
-    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', defaultFormats.join(',') || 'esm,cjs')
+    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', defaults.formats.join(',') || 'esm,cjs')
     .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
     .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
-    .option('-t, --type', 'Emit typescript declarations', !!packageJSON.types)
-    .option('--outdir <path>', 'The output directory for the build operation', 'dist')
-    .action(async (entry: string[], { format, bundle, minify, watch, outdir, type }) => {
+    .option('-t, --type', 'Emit typescript declarations', !!pkg.types)
+    .option('-o, --output <path>', 'The output directory for the build operation', defaults.output)
+    .action(async (entry: string[], { format, bundle, minify, watch, output, type }) => {
         const formats = format.split(',')
         if (!entry.length) {
             entry = ['src/index.ts']
@@ -47,7 +56,8 @@ program.command('pack [entryPaths...]')
                         else log.watch`${format} rebuild succeeded`
                     }
                 } : false,
-                bundle, minify, outdir, format
+                outdir: output,
+                bundle, minify, format
             } as esbuild.BuildOptions)
                 .then(result => {
                     log[watch ? 'w' : 'i']`${format} process ${reveal(entryPoints, 'entries')}`
@@ -57,7 +67,7 @@ program.command('pack [entryPaths...]')
             tasks.push(
                 async () => {
                     return await new Promise<void>((resolve) => {
-                        exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${outdir} ${watch ? '--watch' : ''}`,
+                        exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${output} ${watch ? '--watch' : ''}`,
                             (error, stdout, stderr) => {
                                 loading.clear()
                                 if (error) {
@@ -74,7 +84,7 @@ program.command('pack [entryPaths...]')
         }
         await pAll(tasks)
         loading.stop()
-        log.success`${'Outputed'} ${`.(${outdir}).`} ${formatLogText}`
+        log.success`${'Outputed'} ${`.(${output}).`} ${formatLogText}`
     })
 
 function reveal(arr: string[], target) {
