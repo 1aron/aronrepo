@@ -1,17 +1,21 @@
 import { log } from './log'
 import { mark } from './mark'
 import chalk from 'chalk'
+import { Log } from 'types'
 
-export function handle({ strings, slots, message = '', header, showTime, send = true, event, markEvent }: {
-    strings: TemplateStringsArray,
-    slots: string[],
-    event?: string,
-    header?: string,
-    message?: string,
-    showTime?: boolean,
-    send?: boolean,
-    markEvent?: (event: string) => string
-}) {
+export function handle(
+    { strings, slots, message = '', header, showTime, send = true, event, transform, markEvent }: {
+        strings: TemplateStringsArray,
+        slots: string[],
+        event?: string,
+        header?: string,
+        message?: string,
+        showTime?: boolean,
+        send?: boolean,
+        transform?: (message: string) => string
+        markEvent?: (event: string) => string
+    }
+): string | Log {
     if (showTime) {
         message = chalk.dim(new Date().toLocaleTimeString('en', { hour12: false })) + ' ' + message
     }
@@ -32,6 +36,9 @@ export function handle({ strings, slots, message = '', header, showTime, send = 
         message += (str + (slot ? mark(slot) : ''))
     }
     message = (header ? header + ' ' : '') + message.trim()
+    if (transform) {
+        message = transform(message)
+    }
     if (send) {
         console.log(message)
         return log

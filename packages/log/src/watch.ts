@@ -1,14 +1,15 @@
 import chalk from 'chalk'
 import { handle } from './handle'
-import ora from 'ora'
+import { Log } from 'types'
 
-const watch = (strings, ...slots) => {
-    ora().start()
+const watch: Log = (strings, ...slots) => {
     return handle({
         strings, slots,
         showTime: true,
         event: 'watch',
-        markEvent: (event) => chalk.dim('[') + chalk.magenta(event) + chalk.dim(']')
+        markEvent: (event) =>
+            chalk.dim('[') + chalk.magenta(event) + chalk.dim(']'),
+        transform: (message) => message + chalk.magenta(' …')
     })
 }
 
