@@ -1,5 +1,5 @@
 import fs from 'fs-extra'
 
-export function readPackage(path = './package.json') {
-    return fs.readJSONSync('./package.json', { throws: false }) || {}
+export function readPackage(pkgPath = './package.json') {
+    return fs.readJSONSync(pkgPath, { throws: false }) || {}
 }

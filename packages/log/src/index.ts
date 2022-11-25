@@ -42,4 +42,5 @@ export {
     tree,
     mark
 }
-export * from '../types'
+
+import '../types'

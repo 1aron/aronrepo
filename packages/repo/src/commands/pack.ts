@@ -1,6 +1,5 @@
 import program from 'commander'
 import fg from 'fast-glob'
-import fs from 'fs-extra'
 import { exec } from 'child_process'
 import esbuild from 'esbuild'
 import pAll from 'p-all'
@@ -10,19 +9,20 @@ import { readPackage } from '../utils/read-package'
 
 const pkg = readPackage()
 const { dependencies, peerDependencies } = pkg
-
-console.log('fuck', pkg)
+const entry = pkg.main || pkg.module || pkg.browser
 
 const defaults = {
-    formats: [],
-    output: path.dirname(pkg.main || pkg.module || pkg.browser || '') || 'dist'
+    formats: ['esm', 'cjs'],
+    output: entry ? path.dirname(entry) : 'dist'
 }
 
-console.log(defaults)
+pkg.main && !defaults.formats.includes('cjs') && defaults.formats.push('cjs')
+pkg.module && !defaults.formats.includes('esm') && defaults.formats.push('esm')
+pkg.browser && !defaults.formats.includes('iife') && defaults.formats.push('iife')
 
-pkg.main && defaults.formats.push('cjs')
-pkg.module && defaults.formats.push('esm')
-pkg.browser && defaults.formats.push('iife')
+if (Object.keys(pkg).length) {
+    log`📦 extract build options from ${'*package.json*'}`
+}
 
 /** Extract external dependencies to prevent bundling */
 const externalDependencies = []
@@ -31,13 +31,16 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     // .allowUnknownOption()
-    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', defaults.formats.join(',') || 'esm,cjs')
+    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', defaults.formats.join(','))
     .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
     .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-t, --type', 'Emit typescript declarations', !!pkg.types)
     .option('-o, --output <path>', 'The output directory for the build operation', defaults.output)
-    .action(async (entry: string[], { format, bundle, minify, watch, output, type }) => {
+    .action(async function (entry: string[]) {
+        const options = this.opts()
+        const { format, bundle, minify, watch, output, type } = options
+        log.tree(options)
         const formats = format.split(',')
         if (!entry.length) {
             entry = ['src/index.ts']
@@ -53,6 +56,7 @@ program.command('pack [entryPaths...]')
                 external: externalDependencies,
                 watch: watch ? {
                     onRebuild(error: string, result) {
+                        loading.clear()
                         if (error) log.error`${format} watch build failed ${new Error(error)}`
                         else log.watch`${format} rebuild succeeded`
                     }
