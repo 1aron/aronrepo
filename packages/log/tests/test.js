@@ -13,16 +13,23 @@ log.i`${'change'} File change detected. ${'Starting'} incremental compilation...
 log.i`File change detected. ${'Starting'} incremental compilation...`
 
 console.log('')
-log.w`4 entries`
+log.w`${4} entries`
 
 console.log('')
 log.error`${'Type'} Cannot use import statement outside a module`
 
 console.log('')
-log.pass`${'Test'} 3 cases`
+log.conflict`${'Version'} Custom elements cannot be defined again`
+
+console.log('')
+log.pass`${'Test'} ${3} cases`
 
 console.log('')
 log.check`Up to date, audited ${'*1076*'} packages in ${'.786ms.'}`
+
+console.log('')
+log.delete`Delete ${'-3-'} files`
+log.add`Add ${'+3+'} files`
 
 console.log('')
 log.o`${'Valid commit format'} ${'"Fix(Compiler): Import user config file path problem"'}`

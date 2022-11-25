@@ -5,15 +5,22 @@ type Log = (strings: string[], ...messages: string[]) => void
 const log = <{
     (strings, ...messages: string[]): void
     error: Log,
+    conflict: Log,
+    pass: Log,
+
     info: Log, i: Log,
     watch: Log, w: Log,
-    pass: Log,
+
     success: Log,
     warn: Log,
     fail: Log,
+
     x: Log, invalid: Log,
     o: Log, valid: Log
+
     check: Log,
+    d: Log, delete: Log, remove: Log,
+    a: Log, add: Log
 }>((strings, ...slots) => {
     handleMessage({ strings, slots })
 })
@@ -26,10 +33,34 @@ log.error = (strings, ...slots) => {
     })
 }
 
+log.conflict = (strings, ...slots) => {
+    return handleMessage({
+        strings, slots,
+        message: chalk.bgYellow.bold.white(' ‼ CONFLICT '),
+        markEvent: (event) => chalk.bgBlack.yellow(` ${event} `)
+    })
+}
+
 log.check = (strings, ...slots) => {
     return handleMessage({
         strings, slots,
         header: chalk.green('✓'),
+        markEvent: (event) => chalk.green(event)
+    })
+}
+
+log.d = log.delete = log.remove = (strings, ...slots) => {
+    return handleMessage({
+        strings, slots,
+        header: chalk.red('-'),
+        markEvent: (event) => chalk.red(event)
+    })
+}
+
+log.a = log.add = (strings, ...slots) => {
+    return handleMessage({
+        strings, slots,
+        header: chalk.green('+'),
         markEvent: (event) => chalk.green(event)
     })
 }
@@ -54,7 +85,7 @@ log.info = log.i = (strings, ...slots) => {
     return handleMessage({
         strings, slots,
         header: chalk.dim(new Date().toLocaleTimeString()),
-        markEvent: (event) => chalk.dim('[') + chalk.cyan(event) + chalk.dim(']')
+        markEvent: (event) => chalk.dim('[') + chalk.magenta(event) + chalk.dim(']')
     })
 }
 
@@ -63,7 +94,7 @@ log.watch = log.w = (strings, ...slots) => {
         strings, slots,
         header: chalk.dim(new Date().toLocaleTimeString()),
         event: 'watch',
-        markEvent: (event) => chalk.dim('[') + chalk.cyan(event) + chalk.dim(']')
+        markEvent: (event) => chalk.dim('[') + chalk.magenta(event) + chalk.dim(']')
     })
 }
 
@@ -122,18 +153,20 @@ function handleMessage({ strings, slots, message = '', header, event, markEvent 
             } else if (str) {
                 message += ' '
             }
-            if(message[message.length -1] !== ' ') {
+            if (message[message.length - 1] !== ' ') {
                 message += ' '
             }
         }
         message += (str + (slot ? mark(slot) : ''))
     }
-    console.log((header ? header + ' ': '') + message.trim())
+    console.log((header ? header + ' ' : '') + message.trim())
     return log
 }
 
 export function mark(event: string) {
+
     const newSlot = event
+        .toString()
         .replace(/\*(.*?)\*/g, chalk.cyan('$1'))
         .replace(/_(.*?)_/g, chalk.underline('$1'))
         .replace(/\/(.*?)\//g, chalk.italic('$1'))
@@ -142,9 +175,9 @@ export function mark(event: string) {
         .replace(/!(.*?)!/g, chalk.yellow('$1'))
         .replace(/\+(.*?)\+/g, chalk.green('$1'))
         .replace(/\.(.*?)\./g, chalk.dim('$1'))
-        .replace(/`(.*?)`/g, chalk.blue('`$1`'))
+        .replace(/`(.*?)`/g, chalk.cyan('`$1`'))
     if (event === newSlot) {
-        return chalk.blue(event)
+        return chalk.cyan(event)
     } else {
         return newSlot
     }
