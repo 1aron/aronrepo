@@ -2,6 +2,7 @@ import { log } from './log'
 import { mark } from './mark'
 import { Log } from 'types'
 import { getTime } from './get-time'
+import chalk from 'chalk'
 
 export function handle(
     { strings, slots, message = '', header, showTime, send = true, event, transform, markEvent }: {
@@ -17,13 +18,13 @@ export function handle(
     }
 ): string | Log {
     if (showTime) {
-        message = getTime() + ' ' + message
+        message = chalk.dim(getTime()) + ' ' + message
     }
     if (strings.length) {
         for (let i = 0; i < strings.length; i++) {
             const str = strings[i]
             const slot = slots[i]
-            if (i === 0 || !str && !slot) {
+            if (i === 0) {
                 if (!str && slot && markEvent) {
                     message += markEvent(slot)
                     continue

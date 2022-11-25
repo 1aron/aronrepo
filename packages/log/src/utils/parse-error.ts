@@ -13,7 +13,7 @@ export function parseError(error: any) {
             stackTree[
                 line
                     .replace(/\((.+)\)/g, (_, m) => `(${chalk.cyan(m)})`)
-                    .replace(/^at /g, m => chalk.gray(m))
+                    .replace(/^at /g, m => chalk.dim(m))
             ] = null
         })
     return {

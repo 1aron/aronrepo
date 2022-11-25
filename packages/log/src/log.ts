@@ -21,12 +21,12 @@ import type { Ora } from 'ora'
 
 const log = <{
     (strings: TemplateStringsArray, ...messages: any[]): void
-    error: Log,
     conflict: Log,
     pass: Log,
 
-    info: Log, i: Log,
-    watch: Log, w: Log,
+    e: Log, error: Log,
+    i: Log, info: Log,
+    w: Log, watch: Log,
 
     success: Log,
     warn: Log,

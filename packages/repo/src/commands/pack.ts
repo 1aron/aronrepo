@@ -32,43 +32,49 @@ program.command('pack [entryPaths...]')
         if (!entry.length) {
             entry = ['src/index.ts']
         }
-        const loading = log.load`${'building'}`
-        await pAll([
-            ...formats.map((format) => async () => {
-                const entryPoints = fg.sync(entry)
-                loading.clear()
-                await esbuild.build({
-                    entryPoints,
-                    outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[format] },
-                    external: externalDependencies,
-                    watch: watch ? {
-                        onRebuild(error: string, result) {
-                            if (error) log.error`${format} watch build failed ${new Error(error)}`
-                            else log.watch`${format} rebuild succeeded`
-                        }
-                    } : false,
-                    bundle, minify, outdir, format
-                } as esbuild.BuildOptions)
-                    .then(result => {
-                        log[watch ? 'w' : 'i']`${format} process ${reveal(entryPoints, 'entries')}`
-                    })
-            }),
-            async () => {
-                return await new Promise<void>((resolve) =>
-                    exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --verbose --declaration --outDir ${outdir} ${watch ? '--watch' : ''}`,
-                        (error, stdout, stderr) => {
-                            loading.clear()
-                            if (error) {
-                                log.e(error)
-                            } else {
-                                log[watch ? 'w' : 'i']`${'type'} declarations emitted`
+        const formatLogText = formats.join(', ').toUpperCase() + (type ? ', Type Declarations' : '')
+        const loading = log.load`${'building'} ${formatLogText}`
+        const tasks = formats.map((format) => async () => {
+            const entryPoints = fg.sync(entry)
+            loading.clear()
+            return await esbuild.build({
+                entryPoints,
+                outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[format] },
+                external: externalDependencies,
+                watch: watch ? {
+                    onRebuild(error: string, result) {
+                        if (error) log.error`${format} watch build failed ${new Error(error)}`
+                        else log.watch`${format} rebuild succeeded`
+                    }
+                } : false,
+                bundle, minify, outdir, format
+            } as esbuild.BuildOptions)
+                .then(result => {
+                    log[watch ? 'w' : 'i']`${format} process ${reveal(entryPoints, 'entries')}`
+                })
+        })
+        if (type) {
+            tasks.push(
+                async () => {
+                    return await new Promise<void>((resolve) => {
+                        exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${outdir} ${watch ? '--watch' : ''}`,
+                            (error, stdout, stderr) => {
+                                loading.clear()
+                                if (error) {
+                                    log.e(error)
+                                } else {
+                                    log[watch ? 'w' : 'i']`${'type'} declarations emitted`
+                                }
+                                resolve()
                             }
-                            resolve()
-                        })
-                )
-            }
-        ])
+                        )
+                    })
+                }
+            )
+        }
+        await pAll(tasks)
         loading.stop()
+        log.success`${'Outputed'} ${`.(${outdir}).`} ${formatLogText}`
     })
 
 function reveal(arr: string[], target) {
