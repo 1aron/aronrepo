@@ -11,7 +11,7 @@ const { dependencies, peerDependencies } = packageJSON
 const defaultFormats = []
 
 packageJSON.main && defaultFormats.push('cjs')
-packageJSON.module && defaultFormats.push('mjs')
+packageJSON.module && defaultFormats.push('esm')
 packageJSON.browser && defaultFormats.push('iife')
 
 /** Extract external dependencies to prevent bundling */

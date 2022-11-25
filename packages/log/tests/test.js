@@ -7,13 +7,12 @@ log`Catch ${'-clause-'} ${'+variable+'} ${'~type~'} ${'!annotation!'} ${'`must`'
 
 console.log('')
 log`${'Header'} Body`
+log`General logs`
 
 console.log('')
 log.i`${'change'} File change detected. ${'Starting'} incremental compilation...`
 log.i`File change detected. ${'Starting'} incremental compilation...`
-
-console.log('')
-log.w`${4} entries`
+log.w`${'pack'} ${4} entries`
 
 console.log('')
 log.error`${'Type'} Cannot use import statement outside a module`
