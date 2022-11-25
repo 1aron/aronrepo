@@ -2,6 +2,8 @@ const log = require('../dist/index.cjs').default
 
 // log.x`string1 ${2} string3 ${4} string 5`
 
+console.log(log)
+
 console.log('')
 log`Catch ${'-clause-'} ${'+variable+'} ${'~type~'} ${'!annotation!'} ${'`must`'} be ${'*any*'} or ${'_unknown_'} if ${'/specified/'}. ${'.ts(1196).'}`
 
@@ -24,10 +26,10 @@ console.log('')
 log.pass`${'Test'} ${3} cases`
 
 console.log('')
-log.check`Up to date, audited ${'*1076*'} packages in ${'.786ms.'}`
+log.ok`Up to date, audited ${'*1076*'} packages in ${'.786ms.'}`
 
 console.log('')
-log.delete`Delete ${'-3-'} files`
+log.del`Delete ${'-3-'} files`
 log.add`Add ${'+3+'} files`
 
 console.log('')
