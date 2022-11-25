@@ -9,7 +9,24 @@ const load = (strings, ...slots): Ora => {
         send: false,
         markEvent: (event) => chalk.dim('[') + chalk.magenta(event) + chalk.dim(']')
     }) as string
-    return ora().start(message)
+    return ora({
+        spinner: {
+            'interval': 80,
+            'frames': [
+                '▰▱▱▱▱▱',
+                '▰▰▱▱▱▱',
+                '▰▰▰▰▱▱',
+                '▰▰▰▰▱▱',
+                '▰▰▰▰▰▱',
+                '▰▰▰▰▰▰',
+                '▱▰▰▰▰▰',
+                '▱▱▰▰▰▰',
+                '▱▱▱▰▰▰',
+                '▱▱▱▱▰▰',
+                '▱▱▱▱▱▰'
+            ]
+        }
+    }).start(message)
 }
 
 export { load }

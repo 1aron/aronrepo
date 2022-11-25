@@ -43,3 +43,8 @@ log.warn`${'Warn'} Same file name`
 log.fail`Too many requests`
 
 console.log('')
+const loading = log.load`Loading modules`
+
+setTimeout(()=> {
+    loading.stop()
+}, 5000)

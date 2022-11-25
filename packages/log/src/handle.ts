@@ -2,6 +2,7 @@ import { log } from './log'
 import { mark } from './mark'
 import chalk from 'chalk'
 import { Log } from 'types'
+import { getTime } from './get-time'
 
 export function handle(
     { strings, slots, message = '', header, showTime, send = true, event, transform, markEvent }: {
@@ -17,7 +18,7 @@ export function handle(
     }
 ): string | Log {
     if (showTime) {
-        message = chalk.dim(new Date().toLocaleTimeString('en', { hour12: false })) + ' ' + message
+        message = getTime() + ' ' + message
     }
     for (let i = 0; i < strings.length; i++) {
         const str = strings[i]

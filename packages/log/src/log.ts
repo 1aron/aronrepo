@@ -16,6 +16,7 @@ import { pass } from './pass'
 import { tree } from './tree'
 import { watch } from './watch'
 import { fail } from './fail'
+import { load } from './load'
 
 const log = <{
     (strings: TemplateStringsArray, ...messages: any[]): void
@@ -57,6 +58,7 @@ Object.assign(log, {
     conflict,
     ok,
     tree,
+    load,
     mark
 })
 

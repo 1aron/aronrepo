@@ -9,7 +9,7 @@ const watch: Log = (strings, ...slots) => {
         event: 'watch',
         markEvent: (event) =>
             chalk.dim('[') + chalk.magenta(event) + chalk.dim(']'),
-        transform: (message) => message + chalk.magenta(' …')
+        transform: (message) => message + chalk.cyan(' …')
     })
 }
 
