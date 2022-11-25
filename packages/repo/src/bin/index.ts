@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+
 import fs from 'fs-extra'
 import program from 'commander'
 import path from 'path'
 import '../commands'
+import { readPackage } from '../utils/read-package'
 
-const { version, name, description } = fs.readJSONSync(path.join(__dirname, '../../package.json'))
+const { version, name, description } = readPackage(path.join(__dirname, '../../package.json'))
 
 program
     .name(name)

@@ -48,7 +48,8 @@
     ],
     "dependencies": {
         "aron-conventional-commits": "",
-        "compare-func": "^2.0.0"
+        "compare-func": "^2.0.0",
+        "dedent": "^0.7.0"
     },
     "devDependencies": {
         "conventional-changelog-core": "^4.2.4"

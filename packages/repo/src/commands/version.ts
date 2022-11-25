@@ -3,14 +3,20 @@ import fg from 'fast-glob'
 import fs from 'fs-extra'
 import path from 'path'
 import log, { mark } from 'aronlog'
+import { readPackage } from '../utils/read-package'
 
-const { workspaces } = fs.readJSONSync('./package.json')
+const pkg = readPackage()
+
+const defaults = {
+    workspaces: pkg.workspaces
+}
 
 program.command('version <version>')
     .description('Bump to specific version for workspace\'s packages')
     .option('-p, --prefix <symbol>', 'version prefix `^`, `~`, `>`, `>=`, `<`, `<=` ', '^')
+    .option('-w, --workspaces <paths>', 'Specific your workspaces', defaults.workspaces)
     .option('-ls, --list', 'List current bumpable dependency tree in workspaces', false)
-    .action((version, { prefix, list }) => {
+    .action((version, { prefix, list, workspaces }) => {
         const nextVersion = prefix + version
         const packagesOfPath = {}
         const packagesOfName = {}

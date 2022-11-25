@@ -9,12 +9,11 @@
         "skipLibCheck": true,
         "declaration": true,
         "sourceMap": true,
+        "types": [
+            "node"
+        ],
         "lib": [
-            "es2021",
-            "dom"
-        ]
-    },
-    "typeAcquisition": {
-        "enable": true
+            "esnext"
+        ],
     }
 }

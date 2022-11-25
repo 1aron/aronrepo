@@ -44,7 +44,6 @@
         "conventional-changelog-aron": "",
         "eslint-config-aron": "",
         "fs-extra": "^10.1.0",
-        "run-parallel": "^1.2.0",
         "semantic-release-config-aron": ""
     }
 }

@@ -6,15 +6,16 @@ import esbuild from 'esbuild'
 import pAll from 'p-all'
 import log from 'aronlog'
 import path from 'path'
+import { readPackage } from '../utils/read-package'
 
-const pkg = fs.readJSONSync('./package.json', { throws: false })
+const pkg = readPackage()
 const { dependencies, peerDependencies } = pkg
 
-console.log(pkg)
+console.log('fuck', pkg)
 
 const defaults = {
     formats: [],
-    output: path.dirname((pkg.main || pkg.module || pkg.browser)) || 'dist'
+    output: path.dirname(pkg.main || pkg.module || pkg.browser || '') || 'dist'
 }
 
 console.log(defaults)
