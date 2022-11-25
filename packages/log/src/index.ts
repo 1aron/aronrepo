@@ -31,7 +31,7 @@ export {
     info,
     watch as w, watch,
     success,
-    error,
+    error as e, error,
     fail,
     warn,
     pass,

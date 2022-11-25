@@ -46,8 +46,11 @@
         "dist"
     ],
     "dependencies": {
+        "consola": "^2.15.3",
+        "dedent": "^0.7.0",
         "object-treeify": "^3.3.1",
-        "ora": "^6.1.2"
+        "ora": "^6.1.2",
+        "p-all": "^4.0.0"
     },
     "sideEffects": false
 }

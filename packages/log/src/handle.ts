@@ -1,6 +1,5 @@
 import { log } from './log'
 import { mark } from './mark'
-import chalk from 'chalk'
 import { Log } from 'types'
 import { getTime } from './get-time'
 
@@ -20,21 +19,25 @@ export function handle(
     if (showTime) {
         message = getTime() + ' ' + message
     }
-    for (let i = 0; i < strings.length; i++) {
-        const str = strings[i]
-        const slot = slots[i]
-        if (i === 0) {
-            if (!str && slot && markEvent) {
-                message += markEvent(slot)
-                continue
-            } else if (event && markEvent) {
-                message += markEvent(event)
+    if (strings.length) {
+        for (let i = 0; i < strings.length; i++) {
+            const str = strings[i]
+            const slot = slots[i]
+            if (i === 0 || !str && !slot) {
+                if (!str && slot && markEvent) {
+                    message += markEvent(slot)
+                    continue
+                } else if (event && markEvent) {
+                    message += markEvent(event)
+                }
+                if (message[message.length - 1] !== ' ') {
+                    message += ' '
+                }
             }
-            if (message[message.length - 1] !== ' ') {
-                message += ' '
-            }
+            message += (str + (slot ? mark(slot) : ''))
         }
-        message += (str + (slot ? mark(slot) : ''))
+    } else if (event && markEvent) {
+        message += markEvent(event)
     }
     message = (header ? header + ' ' : '') + message.trim()
     if (transform) {

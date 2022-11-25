@@ -19,5 +19,8 @@
     },
     "files": [
         "dist"
-    ]
+    ],
+    "dependencies": {
+        "dedent": "^0.7.0"
+    }
 }

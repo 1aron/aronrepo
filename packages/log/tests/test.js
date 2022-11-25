@@ -1,6 +1,8 @@
 const log = require('../dist/index.cjs').default
-
+const consola = require('consola')
 // log.x`string1 ${2} string3 ${4} string 5`
+
+consola.error(new Error('Foo'))
 
 console.log('')
 log`Catch ${'-clause-'} ${'+variable+'} ${'~type~'} ${'!annotation!'} ${'`must`'} be ${'*any*'} or ${'_unknown_'} if ${'/specified/'}. ${'.ts(1196).'}`

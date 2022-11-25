@@ -12,9 +12,5 @@ export function mark(event: string) {
         .replace(/^\+(.*?)\+$/g, chalk.green('$1'))
         .replace(/^\.(.*?)\.$/g, chalk.dim('$1'))
         .replace(/^`(.*?)`$/g, chalk.cyan('`$1`'))
-    if (event === newSlot) {
-        return chalk.cyan(event)
-    } else {
-        return newSlot
-    }
+    return newSlot
 }

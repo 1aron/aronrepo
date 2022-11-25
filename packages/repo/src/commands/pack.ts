@@ -3,7 +3,7 @@ import fg from 'fast-glob'
 import fs from 'fs-extra'
 import { exec } from 'child_process'
 import esbuild from 'esbuild'
-import parallel from 'run-parallel'
+import pAll from 'p-all'
 import log from 'aronlog'
 
 const packageJSON = fs.readJSONSync('./package.json')
@@ -27,51 +27,54 @@ program.command('pack [entryPaths...]')
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-t, --type', 'Emit typescript declarations', !!packageJSON.types)
     .option('--outdir <path>', 'The output directory for the build operation', 'dist')
-    .action((entry: string[], { format, bundle, minify, watch, outdir, type }) => {
+    .action(async (entry: string[], { format, bundle, minify, watch, outdir, type }) => {
         const formats = format.split(',')
         if (!entry.length) {
             entry = ['src/index.ts']
         }
-        parallel(
-            [
-                ...formats.map((format) => async () => {
-                    const entryPoints = fg.sync(entry)
-                    await esbuild.build({
-                        entryPoints,
-                        outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[format] },
-                        external: externalDependencies,
-                        watch: watch ? {
-                            onRebuild(error: string, result) {
-                                if (error) log.error`${format} watch build failed ${new Error(error)}`
-                                else log.watch`${format} rebuild succeeded`
+        const loading = log.load`${'building'}`
+        await pAll([
+            ...formats.map((format) => async () => {
+                const entryPoints = fg.sync(entry)
+                loading.clear()
+                await esbuild.build({
+                    entryPoints,
+                    outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[format] },
+                    external: externalDependencies,
+                    watch: watch ? {
+                        onRebuild(error: string, result) {
+                            if (error) log.error`${format} watch build failed ${new Error(error)}`
+                            else log.watch`${format} rebuild succeeded`
+                        }
+                    } : false,
+                    bundle, minify, outdir, format
+                } as esbuild.BuildOptions)
+                    .then(result => {
+                        log[watch ? 'w' : 'i']`${format} process ${reveal(entryPoints, 'entries')}`
+                    })
+            }),
+            async () => {
+                return await new Promise<void>((resolve) =>
+                    exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --verbose --declaration --outDir ${outdir} ${watch ? '--watch' : ''}`,
+                        (error, stdout, stderr) => {
+                            loading.clear()
+                            if (error) {
+                                log.e(error)
+                            } else {
+                                log[watch ? 'w' : 'i']`${'type'} declarations emitted`
                             }
-                        } : false,
-                        bundle, minify, outdir, format
-                    } as esbuild.BuildOptions)
-                        .then(result => {
-                            log.watch`${format} ${reveal(entryPoints, 'entries')}`
+                            resolve()
                         })
-                }),
-                async () => {
-                    const childProcess = await exec(`npm exec tsc ${entry.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${outdir} ${watch && ' --watch'}`)
-                    childProcess.stdout.on('data', (data: string) => {
-                        log.success`${type} ${data.trim()}`
-                    })
-                    childProcess.stderr.on('data', (data: string) => {
-                        log.error`${data.trim()}`
-                    })
-                    childProcess.on('close', (code) => {
-                        log.i`tsc child process exited with code ${code}`
-                    })
-                }
-            ]
-        )
+                )
+            }
+        ])
+        loading.stop()
     })
 
 function reveal(arr: string[], target) {
     if (arr.length > 2) {
-        return `${arr.slice(0, 2).join(', ')}, and ${arr.length - 2} other ${target} ...`
+        return `${arr.slice(0, 2).join(', ')}, and ${arr.length - 2} other ${target}`
     } else {
-        return `${arr.join(', ')} ${target} ...`
+        return `${arr.join(', ')} ${target}`
     }
 }
