@@ -1,46 +1,23 @@
-import chalk from 'chalk'
-import { handle } from './handle'
-import ora, { Ora } from 'ora'
-import { getTime } from './get-time'
+import ora, { Options, Ora } from 'ora'
+import { generalSpinner } from './utils/general-spinner'
+import { getText } from './utils/get-text'
 
 interface LogLoading extends Ora {
-    log: (strings: TemplateStringsArray, ...slots) => Ora
+    log: (event: string, message?: string) => Ora
 }
 
-const load = (strings, ...slots): Ora => {
-    const getMessage = (strings, ...slots) => handle({
-        strings, slots,
-        send: false,
-        markEvent: (event) => chalk.dim('[') + chalk.cyan(event) + chalk.dim('…]')
-    }) as string
-    const message = getMessage(strings, ...slots)
-    const loading =
-        ora({
-            spinner: {
-                'interval': 80,
-                'frames': [
-                    '▰▱▱▱▱▱▱▱',
-                    '▰▰▱▱▱▱▱▱',
-                    '▰▰▰▱▱▱▱▱',
-                    '▰▰▰▰▱▱▱▱',
-                    '▰▰▰▰▰▱▱▱',
-                    '▰▰▰▰▰▰▱▱',
-                    '▰▰▰▰▰▰▰▱',
-                    '▰▰▰▰▰▰▰▰',
-                    '▱▰▰▰▰▰▰▰',
-                    '▱▱▰▰▰▰▰▰',
-                    '▱▱▱▰▰▰▰▰',
-                    '▱▱▱▱▰▰▰▰',
-                    '▱▱▱▱▱▰▰▰',
-                    '▱▱▱▱▱▱▰▰',
-                    '▱▱▱▱▱▱▱▰',
-                ]
-            }
-        }).start(message.trim()) as LogLoading
-    loading.log = (strings, ...slots) => {
-        const message = getMessage(strings, ...slots)
-        loading.text = message
-        return loading
+const load = (event: string, message?: string, options?: Options): Ora => {
+    if (event && !message) {
+        message = event
+        event = ''
+    }
+    const loading = ora(Object.assign({
+        spinner: event === 'watching' ? 'dots12' : generalSpinner
+    }, options || {}))
+        .start(getText(event, message)) as LogLoading
+    loading.log = (event: string, message?: string) => {
+        loading.stop()
+        return load(event, message)
     }
     return loading
 }

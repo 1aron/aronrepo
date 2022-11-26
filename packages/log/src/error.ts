@@ -3,8 +3,6 @@ import { Log } from 'types'
 import { handle } from './handle'
 import treeify from 'object-treeify'
 import { parseError } from './utils/parse-error'
-import { mark } from './mark'
-import { getTime } from './get-time'
 
 const error: Log = (strings, ...slots) => {
     if (!Array.isArray(strings)) {

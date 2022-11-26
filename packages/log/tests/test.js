@@ -12,10 +12,10 @@ log`General logs`
 console.log('')
 log.i`${'change'} File change detected. ${'Starting'} incremental compilation...`
 log.i`File change detected. ${'Starting'} incremental compilation...`
-log.w`${'esm'} ${4} entries`
-log.w`${'cjs'} ${4} entries`
-log.w`${'iife'} ${4} entries`
-log.w`entries`
+log.i`${'esm'} ${4} entries`
+log.i`${'cjs'} ${4} entries`
+log.i`${'iife'} ${4} entries`
+log.i`entries`
 
 console.log('')
 log.error`${'Type'} Cannot use import statement outside a module`
@@ -43,8 +43,12 @@ log.warn`${'Warn'} Same file name`
 log.fail`Too many requests`
 
 console.log('')
-const loading = log.load`Loading modules`
+const loading = log.load('building', 'process modules')
 
-setTimeout(()=> {
+setTimeout(() => {
+    loading.log('building', 'test')
+}, 2000)
+
+setTimeout(() => {
     loading.stop()
 }, 5000)
