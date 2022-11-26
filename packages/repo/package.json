@@ -2,10 +2,8 @@
     "name": "aronrepo",
     "license": "MIT",
     "scripts": {
-        "build:cjs": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index.cjs --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:aronlog --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
-        "build:esm": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index.mjs --format=esm --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:aronlog --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
-        "build": "conc 'npm:build:*'",
-        "dev": "conc 'npm:build:* -- --watch'",
+        "build": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:aronlog --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
+        "dev": "npm:build:* -- --watch",
         "type-check": "tsc --noEmit"
     },
     "description": "Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows 📦",
