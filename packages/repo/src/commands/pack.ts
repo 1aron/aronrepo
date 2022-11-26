@@ -97,7 +97,7 @@ program.command('pack [entryPaths...]')
                         stdio: 'inherit'
                     })
                     loading.clear()
-                    log.i`${'type'} declarations emitted`
+                    log.i`${'type'} type declarations`
                 }
             )
         }
