@@ -1,6 +1,6 @@
 import program from 'commander'
 import fg from 'fast-glob'
-import { execSync } from 'child_process'
+import { execaCommand } from 'execa'
 import esbuild from 'esbuild'
 import pAll from 'p-all'
 import log from 'aronlog'
@@ -8,6 +8,7 @@ import path from 'path'
 import { readPackage } from '../utils/read-package'
 import { markJoin } from '../utils/mark-join'
 import { changeFilePath } from '../utils/change-file-path'
+import literal from '@master/literal'
 
 const pkg = readPackage()
 const { dependencies, peerDependencies } = pkg
@@ -40,20 +41,16 @@ program.command('pack [entryPaths...]')
             }
             tasks.push(
                 async () => {
-                    loading.log(event, eachFormat)
                     return await esbuild.build({
                         entryPoints: eachEntryPoints,
                         outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
                         external: externalDependencies,
                         watch: options.watch ? {
-                            onRebuild(error: string) {
-                                loading.clear()
-                                if (error) {
-                                    log.error`${eachFormat} watch build failed ${new Error(error)}`
-                                }
-                                else log.i`${eachFormat} rebuild succeeded`
+                            onRebuild(error, result) {
+                                // make esbuild log mute and depend on `tsx`
                             }
                         } : false,
+                        logLevel: 'silent',
                         outdir: options.outdir,
                         bundle: options.bundle,
                         minify: options.minify,
@@ -91,22 +88,17 @@ program.command('pack [entryPaths...]')
         options.format = formats.join(',')
         if (options.type) {
             tasks.push(
-                () => new Promise<void>((resolve) => {
-                    try {
-                        execSync(`npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${options.outdir} ${options.watch ? '--watch' : ''}`, {
-                            stdio: 'inherit',
-                            encoding: 'utf-8'
-                        })
-                        loading.clear()
-                        log.i`${'type'} declarations emitted`
-                        resolve()
-                    } catch (error) {
-                        // log.e(error)
-                        log.fail`Exit build`
-                        process.exit()
-                    }
-                    loading.log(event, 'type declarations')
-                })
+                () => {
+                    execaCommand(literal`
+                        npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
+                        --outDir ${options.outdir}
+                        ${options.watch && '--watch'}
+                    `, {
+                        stdio: 'inherit'
+                    })
+                    loading.clear()
+                    log.i`${'type'} declarations emitted`
+                }
             )
         }
         if (Object.keys(pkg).length) {
@@ -116,10 +108,12 @@ program.command('pack [entryPaths...]')
             ...options
         })
         const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
-        const loading = log.load(event, formatLogText)
+        const loading = log.load(event, options.watch ? ' ' : formatLogText)
         await pAll(tasks)
-        loading.stop()
-        log.success`${'Outputed'} ${`.(${options.outdir}).`} ${formatLogText}`
+        if (!options.watch) {
+            loading.stop()
+            log.success`${'Outputed'} ${`.(${options.outdir}).`} ${formatLogText}`
+        }
     })
 
 function reveal(arr: string[], target) {

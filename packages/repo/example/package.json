@@ -18,5 +18,8 @@
     },
     "files": [
         "dist"
-    ]
+    ],
+    "dependencies": {
+        "@master/literal": "^1.0.11"
+    }
 }

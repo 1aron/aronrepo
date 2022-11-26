@@ -40,11 +40,14 @@
         "typescript": ""
     },
     "dependencies": {
+        "@master/literal": "^1.0.11",
         "aronlog": "",
         "commitlint-config-aron": "",
         "conventional-changelog-aron": "",
         "eslint-config-aron": "",
+        "execa": "^6.1.0",
         "fs-extra": "^10.1.0",
-        "semantic-release-config-aron": ""
+        "semantic-release-config-aron": "",
+        "tsc-watch": "^5.0.3"
     }
 }
