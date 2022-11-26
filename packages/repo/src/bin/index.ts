@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 
-import program from 'commander'
+import commander from 'commander'
 import path from 'path'
 import '../commands'
 import { readPackage } from '../utils/read-package'
 
 const { version, name, description } = readPackage(path.join(__dirname, '../../package.json'))
-
-program
+commander.program
     .name(name)
     .description(description)
     .version(version)
 
-program.parse()
+commander.program.parse()
 
