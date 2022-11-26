@@ -33,50 +33,67 @@ program.command('pack [entryPaths...]')
             log`📦 extract and merge options from ${`+${pkg.name}+`}'s ${'*package.json*'}`
         }
         const options = this.opts()
-        const formats: string[] = options.format.split(',')
-        if (!entries.length) {
-            if (formats.includes('cjs') && pkg.main) {
-                entries.push(changeFilePath(pkg.main, options.src))
+        const tasks = []
+        const addBuildTask = async (eachEntries: string[], eachFormat: string) => {
+            const eachEntryPoints = fg.sync([...new Set(eachEntries)])
+            if (!eachEntryPoints.length) {
+                log.e`${eachFormat} Cannot find any entry file specified ${markJoin(eachEntries)}`
+                return
             }
-            if (formats.includes('mjs') && pkg.module) {
-                entries.push(changeFilePath(pkg.module, options.src))
+            tasks.push(
+                async () => {
+                    loading.clear()
+                    await esbuild.build({
+                        entryPoints: eachEntryPoints,
+                        outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
+                        external: externalDependencies,
+                        watch: options.watch ? {
+                            onRebuild(error: string, result) {
+                                loading.clear()
+                                if (error) log.error`${eachFormat} watch build failed ${new Error(error)}`
+                                else log.i`${eachFormat} rebuild succeeded`
+                            }
+                        } : false,
+                        outdir: options.outdir,
+                        bundle: options.bundle,
+                        minify: options.minify,
+                        format: eachFormat
+                    } as esbuild.BuildOptions)
+                        .then(result => {
+                            log.i`${eachFormat} process ${reveal(eachEntryPoints, 'entries')}`
+                        })
+                }
+            )
+        }
+        let formats: string[] = []
+        if (entries.length) {
+            formats = (options.format || 'cjs,esm').split(',')
+            formats.map((eachFormat: string) => addBuildTask(entries, eachFormat))
+        } else {
+            if (pkg.main) {
+                addBuildTask([changeFilePath(pkg.main, options.srcdir, '.ts')], 'cjs')
+                formats.push('cjs')
             }
-            if (formats.includes('iife') && pkg.browser) {
-                entries.push(changeFilePath(pkg.browser, options.src))
+            if (pkg.module) {
+                addBuildTask([changeFilePath(pkg.module, options.srcdir, '.ts')], 'esm')
+                formats.push('esm')
+            }
+            if (pkg.browser) {
+                addBuildTask([changeFilePath(pkg.browser, options.srcdir, '.ts')], 'iife')
+                formats.push('iife')
+            }
+            if (!tasks.length) {
+                formats = (options.format || 'cjs,esm').split(',')
+                formats.map((eachFormat: string) => addBuildTask([path.join(options.srcdir, 'index.ts')], eachFormat))
             }
         }
-        log.tree({
-            ...options,
-            entries: entries.length ? entries : ['./src/index.{js,ts}']
-        })
+        options.format = formats.join(',')
         const formatLogText = formats.join(', ').toUpperCase() + (options.types ? ', Type Declarations' : '')
-        const loading = log.load(options.watch ? 'watching' : 'building', formatLogText)
-        const tasks = formats.map((eachFormat) => async () => {
-            const entryPoints = fg.sync(entries)
-            loading.clear()
-            return await esbuild.build({
-                entryPoints,
-                outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
-                external: externalDependencies,
-                watch: options.watch ? {
-                    onRebuild(error: string, result) {
-                        loading.clear()
-                        if (error) log.error`${eachFormat} watch build failed ${new Error(error)}`
-                        else log.i`${eachFormat} rebuild succeeded`
-                    }
-                } : false,
-                ...options,
-                format: eachFormat
-            } as esbuild.BuildOptions)
-                .then(result => {
-                    log.i`${eachFormat} process ${reveal(entryPoints, 'entries')}`
-                })
-        })
         if (options.types) {
             tasks.push(
                 async () => {
                     return await new Promise<void>((resolve) => {
-                        exec(`npm exec tsc ${entries.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${outdir} ${watch ? '--watch' : ''}`,
+                        exec(`npm exec tsc ${entries.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${options.outdir} ${options.watch ? '--watch' : ''}`,
                             (error, stdout, stderr) => {
                                 loading.clear()
                                 if (error) {
@@ -91,6 +108,10 @@ program.command('pack [entryPaths...]')
                 }
             )
         }
+        log.tree({
+            ...options
+        })
+        const loading = log.load(options.watch ? 'watching' : 'building', formatLogText)
         await pAll(tasks)
         loading.stop()
         log.success`${'Outputed'} ${`.(${options.outdir}).`} ${formatLogText}`
