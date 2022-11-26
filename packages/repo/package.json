@@ -2,8 +2,8 @@
     "name": "aronrepo",
     "license": "MIT",
     "scripts": {
-        "build:cjs": "esbuild src/bin/index.ts --bundle --outdir=dist/bin --format=cjs --minify --sourcemap --platform=node --external:esbuild",
-        "build:esm": "esbuild src/bin/index.ts --bundle --outdir=dist/bin --out-extension:.js=.mjs --format=esm --minify --sourcemap --platform=node --external:esbuild",
+        "build:cjs": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index.cjs --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:aronlog --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:execa --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
+        "build:esm": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index.mjs --format=esm --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:aronlog --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:execa --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
         "build": "conc 'npm:build:*'",
         "dev": "conc 'npm:build:* -- --watch'",
         "type-check": "tsc --noEmit"
@@ -42,12 +42,14 @@
     "dependencies": {
         "@master/literal": "^1.0.11",
         "aronlog": "",
+        "commander": "^9.4.1",
         "commitlint-config-aron": "",
         "conventional-changelog-aron": "",
         "eslint-config-aron": "",
         "execa": "^6.1.0",
+        "fast-glob": "^3.2.12",
         "fs-extra": "^10.1.0",
-        "semantic-release-config-aron": "",
-        "tsc-watch": "^5.0.3"
+        "p-all": "^4.0.0",
+        "semantic-release-config-aron": ""
     }
 }

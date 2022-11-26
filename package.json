@@ -1,7 +1,7 @@
 {
     "scripts": {
         "build": "turbo run build",
-        "build:force": "turbo run build --force --no-cache",
+        "build:force": "npm run clean:build && turbo run build --force --no-cache",
         "check": "turbo run test lint --parallel",
         "test": "turbo run test --parallel",
         "lint": "turbo run lint --parallel",
@@ -9,7 +9,8 @@
         "dev": "turbo run dev",
         "clean:build": "rm -rf ./packages/**/*dist",
         "link:status": "npm ls --link=true",
-        "analyze:commit": "semantic-release --debug"
+        "analyze:commit": "semantic-release --debug",
+        "aron": "aron"
     },
     "repository": {
         "type": "git",
