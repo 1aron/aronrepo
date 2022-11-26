@@ -12,8 +12,7 @@
         "clean:build": "rm -rf ./packages/**/*dist",
         "version": "node ./packages/repo/dist/bin/index.cjs version",
         "link:status": "npm ls --link=true",
-        "analyze:commit": "semantic-release --debug",
-        "aron": "aron"
+        "analyze:commit": "semantic-release --debug"
     },
     "repository": {
         "type": "git",
