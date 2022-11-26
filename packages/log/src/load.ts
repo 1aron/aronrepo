@@ -16,8 +16,9 @@ const load = (event: string, message?: string, options?: Options): Ora => {
     }, options || {}))
         .start(getText(event, message)) as LogLoading
     loading.log = (event: string, message?: string) => {
-        loading.stop()
-        return load(event, message)
+        loading.clear()
+        loading.text = getText(event, message)
+        return loading
     }
     return loading
 }

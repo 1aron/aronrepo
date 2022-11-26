@@ -29,20 +29,18 @@ program.command('pack [entryPaths...]')
     .option('-o, --outdir <dir>', 'The output directory for the build operation', pkgEntry ? path.dirname(pkgEntry) : 'dist')
     .option('-o, --srcdir <dir>', 'The source directory', 'src')
     .action(async function (entries: string[]) {
-        if (Object.keys(pkg).length) {
-            log`📦 extract and merge options from ${`+${pkg.name}+`}'s ${'*package.json*'}`
-        }
         const options = this.opts()
         const tasks = []
+        const event = options.watch ? 'watching' : 'building'
         const addBuildTask = async (eachEntries: string[], eachFormat: string) => {
             const eachEntryPoints = fg.sync([...new Set(eachEntries)])
             if (!eachEntryPoints.length) {
                 log.e`${eachFormat} Cannot find any entry file specified ${markJoin(eachEntries)}`
-                return
+                process.exit()
             }
             tasks.push(
                 async () => {
-                    loading.clear()
+                    loading.log(event, eachFormat)
                     await esbuild.build({
                         entryPoints: eachEntryPoints,
                         outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
@@ -88,30 +86,34 @@ program.command('pack [entryPaths...]')
             }
         }
         options.format = formats.join(',')
-        const formatLogText = formats.join(', ').toUpperCase() + (options.types ? ', Type Declarations' : '')
         if (options.types) {
             tasks.push(
-                async () => {
-                    return await new Promise<void>((resolve) => {
-                        exec(`npm exec tsc ${entries.join(' ')} -- --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${options.outdir} ${options.watch ? '--watch' : ''}`,
-                            (error, stdout, stderr) => {
-                                loading.clear()
-                                if (error) {
-                                    log.e(error)
-                                } else {
-                                    log.i`${'types'} declarations emitted`
-                                }
-                                resolve()
+                () => new Promise<void>((resolve) => {
+                    loading.log(event, 'type declarations')
+                    exec(`npm exec tsc -- ${options.watch ? '--watch' : ''}`,
+                        (error, stdout, stderr) => {
+                            loading.clear()
+                            if (error) {
+                                log.e(error)
+                                log.fail`Exit build`
+                                process.exit()
+                            } else {
+                                log.i`${'types'} declarations emitted`
                             }
-                        )
-                    })
-                }
+                            resolve()
+                        }
+                    )
+                })
             )
+        }
+        if (Object.keys(pkg).length) {
+            log`📦 extract and merge options from ${`+${pkg.name}+`}'s ${'*package.json*'}`
         }
         log.tree({
             ...options
         })
-        const loading = log.load(options.watch ? 'watching' : 'building', formatLogText)
+        const formatLogText = formats.join(', ').toUpperCase() + (options.types ? ', Type Declarations' : '')
+        const loading = log.load(event, formatLogText)
         await pAll(tasks)
         loading.stop()
         log.success`${'Outputed'} ${`.(${options.outdir}).`} ${formatLogText}`
