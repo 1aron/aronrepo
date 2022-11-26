@@ -51,7 +51,7 @@ program.command('pack [entryPaths...]')
                                 // make esbuild log mute and depend on `tsx`
                             }
                         } : false,
-                        logLevel: 'silent',
+                        logLevel: options.watch ? 'silent' : 'info',
                         outdir: options.outdir,
                         bundle: options.bundle,
                         minify: options.minify,
