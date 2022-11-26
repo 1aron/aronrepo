@@ -1,1 +1,4 @@
-alert('b')
+export interface TestBEW {
+    a: string
+    b: number
+}

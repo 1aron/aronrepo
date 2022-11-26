@@ -1,12 +1,5 @@
 {
     "extends": "../../../tsconfig.json",
-    "compilerOptions": {
-        "emitDeclarationOnly": true,
-        "preserveWatchOutput": true,
-        "declaration": true,
-        "outDir": "dist",
-        "baseUrl": ".",
-    },
     "include": [
         "src/**/*.ts",
         "src/**/*.d.ts"

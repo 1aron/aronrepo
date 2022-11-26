@@ -5,7 +5,8 @@
         "build:cjs": "esbuild src/bin/index.ts --bundle --outdir=dist/bin --format=cjs --minify --sourcemap --platform=node --external:esbuild",
         "build:esm": "esbuild src/bin/index.ts --bundle --outdir=dist/bin --out-extension:.js=.mjs --format=esm --minify --sourcemap --platform=node --external:esbuild",
         "build": "conc 'npm:build:*'",
-        "dev": "conc 'npm:build:* -- --watch'"
+        "dev": "conc 'npm:build:* -- --watch'",
+        "type-check": "tsc --noEmit"
     },
     "description": "Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows 📦",
     "author": {

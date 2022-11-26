@@ -1,4 +1,5 @@
-alert('tesr')
+
+import './b/b'
 
 export interface Test {
     a: string

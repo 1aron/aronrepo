@@ -1,13 +1,13 @@
 import program from 'commander'
 import fg from 'fast-glob'
-import { exec } from 'child_process'
+import { execSync } from 'child_process'
 import esbuild from 'esbuild'
 import pAll from 'p-all'
 import log from 'aronlog'
 import path from 'path'
 import { readPackage } from '../utils/read-package'
-import { markJoin } from 'src/utils/mark-join'
-import { changeFilePath } from 'src/utils/change-file-path'
+import { markJoin } from '../utils/mark-join'
+import { changeFilePath } from '../utils/change-file-path'
 
 const pkg = readPackage()
 const { dependencies, peerDependencies } = pkg
@@ -25,7 +25,7 @@ program.command('pack [entryPaths...]')
     .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
     .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
-    .option('-t, --types', 'Emit typescript declarations', !!pkg.types)
+    .option('-t, --type', 'Emit typescript declarations', !!pkg.types)
     .option('-o, --outdir <dir>', 'The output directory for the build operation', pkgEntry ? path.dirname(pkgEntry) : 'dist')
     .option('-o, --srcdir <dir>', 'The source directory', 'src')
     .action(async function (entries: string[]) {
@@ -41,14 +41,16 @@ program.command('pack [entryPaths...]')
             tasks.push(
                 async () => {
                     loading.log(event, eachFormat)
-                    await esbuild.build({
+                    return await esbuild.build({
                         entryPoints: eachEntryPoints,
                         outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
                         external: externalDependencies,
                         watch: options.watch ? {
-                            onRebuild(error: string, result) {
+                            onRebuild(error: string) {
                                 loading.clear()
-                                if (error) log.error`${eachFormat} watch build failed ${new Error(error)}`
+                                if (error) {
+                                    log.error`${eachFormat} watch build failed ${new Error(error)}`
+                                }
                                 else log.i`${eachFormat} rebuild succeeded`
                             }
                         } : false,
@@ -58,6 +60,7 @@ program.command('pack [entryPaths...]')
                         format: eachFormat
                     } as esbuild.BuildOptions)
                         .then(result => {
+                            loading.clear()
                             log.i`${eachFormat} process ${reveal(eachEntryPoints, 'entries')}`
                         })
                 }
@@ -86,23 +89,23 @@ program.command('pack [entryPaths...]')
             }
         }
         options.format = formats.join(',')
-        if (options.types) {
+        if (options.type) {
             tasks.push(
                 () => new Promise<void>((resolve) => {
+                    try {
+                        execSync(`npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration --outDir ${options.outdir} ${options.watch ? '--watch' : ''}`, {
+                            stdio: 'inherit',
+                            encoding: 'utf-8'
+                        })
+                        loading.clear()
+                        log.i`${'type'} declarations emitted`
+                        resolve()
+                    } catch (error) {
+                        // log.e(error)
+                        log.fail`Exit build`
+                        process.exit()
+                    }
                     loading.log(event, 'type declarations')
-                    exec(`npm exec tsc -- ${options.watch ? '--watch' : ''}`,
-                        (error, stdout, stderr) => {
-                            loading.clear()
-                            if (error) {
-                                log.e(error)
-                                log.fail`Exit build`
-                                process.exit()
-                            } else {
-                                log.i`${'types'} declarations emitted`
-                            }
-                            resolve()
-                        }
-                    )
                 })
             )
         }
@@ -112,7 +115,7 @@ program.command('pack [entryPaths...]')
         log.tree({
             ...options
         })
-        const formatLogText = formats.join(', ').toUpperCase() + (options.types ? ', Type Declarations' : '')
+        const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
         const loading = log.load(event, formatLogText)
         await pAll(tasks)
         loading.stop()

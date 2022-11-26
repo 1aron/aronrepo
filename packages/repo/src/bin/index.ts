@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import fs from 'fs-extra'
 import program from 'commander'
 import path from 'path'
 import '../commands'

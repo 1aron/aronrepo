@@ -1,1 +1,1 @@
-alert('omg')
+const a = 123
