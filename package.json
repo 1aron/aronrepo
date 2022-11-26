@@ -1,8 +1,7 @@
 {
     "scripts": {
         "install": "npm ls --link=true",
-        "build": "npm run build:repo && turbo run build",
-        "build:repo": "npm run build -w=aronrepo",
+        "build": "npm run build -w=aronrepo && turbo run build",
         "build:clean": "rm -rf ./packages/**/*dist && turbo run build --force --no-cache",
         "check": "turbo run test lint --parallel",
         "test": "turbo run test --parallel",
