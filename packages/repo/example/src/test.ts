@@ -1,1 +1,1 @@
-const a = 1233d
+const a = 123

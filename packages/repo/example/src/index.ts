@@ -7,6 +7,6 @@ export interface Test {
 }
 
 const test = 456e33
-const teset = 12332223423423
+const teset = 1233222342342
 
 console.log(test)

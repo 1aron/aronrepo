@@ -41,6 +41,7 @@ program.command('pack [entryPaths...]')
             }
             tasks.push(
                 async () => {
+                    loading.clear()
                     return await esbuild.build({
                         entryPoints: eachEntryPoints,
                         outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
@@ -88,17 +89,27 @@ program.command('pack [entryPaths...]')
         options.format = formats.join(',')
         if (options.type) {
             tasks.push(
-                () => {
+                () => new Promise<void>((resolve) => {
+                    if (options.watch) {
+                        loading.stop()
+                    }
+                    log.i`${'type'} process type declarations`
                     execaCommand(literal`
                         npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
                         --outDir ${options.outdir}
                         ${options.watch && '--watch'}
                     `, {
-                        stdio: 'inherit'
+                        stdio: 'inherit',
+                        stripFinalNewline: false
                     })
-                    loading.clear()
-                    log.i`${'type'} type declarations`
-                }
+                        .catch((reason) => {
+                            process.exit()
+                        })
+                        .finally(() => {
+                            loading.clear()
+                            resolve()
+                        })
+                })
             )
         }
         if (Object.keys(pkg).length) {
