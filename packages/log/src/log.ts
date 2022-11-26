@@ -1,4 +1,3 @@
-import { Log } from 'types'
 import { handle } from './handle'
 import { mark } from './mark'
 
@@ -57,3 +56,5 @@ Object.assign(log, {
 })
 
 export { log }
+
+export type Log = (strings: TemplateStringsArray, ...messages: any[]) => void

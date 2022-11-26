@@ -5,6 +5,7 @@
         "check": "turbo run test lint --parallel",
         "test": "turbo run test --parallel",
         "lint": "turbo run lint --parallel",
+        "type-check": "turbo run type-check",
         "dev": "turbo run dev",
         "clean:build": "rm -rf ./packages/**/*dist",
         "link:status": "npm ls --link=true",

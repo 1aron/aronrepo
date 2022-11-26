@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { Log } from 'types'
+import type { Log } from './log'
 import { handle } from './handle'
 import treeify from 'object-treeify'
 import { parseError } from './utils/parse-error'

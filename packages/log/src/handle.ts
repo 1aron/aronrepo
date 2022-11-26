@@ -1,6 +1,6 @@
 import { log } from './log'
 import { mark } from './mark'
-import { Log } from 'types'
+import type { Log } from './log'
 import { getTime } from './get-time'
 import chalk from 'chalk'
 
