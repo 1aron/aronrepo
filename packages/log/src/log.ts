@@ -15,7 +15,7 @@ import { pass } from './pass'
 import { tree } from './tree'
 import { fail } from './fail'
 import { load } from './load'
-import type { Ora } from 'ora'
+import type { Options, Ora } from 'ora'
 
 const log = <{
     (strings: TemplateStringsArray, ...messages: any[]): void
@@ -31,7 +31,7 @@ const log = <{
     ok: Log,
     d: Log, delete: Log,
     a: Log, add: Log
-    load: (strings: TemplateStringsArray, ...messages: any[]) => Ora
+    load: (event: string, message?: string, options?: Options) => Ora
     tree: (object: object | JSON) => void
 }>((strings, ...slots) => {
     handle({ strings, slots })

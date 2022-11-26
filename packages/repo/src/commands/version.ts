@@ -1,4 +1,4 @@
-import program from 'commander'
+import { program } from 'commander'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
 import path from 'path'
