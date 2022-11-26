@@ -1,17 +1,15 @@
 {
     "scripts": {
         "install": "npm ls --link=true",
-        "build:repo": "npm run build -w=aronrepo",
         "build": "npm run build:repo && turbo run build",
-        "build:force": "npm run clean:build && turbo run build --force --no-cache",
+        "build:repo": "npm run build -w=aronrepo",
+        "build:clean": "rm -rf ./packages/**/*dist && turbo run build --force --no-cache",
         "check": "turbo run test lint --parallel",
         "test": "turbo run test --parallel",
         "lint": "turbo run lint --parallel",
         "type-check": "turbo run type-check",
         "dev": "turbo run dev",
-        "clean:build": "rm -rf ./packages/**/*dist",
         "version": "node ./packages/repo/dist/bin/index.cjs version",
-        "link:status": "npm ls --link=true",
         "analyze:commit": "semantic-release --debug"
     },
     "repository": {
