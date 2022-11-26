@@ -81,6 +81,6 @@ program.command('version <version>')
         }
         log`📦`
         log.tree(workspaceDepsTree)
-        log.success`Bump version to ${nextVersion} for ${`+${Object.keys(packagesOfName).length}+`} packages in all workspace`
+        log.success`bump version to ${`+${nextVersion}+`} for ${`+${Object.keys(packagesOfName).length}+`} packages in all workspace`
     })
 
