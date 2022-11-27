@@ -1,6 +1,5 @@
 import { execSync } from 'node:child_process'
 import { expectFileIncludes } from '../../../../utils/expect-file-includes'
-import { run } from '../../../../utils/run'
 
 test('prevent bundling deps and peerDeps by `package.json`', () => {
     execSync('node ../../dist/bin/index pack --platform=node', { cwd: __dirname, stdio: 'pipe' })

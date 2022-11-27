@@ -1,9 +1,9 @@
 import { expectFileIncludes } from '../../../../utils/expect-file-includes'
 import { expectExist } from '../../../../utils/expect-exist'
-import { run } from '../../../../utils/run'
+import { execSync } from 'node:child_process'
 
 test('extract css entries from `package.json`', () => {
-    run('../../dist/bin/index pack')
+    execSync('../../dist/bin/index pack', { cwd: __dirname, stdio: 'pipe' })
     expectExist(['dist/index.css'])
     expectFileIncludes('dist/index.css', ['body{background-color:red}'])
 })

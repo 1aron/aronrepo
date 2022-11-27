@@ -1,7 +1,7 @@
+import { execSync } from 'node:child_process'
 import { expectExist } from '../../../../utils/expect-exist'
-import { run } from '../../../../utils/run'
 
 test('specify css entries', () => {
-    run('../../dist/bin/index pack src/*.css')
+    execSync('../../dist/bin/index pack src/*.css', { cwd: __dirname, stdio: 'pipe' })
     expectExist(['dist/index.css', 'dist/float.css', 'dist/heart.css'])
 })
