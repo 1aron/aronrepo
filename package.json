@@ -9,7 +9,8 @@
         "type-check": "turbo run type-check",
         "dev": "turbo run dev",
         "version": "node ./packages/repo/dist/bin/index version",
-        "analyze:commit": "semantic-release --debug"
+        "analyze:commit": "semantic-release --debug",
+        "prepare": "husky install"
     },
     "repository": {
         "type": "git",
@@ -27,7 +28,8 @@
         "jest-puppeteer": "^6.1.1",
         "parent-module": "^3.0.0",
         "puppeteer": "^19.2.2",
-        "tmp": "^0.2.1"
+        "tmp": "^0.2.1",
+        "husky": "^8.0.0"
     },
     "engines": {
         "node": "^18"

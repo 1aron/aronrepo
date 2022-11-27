@@ -2,9 +2,10 @@ import exec from './exec'
 
 export default function commit(msg) {
     const args = prepareMessageArgs(msg)
-    args.push(
+    args.unshift(
         '--allow-empty',
-        '--no-gpg-sign'
+        '--no-gpg-sign',
+        '--no-verify'
     )
     return exec(`git commit ${args.join(' ')}`)
 }
