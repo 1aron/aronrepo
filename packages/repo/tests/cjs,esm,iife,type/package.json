@@ -1,6 +1,7 @@
 {
+    "name": "cjs-esm-iife-type",
     "scripts": {
-        "pack": "node ../../dist/bin/index pack"
+        "pack": "aron pack"
     },
     "main": "dist/index.cjs",
     "browser": "dist/index.browser.js",

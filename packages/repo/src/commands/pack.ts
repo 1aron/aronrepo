@@ -148,7 +148,7 @@ program.command('pack [entryPaths...]')
         if (!options.watch) {
             loading.stop()
             log.success`${'Success'} ${formatLogText} ${`.${options.outdir}.`}`
-            console.log('\n\n')
+            console.log('')
         }
     })
 
