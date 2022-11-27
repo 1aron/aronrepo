@@ -6,7 +6,9 @@
         "build:type": "tsc --emitDeclarationOnly --preserveWatchOutput",
         "build": "conc 'npm:build:*'",
         "dev": "conc 'npm:build:* -- --watch'",
-        "test": "jest"
+        "test": "jest",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint src"
     },
     "license": "MIT",
     "description": "Aron's conventional changelog preset",

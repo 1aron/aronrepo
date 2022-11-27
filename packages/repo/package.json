@@ -5,7 +5,8 @@
         "build": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:aronlog --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
         "dev": "conc 'npm:build -- --watch'",
         "type-check": "tsc --noEmit",
-        "test": "jest"
+        "test": "jest",
+        "lint": "eslint src"
     },
     "description": "Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows 📦",
     "author": {
