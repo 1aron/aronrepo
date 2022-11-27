@@ -10,7 +10,7 @@
         </picture>
     </a>
 </p>
-<p align="center">Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows</p>
+<p align="center">A monorepo ecosystem integrating first-class packages and conventional workflows</p>
 
 <p align="center">
     <a aria-label="NPM Version" href="https://www.npmjs.com/package/aronrepo">

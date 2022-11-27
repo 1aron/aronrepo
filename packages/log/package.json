@@ -10,7 +10,7 @@
         "type-check": "tsc --noEmit",
         "lint": "eslint src"
     },
-    "description": "Aron's colorful semantic logs",
+    "description": "A set of human-friendly and beautiful terminal log syntax",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",

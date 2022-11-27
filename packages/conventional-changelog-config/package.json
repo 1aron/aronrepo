@@ -11,7 +11,7 @@
         "lint": "eslint src"
     },
     "license": "MIT",
-    "description": "Aron's conventional changelog preset",
+    "description": "Beautiful changelog based on Aron's conventional commits",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",

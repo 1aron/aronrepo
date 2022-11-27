@@ -10,7 +10,7 @@
         "type-check": "tsc --noEmit",
         "lint": "eslint src"
     },
-    "description": "Aron's conventional commits and version rules",
+    "description": "A human-readable set of conventional commits, with version rules and changelog groupings",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",

@@ -8,7 +8,7 @@
         "test": "jest",
         "lint": "eslint src"
     },
-    "description": "Aron's monorepo ecosystem, integrated with first-class packages and conventional workflows 📦",
+    "description": "A monorepo ecosystem integrating first-class packages and conventional workflows 📦",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",
