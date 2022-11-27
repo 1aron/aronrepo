@@ -1,8 +1,5 @@
 {
     "name": "cjs-esm-iife-type",
-    "scripts": {
-        "pack": "aron pack"
-    },
     "main": "dist/index.cjs",
     "browser": "dist/index.browser.js",
     "module": "dist/index.mjs",

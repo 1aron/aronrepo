@@ -13,14 +13,16 @@ import type { PackageJson } from 'pkg-types'
 import prettyBytes from 'pretty-bytes'
 
 program.command('pack [entryPaths...]')
-    // .allowUnknownOption()
+    .allowUnknownOption()
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`')
     .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself')
     .option('-m, --minify', 'The generated code will be minified instead of pretty-printed')
     .option('-w, --watch', 'Rebuild whenever a file changes')
+    .option('-s, --sourcemap', 'Emit a source map')
+    .option('-p, --platform <node,browser,neutral>', 'Platform target')
     .option('-t, --type', 'Emit typescript declarations')
     .option('-o, --outdir <dir>', 'The output directory for the build operation')
-    .option('-o, --srcdir <dir>', 'The source directory')
+    .option('--srcdir <dir>', 'The source directory')
     .action(async function (entries: string[]) {
         const pkg: PackageJson = readPackage()
         const { dependencies, peerDependencies } = pkg
@@ -36,7 +38,8 @@ program.command('pack [entryPaths...]')
             bundle: true,
             type: !!pkg.types,
             srcdir: 'src',
-            outdir: path.dirname(pkgEntry) || 'dist'
+            outdir: path.dirname(pkgEntry) || 'dist',
+            externals: externalDependencies
         }, this.opts())
         const tasks = []
         const event = options.watch ? 'watching' : 'building'
@@ -65,6 +68,8 @@ program.command('pack [entryPaths...]')
                         outdir: options.outdir,
                         bundle: options.bundle,
                         minify: options.minify,
+                        sourcemap: options.sourcemap,
+                        platform: options.platform,
                         metafile: true,
                         format: isCSSTask ? undefined : eachFormat
                     } as BuildOptions)
@@ -139,9 +144,7 @@ program.command('pack [entryPaths...]')
         if (Object.keys(pkg).length) {
             log`📦 extract and merge options from ${`+${pkg.name}+`} ${'*package.json*'}`
         }
-        log.tree({
-            ...options
-        })
+        log.tree(options)
         const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
         const loading = log.load(event, options.watch ? ' ' : formatLogText)
         await pAll(tasks)

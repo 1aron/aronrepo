@@ -1,7 +1,7 @@
-import { exist } from '../../../../utils/exist'
+import { expectExist } from '../../../../utils/expect-exist'
 import { run } from '../../../../utils/run'
 
-test('extract css entries from `package.json`', () => {
-    run('aron pack')
-    exist(['dist/index.css'])
+test('specify css entries', () => {
+    run('aron pack src/*.css')
+    expectExist(['dist/index.css', 'dist/float.css', 'dist/heart.css'])
 })
