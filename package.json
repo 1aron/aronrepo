@@ -8,13 +8,13 @@
         "lint": "turbo run lint --parallel",
         "type-check": "turbo run type-check",
         "dev": "turbo run dev",
-        "version": "node ./packages/repo/dist/bin/index version",
+        "version": "node ./packages/aronrepo/dist/bin/index version",
         "analyze:commit": "semantic-release --debug",
         "prepare": "husky install"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/1aron/repo.git"
+        "url": "https://github.com/1aron/aronrepo.git"
     },
     "workspaces": [
         "packages/*"

@@ -18,11 +18,11 @@
     },
     "homepage": "https://aron.tw",
     "bugs": {
-        "url": "https://github.com/1aron/repo/issues"
+        "url": "https://github.com/1aron/aronrepo/issues"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/1aron/repo.git",
+        "url": "https://github.com/1aron/aronrepo.git",
         "directory": "packages/log"
     },
     "keywords": [

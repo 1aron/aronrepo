@@ -20,7 +20,7 @@ const commits = [
     { type: 'Drop', release: 'patch', group: 'Deprecations' },
 
     { type: 'Docs', release: false, group: 'Documentation' },
-    { type: 'Docs', scope: 'README', release: 'patch', group: 'Documentation' },
+    { type: 'Docs', scope: 'README', release: 'patch', log: false },
 
     { type: 'Upgrade', release: 'patch', group: 'Dependency Upgrades' },
     { type: 'Deps', release: 'patch', group: 'Dependency Upgrades' },
@@ -32,8 +32,8 @@ const commits = [
     { type: 'Test', release: false, group: 'Tests' },
 
     { type: 'Refactor', release: false, group: 'Others' },
-    { type: 'Chore', release: false, hidden: true },
-    { type: 'Misc', release: false, hidden: true }
+    { type: 'Chore', release: false, log: false },
+    { type: 'Misc', release: false, log: false }
 ]
 
 const types = [
