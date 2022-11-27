@@ -7,6 +7,8 @@ export default function initFakeGit() {
     process.chdir(tmpDir.name)
     fs.mkdirSync('git-templates')
     exec('git init --template=./git-templates')
+    exec('git config user.email "test@example.com"')
+    exec('git config user.name "test"')
     fs.writeFileSync('./package.json', JSON.stringify({
         name: 'conventional-changelog-core',
         repository: {
