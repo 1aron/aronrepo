@@ -3,7 +3,7 @@
     "scripts": {
         "build": "esbuild src/*.css --bundle --minify --outdir=dist",
         "dev": "npm run build -- --watch",
-        "pack": "node ../dist/bin/index pack"
+        "pack": "node ../dist/bin/index pack src/*.css"
     },
     "license": "MIT",
     "description": "Simple and useful CSS keyframes ~304B",

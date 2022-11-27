@@ -67,7 +67,7 @@ program.command('pack [entryPaths...]')
                     if (metafile) {
                         for (const outputFilePath in metafile.outputs) {
                             const eachOutput = metafile.outputs[outputFilePath]
-                            log.i`${eachFormat} ${`*${outputFilePath}*`} ${`+${prettyBytes(eachOutput.bytes)}+`} from ${Object.keys(eachOutput.inputs)?.length} inputs`
+                            log.i`${eachFormat} ${`*${outputFilePath}*`} ${`+${prettyBytes(eachOutput.bytes)}+`} ${`.${Object.keys(eachOutput.inputs)?.length} inputs.`}`
                         }
                     }
                 }
@@ -78,6 +78,7 @@ program.command('pack [entryPaths...]')
             const isCSSEntry = entries.find((eachEntry) => eachEntry.includes('.css'))
             if (isCSSEntry) {
                 addBuildTask(entries, 'css')
+                formats.push('css')
             } else {
                 formats = (options.format || 'cjs,esm').split(',')
                 formats.map((eachFormat: string) => addBuildTask(entries, eachFormat))
@@ -85,6 +86,7 @@ program.command('pack [entryPaths...]')
         } else {
             if (pkg.style) {
                 addBuildTask([changeFilePath(pkg.main, options.srcdir, '.css')], 'css')
+                formats.push('css')
             }
             if (pkg.main && !pkg.main.endsWith('.css')) {
                 addBuildTask([changeFilePath(pkg.main, options.srcdir, '.ts')], 'cjs')
@@ -135,14 +137,12 @@ program.command('pack [entryPaths...]')
         log.tree({
             ...options
         })
-        const formatLogText = formats.length
-            ? formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
-            : 'CSS'
+        const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
         const loading = log.load(event, options.watch ? ' ' : formatLogText)
         await pAll(tasks)
         if (!options.watch) {
             loading.stop()
-            log.success`${'Outputed'} ${`.(${options.outdir}).`} ${formatLogText}`
+            log.success`${'Success'} ${formatLogText} ${`.${options.outdir}.`}`
         }
     })
 
