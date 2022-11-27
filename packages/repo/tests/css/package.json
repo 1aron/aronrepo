@@ -1,0 +1,11 @@
+{
+    "name": "@master/keyframes.css",
+    "scripts": {
+        "pack": "node ../../dist/bin/index pack src/*.css"
+    },
+    "main": "./dist/index.css",
+    "style": "./dist/index.css",
+    "files": [
+        "dist"
+    ]
+}

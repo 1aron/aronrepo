@@ -1,2 +1,1 @@
-const entry = 'browser'
-console.log(entry)
+console.log('browser')

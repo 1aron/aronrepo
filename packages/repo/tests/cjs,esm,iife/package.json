@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "pack": "node ../dist/bin/index pack"
+        "pack": "node ../../dist/bin/index pack"
     },
     "main": "dist/index.cjs",
     "browser": "dist/index.browser.js",

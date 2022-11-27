@@ -12,27 +12,32 @@ import literal from '@master/literal'
 import type { PackageJson } from 'pkg-types'
 import prettyBytes from 'pretty-bytes'
 
-const pkg: PackageJson = readPackage()
-const { dependencies, peerDependencies } = pkg
-const pkgEntry = pkg.main || pkg.module || pkg.browser
-// TODO 對應 main, module, browser 來輸出檔案
-
-/** Extract external dependencies to prevent bundling */
-const externalDependencies = []
-dependencies && externalDependencies.push(...Object.keys(dependencies))
-peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
-
 program.command('pack [entryPaths...]')
     // .allowUnknownOption()
-    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', '')
-    .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
-    .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
-    .option('-w, --watch', 'Rebuild whenever a file changes', false)
-    .option('-t, --type', 'Emit typescript declarations', !!pkg.types)
-    .option('-o, --outdir <dir>', 'The output directory for the build operation', pkgEntry ? path.dirname(pkgEntry) : 'dist')
-    .option('-o, --srcdir <dir>', 'The source directory', 'src')
+    .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`')
+    .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself')
+    .option('-m, --minify', 'The generated code will be minified instead of pretty-printed')
+    .option('-w, --watch', 'Rebuild whenever a file changes')
+    .option('-t, --type', 'Emit typescript declarations')
+    .option('-o, --outdir <dir>', 'The output directory for the build operation')
+    .option('-o, --srcdir <dir>', 'The source directory')
     .action(async function (entries: string[]) {
-        const options = this.opts()
+        const pkg: PackageJson = readPackage()
+        const { dependencies, peerDependencies } = pkg
+        const pkgEntry = pkg.main || pkg.module || pkg.browser
+        /** Extract external dependencies to prevent bundling */
+        const externalDependencies = []
+        dependencies && externalDependencies.push(...Object.keys(dependencies))
+        peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
+        const options = Object.assign({
+            format: '',
+            watch: false,
+            minify: true,
+            bundle: true,
+            type: !!pkg.types,
+            srcdir: 'src',
+            outdir: path.dirname(pkgEntry) || 'dist'
+        }, this.opts())
         const tasks = []
         const event = options.watch ? 'watching' : 'building'
         const addBuildTask = async (eachEntries: string[], eachFormat: string) => {
@@ -112,7 +117,6 @@ program.command('pack [entryPaths...]')
                     if (options.watch) {
                         loading.stop()
                     }
-                    log.i`${'type'} process type declarations`
                     execaCommand(literal`
                         npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
                         --outDir ${options.outdir}
@@ -126,6 +130,7 @@ program.command('pack [entryPaths...]')
                         })
                         .finally(() => {
                             loading.clear()
+                            log.i`${'type'} type declarations`
                             resolve()
                         })
                 })
@@ -143,6 +148,7 @@ program.command('pack [entryPaths...]')
         if (!options.watch) {
             loading.stop()
             log.success`${'Success'} ${formatLogText} ${`.${options.outdir}.`}`
+            console.log('\n\n')
         }
     })
 
