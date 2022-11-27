@@ -2,7 +2,7 @@
     "name": "example",
     "license": "MIT",
     "scripts": {
-        "pack": "node .dist/bin pack"
+        "pack": "node ../dist/bin/index pack"
     },
     "main": "dist/index.cjs",
     "jsnext:main": "dist/index.mjs",
