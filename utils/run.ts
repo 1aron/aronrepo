@@ -1,7 +1,7 @@
-import { commandSync } from 'execa'
+import { execSync } from 'child_process'
 import path from 'path'
 const parentModuleDir = path.dirname(require.main.filename)
 
 export function run(command: string) {
-    commandSync(command, { cwd: parentModuleDir, stdio: 'pipe' })
+    execSync(command, { cwd: parentModuleDir, stdio: 'pipe' })
 }
