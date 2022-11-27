@@ -28,9 +28,6 @@
         "puppeteer": "^19.2.2",
         "tmp": "^0.2.1"
     },
-    "dependencies": {
-        "aronrepo": ""
-    },
     "engines": {
         "node": "^18"
     }

@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import fg from 'fast-glob'
 import { execaCommand } from 'execa'
-import esbuild from 'esbuild'
+import { build, BuildOptions } from 'esbuild'
 import pAll from 'p-all'
 import log from 'aronlog'
 import path from 'path'
@@ -9,8 +9,10 @@ import { readPackage } from '../utils/read-package'
 import { markJoin } from '../utils/mark-join'
 import { changeFilePath } from '../utils/change-file-path'
 import literal from '@master/literal'
+import type { PackageJson } from 'pkg-types'
+import prettyBytes from 'pretty-bytes'
 
-const pkg = readPackage()
+const pkg: PackageJson = readPackage()
 const { dependencies, peerDependencies } = pkg
 const pkgEntry = pkg.main || pkg.module || pkg.browser
 // TODO 對應 main, module, browser 來輸出檔案
@@ -35,6 +37,7 @@ program.command('pack [entryPaths...]')
         const event = options.watch ? 'watching' : 'building'
         const addBuildTask = async (eachEntries: string[], eachFormat: string) => {
             const eachEntryPoints = fg.sync([...new Set(eachEntries)])
+            const isCSSTask = eachFormat === 'css'
             if (!eachEntryPoints.length) {
                 log.e`${eachFormat} Cannot find any entry file specified ${markJoin(eachEntries)}`
                 process.exit()
@@ -42,34 +45,48 @@ program.command('pack [entryPaths...]')
             tasks.push(
                 async () => {
                     loading.clear()
-                    return await esbuild.build({
+                    const { metafile } = await build({
                         entryPoints: eachEntryPoints,
-                        outExtension: { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
+                        outExtension: isCSSTask
+                            ? { '.css': '.css' }
+                            : { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
                         external: externalDependencies,
                         watch: options.watch ? {
                             onRebuild(error, result) {
                                 // make esbuild log mute and depend on `tsx`
                             }
                         } : false,
-                        logLevel: options.watch ? 'silent' : 'info',
+                        logLevel: 'silent',
                         outdir: options.outdir,
                         bundle: options.bundle,
                         minify: options.minify,
-                        format: eachFormat
-                    } as esbuild.BuildOptions)
-                        .then(result => {
-                            loading.clear()
-                            log.i`${eachFormat} process ${reveal(eachEntryPoints, 'entries')}`
-                        })
+                        metafile: true,
+                        format: isCSSTask ? undefined : eachFormat
+                    } as BuildOptions)
+                    loading.clear()
+                    if (metafile) {
+                        for (const outputFilePath in metafile.outputs) {
+                            const eachOutput = metafile.outputs[outputFilePath]
+                            log.i`${eachFormat} ${`*${outputFilePath}*`} ${`+${prettyBytes(eachOutput.bytes)}+`} from ${Object.keys(eachOutput.inputs)?.length} inputs`
+                        }
+                    }
                 }
             )
         }
         let formats: string[] = []
         if (entries.length) {
-            formats = (options.format || 'cjs,esm').split(',')
-            formats.map((eachFormat: string) => addBuildTask(entries, eachFormat))
+            const isCSSEntry = entries.find((eachEntry) => eachEntry.includes('.css'))
+            if (isCSSEntry) {
+                addBuildTask(entries, 'css')
+            } else {
+                formats = (options.format || 'cjs,esm').split(',')
+                formats.map((eachFormat: string) => addBuildTask(entries, eachFormat))
+            }
         } else {
-            if (pkg.main) {
+            if (pkg.style) {
+                addBuildTask([changeFilePath(pkg.main, options.srcdir, '.css')], 'css')
+            }
+            if (pkg.main && !pkg.main.endsWith('.css')) {
                 addBuildTask([changeFilePath(pkg.main, options.srcdir, '.ts')], 'cjs')
                 formats.push('cjs')
             }
@@ -113,12 +130,14 @@ program.command('pack [entryPaths...]')
             )
         }
         if (Object.keys(pkg).length) {
-            log`📦 extract and merge options from ${`+${pkg.name}+`}'s ${'*package.json*'}`
+            log`📦 extract and merge options from ${`+${pkg.name}+`} ${'*package.json*'}`
         }
         log.tree({
             ...options
         })
-        const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
+        const formatLogText = formats.length
+            ? formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
+            : 'CSS'
         const loading = log.load(event, options.watch ? ' ' : formatLogText)
         await pAll(tasks)
         if (!options.watch) {
