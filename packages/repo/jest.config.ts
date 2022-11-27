@@ -9,5 +9,6 @@ export default {
                 importHelpers: true
             }
         }
-    }
+    },
+    transformIgnorePatterns: ['node_modules/(?!callsites)/']
 }

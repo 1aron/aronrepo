@@ -25,6 +25,7 @@
         "eslint-plugin-react-hooks": "^4.6.0",
         "jest-environment-jsdom": "^29.3.1",
         "jest-puppeteer": "^6.1.1",
+        "parent-module": "^3.0.0",
         "puppeteer": "^19.2.2",
         "tmp": "^0.2.1"
     },

@@ -1,8 +1,5 @@
 {
-    "name": "@master/keyframes.css",
-    "scripts": {
-        "pack": "aron pack src/*.css"
-    },
+    "name": "css-args",
     "main": "./dist/index.css",
     "style": "./dist/index.css",
     "files": [
