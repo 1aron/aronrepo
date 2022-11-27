@@ -1,8 +1,9 @@
+import { execSync } from 'node:child_process'
 import { expectFileIncludes } from '../../../../utils/expect-file-includes'
 import { run } from '../../../../utils/run'
 
 test('prevent bundling deps and peerDeps by `package.json`', () => {
-    run('node ../../dist/bin/index pack --platform=node')
+    execSync('node ../../dist/bin/index pack --platform=node', { cwd: __dirname, stdio: 'pipe' })
     expectFileIncludes('dist/index.cjs', [
         'require("@master/css")',
         'require("@master/style-element.react")'
