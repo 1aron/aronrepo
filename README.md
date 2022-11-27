@@ -4,7 +4,7 @@
 <p align="center">
     <a href="https://repo.master.co">
         <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/33840671/204158206-14882545-dd05-4419-8f3e-5211b933c177.svg">
+            <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/33840671/204158630-4d32ed01-3348-4b75-b107-2a8ac1f706f6.svg">
             <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/33840671/204158206-14882545-dd05-4419-8f3e-5211b933c177.svg">
             <img alt="aronrepo" src="https://user-images.githubusercontent.com/33840671/204158206-14882545-dd05-4419-8f3e-5211b933c177.svg" width="100%">
         </picture>
