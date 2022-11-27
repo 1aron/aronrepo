@@ -1,14 +1,13 @@
 {
-    "name": "example",
-    "license": "MIT",
     "scripts": {
         "pack": "node ../dist/bin/index pack"
     },
     "main": "dist/index.cjs",
-    "jsnext:main": "dist/index.mjs",
-    "esnext": "dist/index.mjs",
+    "browser": "dist/index.browser.js",
     "module": "dist/index.mjs",
     "types": "dist/index.d.ts",
+    "jsnext:main": "dist/index.mjs",
+    "esnext": "dist/index.mjs",
     "exports": {
         ".": {
             "require": "./dist/index.cjs",
@@ -18,8 +17,5 @@
     },
     "files": [
         "dist"
-    ],
-    "dependencies": {
-        "@master/literal": "^1.0.11"
-    }
+    ]
 }
