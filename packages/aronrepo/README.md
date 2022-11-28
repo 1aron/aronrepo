@@ -4,9 +4,9 @@
 <p align="center">
     <a href="https://repo.master.co">
         <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/33840671/204158630-4d32ed01-3348-4b75-b107-2a8ac1f706f6.svg">
-            <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/33840671/204158206-14882545-dd05-4419-8f3e-5211b933c177.svg">
-            <img alt="aronrepo" src="https://user-images.githubusercontent.com/33840671/204158206-14882545-dd05-4419-8f3e-5211b933c177.svg" width="100%">
+            <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/33840671/204220749-4536401e-20c4-49b7-bf37-b07fce15f1c2.svg">
+            <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/33840671/204220755-744f6b4f-a90e-442f-bd30-53ce7995a8f8.svg">
+            <img alt="aronrepo" src="https://user-images.githubusercontent.com/33840671/204220755-744f6b4f-a90e-442f-bd30-53ce7995a8f8.svg" width="100%">
         </picture>
     </a>
 </p>
@@ -45,6 +45,35 @@
 
 </div>
 
-## Documentation
+## Built on the top
+- [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
+- [esbuild](https://esbuild.github.io/) - An extremely fast JavaScript and CSS bundler and minifier
+- [semantic-release](https://www.typescriptlang.org/) - Fully automated version management and package publishing
+- [typescript](https://www.typescriptlang.org/) - A strongly typed programming language that builds on JavaScript
+- [commitlint](https://github.com/conventional-changelog/commitlint) - Lint commit messages
+- [conventional-changelog](https://github.com/conventional-changelog/conventional-changelog) - Generate changelogs and release notes from a project's commit messages and metadata
+- [eslint](https://eslint.org/) - Find and fix problems in your JavaScript code
+- [husky](https://typicode.github.io/husky) - Modern native Git hooks made easy
 
-soon...
+## Ecosystem
+
+`aronrepo` builds on the top above-mentioned tools, systems and languages, with useful commands and conventional workflows.
+
+- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - Built-in packaging and versioning commands,and automatically install all core packages
+- [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
+- [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits
+- [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
+- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config-aron) - Aron's eslint config
+- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
+
+With continuous integration, most commands and actions can be automated.
+
+## Getting Started
+Automatically install core packages by installing `aronrepo`:
+```bash
+npm i aronrepo -D
+```
+- Requires `npm@>=7` when using `npm`
+- Set [`auto-install-peers`](https://pnpm.io/next/npmrc#auto-install-peers) when using `pnpm`
+
+You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions.
