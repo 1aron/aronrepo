@@ -63,7 +63,7 @@
 - [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
 - [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits
 - [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
-- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config-aron) - Aron's eslint config
+- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config
 - [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
 - [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
 
