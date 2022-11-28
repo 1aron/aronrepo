@@ -13,11 +13,11 @@
 <p align="center">A monorepo ecosystem integrating first-class packages and conventional workflows</p>
 
 <p align="center">
-    <a aria-label="NPM Version" href="https://www.npmjs.com/package/aronrepo">
+    <a aria-label="overview" href="https://github.com/1aron/aronrepo">
         <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/v/aronrepo?color=212022&label=&style=for-the-badge">
-            <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/v/aronrepo?color=f6f7f8&label=&style=for-the-badge">
-            <img alt="NPM Version" src="https://img.shields.io/npm/v/aronrepo?color=f6f7f8&label=&style=for-the-badge">
+            <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=212022&style=for-the-badge">
+            <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=f6f7f8&style=for-the-badge">
+            <img alt="NPM Version" src="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=f6f7f8&style=for-the-badge">
         </picture>
     </a>
     <a aria-label="NPM Package" href="https://www.npmjs.com/package/aronrepo">
@@ -44,31 +44,6 @@
 </p>
 
 </div>
-
-## Built on the top
-- [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
-- [esbuild](https://esbuild.github.io/) - An extremely fast JavaScript and CSS bundler and minifier
-- [semantic-release](https://www.typescriptlang.org/) - Fully automated version management and package publishing
-- [typescript](https://www.typescriptlang.org/) - A strongly typed programming language that builds on JavaScript
-- [commitlint](https://github.com/conventional-changelog/commitlint) - Lint commit messages
-- [conventional-changelog](https://github.com/conventional-changelog/conventional-changelog) - Generate changelogs and release notes from a project's commit messages and metadata
-- [eslint](https://eslint.org/) - Find and fix problems in your JavaScript code
-- [husky](https://typicode.github.io/husky) - Modern native Git hooks made easy
-
-## Ecosystem
-
-`aronrepo` builds on the top above-mentioned tools, systems and languages, with useful commands and conventional workflows.
-
-- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - Built-in packaging and versioning commands,and automatically install all core packages
-- [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
-- [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits
-- [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
-- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config-aron) - Aron's eslint config
-- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
-
-With continuous integration, most commands and actions can be automated.
-
-- [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
 
 ## Getting Started
 Automatically install core packages by installing `aronrepo`:
