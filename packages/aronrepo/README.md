@@ -59,5 +59,91 @@ npm i aronrepo -D
 ```
 - Requires `npm@>=7` when using `npm`
 - Set [`auto-install-peers`](https://pnpm.io/next/npmrc#auto-install-peers) when using `pnpm`
+- You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions.
 
-You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions.
+Add `packages/*` workspace to project root `./package.json`
+```
+{
+    "workspaces": [
+        "packages/*"
+    ]
+}
+```
+
+To create your first package, you may automate the required steps to define a new workspace using `npm init`.
+
+```
+npm init -w ./packages/a
+```
+
+## `aron pack`
+
+Packing your typescript and css packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/) so it's fast.
+
+`aron pack` analyzes your `package.json` entry point and uses the default `src` directory as relative input sources for builds.
+
+### Javascript packages
+Simultaneously output `cjs`, `esm`, `iife`, `type declarations` respectively according to the configuration of `main`, `module`, `browser`, `types` in `package.json`
+
+If you only want to package javascript modules in a specific format, remove the corresponding entry point from `package.json`.
+
+```json
+{
+    "name": "a",
+    "scripts": {
+        "build": "aron pack"
+    },
+    "main": "dist/index.cjs",
+    "browser": "dist/index.browser.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "jsnext:main": "dist/index.mjs",
+    "esnext": "dist/index.mjs",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist"
+    ]
+}
+```
+Now with the configuration above you just need to run:
+
+```bash
+npm run build
+```
+
+Everything happens as you would expect.
+
+<img width="628" alt="cjs-esm-iife-type-pack" src="https://user-images.githubusercontent.com/33840671/204300928-23e2d2f9-b0ed-4feb-b7cf-1b9ba6cf8127.png">
+
+### CSS packages
+
+```json
+{
+    "name": "b",
+    "scripts": {
+        "build": "aron pack"
+    },
+    "main": "./dist/index.css",
+    "style": "./dist/index.css",
+    "files": [
+        "dist"
+    ]
+}
+```
+
+Now with the configuration above you just need to run:
+
+```bash
+npm run build
+```
+
+<img width="628" alt="cjs-esm-iife-type-pack-w" src="https://user-images.githubusercontent.com/33840671/204301220-9f35d7cf-9f53-497d-8e7d-92bd46de93b4.png">
+
+
+
