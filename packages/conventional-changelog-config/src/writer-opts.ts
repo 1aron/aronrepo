@@ -15,7 +15,7 @@ export default {
              * To      Revert: `Feat(Scope): First feature`
              */
             commit.header = commit.header.replace(/(Revert|Revert:)\s"([\s\S]+?)"(.*)/, '$1 `$2`$3')
-        } else if (conventionalCommit && !conventionalCommit.log && conventionalCommit.group) {
+        } else if (conventionalCommit && !conventionalCommit.hidden && conventionalCommit.group) {
             commit.type = conventionalCommit.group
         } else {
             return
