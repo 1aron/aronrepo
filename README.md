@@ -65,7 +65,6 @@
 - [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
 - [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config-aron) - Aron's eslint config
 - [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
-
 - [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
 
 With continuous integration, most commands and actions can be automated.
