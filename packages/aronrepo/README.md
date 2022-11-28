@@ -68,6 +68,8 @@
 
 With continuous integration, most commands and actions can be automated.
 
+- [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
+
 ## Getting Started
 Automatically install core packages by installing `aronrepo`:
 ```bash
