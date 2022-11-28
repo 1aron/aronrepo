@@ -121,6 +121,7 @@ program.command('pack [entryPaths...]')
                 () => new Promise<void>((resolve) => {
                     if (options.watch) {
                         loading.stop()
+                        log.i`${'type'} type declarations`
                     }
                     execaCommand(literal`
                         npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
