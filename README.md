@@ -69,6 +69,6 @@
 
 With continuous integration, most commands and actions can be automated.
 
-## Who's using aronrepo?
+## Who's using?
 
 - [Master CSS](https://css.master.co/) - A Virtual CSS language with enhanced syntax
