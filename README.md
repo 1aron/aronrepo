@@ -59,7 +59,7 @@
 
 `aronrepo` builds on the top above-mentioned tools, systems and languages, with useful commands, utilities and conventional workflows.
 
-- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - Packing, versioning commands, and installing core packages
+- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - Packaging, version control, and core package installation, starting with zero configuration
 - [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
 - [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
 - [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits

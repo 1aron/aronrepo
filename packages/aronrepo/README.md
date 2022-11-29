@@ -52,6 +52,23 @@
 
 </div>
 
+## Features
+All features are enabled with zero configuration.
+
+##### Packing
+- Output or watch multiple formats on one command
+- Support **ESM**, **CJS**, and **IIFE** JavaScript modules
+- Support **CSS** bundle
+- Generate `.d.ts` type declarations
+- Extract options from `package.json`
+- Prevent bundling `dependencies` and `peerDependencies` by `package.json`
+
+##### Versing
+- Synchronize versions of packages in all workspaces
+- Bump packages to a specific version by the `.workspaces` of `package.json`
+- Bump versions by analyzing `dependencies` and `peerDependencies` of the workspace
+- Prevent bumping versions for `private: true` packages
+
 ## Getting Started
 
 Add workspaces `packages/*` to `./package.json` in project root
@@ -62,7 +79,7 @@ Add workspaces `packages/*` to `./package.json` in project root
     ]
 }
 ```
-Quickly install core packages by `aronrepo`:
+Install CLI and core packages by `aronrepo`:
 ```bash
 npm i aronrepo -D
 ```
@@ -76,13 +93,13 @@ To create your first package, you may automate the required steps to define a ne
 npm init -w ./packages/a
 ```
 
-After all, packages are configured including dependencies, run `npm i` in the root directory to install dependencies in all workspaces and root.
+After all, packages are configured, including dependencies, run `npm i` in the root directory to install dependencies in all workspaces and root.
 
 ## `aron pack`
 
-Packing your TypeScript and CSS packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/) so it's fast.
+Packing your TypeScript and CSS packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/).
 
-The command analyzes your `package.json` entry point and relative to input sources in the `src` directory for builds.
+`aron pack` analyzes the `package.json` entry point relative to input sources in the `src` directory for builds.
 
 ### Javascript packages
 
@@ -130,7 +147,7 @@ Simultaneously output `cjs`, `esm`, `iife`, `type declarations` respectively acc
 ```
 If you only want to pack specific javascript modules, remove the corresponding entry point from `package.json`.
 
-Now run with the above configuration:
+Run with the above configuration:
 
 ```bash
 npm run build
@@ -138,13 +155,19 @@ npm run build
 
 <img width="628" alt="cjs-esm-iife-type-pack" src="https://user-images.githubusercontent.com/33840671/204300928-23e2d2f9-b0ed-4feb-b7cf-1b9ba6cf8127.png">
 
+Now import the above package `a` in your project or publish it.
+
+```ts
+import 'a'
+```
+
 ### CSS packages
 
 ```diff
 .
 ├── package.json
 └── packages
-    └─── a
+    └─── b
          ├─── src
          │    └─── index.css
 +        ├─── dist
@@ -152,7 +175,7 @@ npm run build
          └─── package.json
 ```
 
-Packaging CSS is simpler, configure `style` and `main` entry points in `package.json`.
+Packaging CSS is more straightforward, configuring `style` and `main` entry points in `package.json`.
 
 ```json
 {
@@ -168,22 +191,121 @@ Packaging CSS is simpler, configure `style` and `main` entry points in `package.
 }
 ```
 
-Now run with the above configuration:
+Run with the above configuration:
 
 ```bash
 npm run build
 ```
 
-<img width="628" alt="cjs-esm-iife-type-pack-w" src="https://user-images.githubusercontent.com/33840671/204301220-9f35d7cf-9f53-497d-8e7d-92bd46de93b4.png">
+<img width="523" alt="css-pack" src="https://user-images.githubusercontent.com/33840671/204450194-7831c448-2e21-4ce8-8c45-5139febc10e6.png">
+
+Now import the above package `b` in your project or publish it.
+
+```css
+@import 'b'
+```
 
 ### Multiple entry points
 
-The command supports glob patterns that let you specify multiple entry points at once, including the output of nested directories.
+`aron pack <entryPaths...>` supports glob patterns that let you specify multiple entry points at once, including the output of nested directories.
+
+Specifying an entry point will cause the Javascript output `format` to be preset to `cjs,esm`.
 
 ```
-aron src/**/*.ts --format cjs,esm,iife
+aron src/**/*.ts
 ```
-
+```diff
+.
+├── package.json
+└── packages
+    └─── a
+         ├─── src
+         │    ├─── index.ts
+         │    └─── utils
+         │         └─── exec.ts
++        ├─── dist
++        │    ├─── index.cjs
++        │    ├─── index.mjs
++        │    ├─── index.d.ts
++        │    └─── utils
++        │         ├─── exec.cjs
++        │         ├─── exec.mjs
++        │         └─── exec.d.ts
+         └─── package.json
+```
+The same goes for multiple CSS entries:
 ```
 aron src/**/*.css
 ```
+```diff
+.
+├── package.json
+└── packages
+    └─── a
+         ├─── src
+         │    ├─── index.css
+         │    └─── components
+         │         ├─── card.css
+         │         └─── button.css
++        ├─── dist
++        │    ├─── index.css
++        │    └─── components
++        │         ├─── card.css
++        │         └─── button.css
+         └─── package.json
+```
+Usually, it would be best to bundle CSS packages through a main `index.css` and output other CSS files so developers can import on demand instead of the whole package. For example [@master/keyframes.css](https://www.npmjs.com/package/@master/keyframes.css)
+
+### Exclude external dependencies
+`aron pack` automatically excludes external dependencies to be bundled by the `.dependencies` and `peerDependencies` of `package.json`
+
+`src/index.ts`
+```ts
+import 'a'
+import 'b'
+import 'c'
+```
+
+`package.json`
+```json
+{
+    "name": "externals",
+    "main": "dist/index.cjs",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "package-a": "^1.0.0"
+    },
+    "peerDependencies": {
+        "package-b": "^1.0.0"
+    },
+    "devDependencies": {
+        "package-c": "^1.0.0"
+    },
+}
+
+```
+
+Run with the above setup:
+
+```bash
+aron pack
+```
+
+<img width="568" alt="exclude-externals-pack" src="https://user-images.githubusercontent.com/33840671/204489494-10854837-be15-49fd-a1c8-0e02fb3e174a.png">
+
+Only `package-c` is bundled into `dist/index.cjs`, except for `package-a` and `package-b`.
+
+So if there is an external package that needs to be bundled, you just install it to `devDependencies` via `npm i <some-package> --save-dev`, then `aron pack` will not exclude it.
+
+## `aron version`
+
+Smartly bump packages to a specific version by the `.workspaces` of `package.json`.
+
+<img width="662" alt="version" src="https://user-images.githubusercontent.com/33840671/204488114-4e5cbc2d-9142-436a-8d6f-57bde6133306.png">
