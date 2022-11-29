@@ -24,14 +24,17 @@
         "@types/node": "^18.11.9",
         "concurrently": "^7.5.0",
         "eslint-plugin-react-hooks": "^4.6.0",
+        "husky": "^8.0.0",
         "jest-environment-jsdom": "^29.3.1",
         "jest-puppeteer": "^6.1.1",
         "parent-module": "^3.0.0",
         "puppeteer": "^19.2.2",
-        "tmp": "^0.2.1",
-        "husky": "^8.0.0"
+        "tmp": "^0.2.1"
     },
     "engines": {
         "node": "^18"
+    },
+    "dependencies": {
+        "ls": "^0.2.1"
     }
 }

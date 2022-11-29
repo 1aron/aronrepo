@@ -54,6 +54,7 @@
         "semantic-release-config-aron": ""
     },
     "devDependencies": {
+        "dedent": "^0.7.0",
         "pkg-types": "^1.0.1"
     }
 }
