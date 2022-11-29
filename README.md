@@ -55,8 +55,6 @@
 - [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config
 - [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
 
-With continuous integration, most commands and actions can be automated.
-
 ## Built on the top
 - [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
 - [esbuild](https://esbuild.github.io/) - An extremely fast JavaScript and CSS bundler and minifier
