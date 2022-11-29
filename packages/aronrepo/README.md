@@ -99,6 +99,8 @@ After all, packages are configured, including dependencies, run `npm i` in the r
 
 Packing your TypeScript and CSS packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/).
 
+[Check out the available options here for now](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/src/commands/pack.ts#L17-L25)
+
 `aron pack` analyzes the `package.json` entry point relative to input sources in the `src` directory for builds.
 
 ### Javascript packages
@@ -308,6 +310,8 @@ So if there is an external package that needs to be bundled, you just install it
 
 Smartly bump packages to specific versions by the `.workspaces` of the root `package.json`.
 
+[Check out the available options here for now](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/src/commands/version.ts#L16-L18)
+
 The command automatically bumps the version of all packages by scanning all workspaces and analyzing `dependencies` and `peerDependencies` of `package.json`
 
 ```diff
@@ -322,35 +326,49 @@ The command automatically bumps the version of all packages by scanning all work
          └─── package.json
 ```
 
+This command identifies whether it is a package in the workspace by scanning packages of the workspace and its dependencies that don't specify a version `""`, and replaces `""` with the next version.
+
+Now bump all dependent and workspace packages to a specified version:
+
+```
+aron version 1.2.0
+```
+
+<img width="628" alt="version" src="https://user-images.githubusercontent.com/33840671/204528593-a7a982f1-2e62-4a8e-95c3-122963f2254c.png">
+
 `packages/a/package.json`
 
-```json
+```diff
 {
     "name": "a",
++   "version": "^1.2.0",
     "dependencies": {
-        "b": ""
+-       "b": "",
++       "b": "^1.2.0"
     }
 }
 ```
 
 `packages/b/package.json`
 
-```json
+```diff
 {
-    "name": "b"
+    "name": "b",
++   "version": "^1.2.0"
 }
 ```
 
 `packages/c/package.json`
 
-```json
+```diff
 {
     "name": "c",
-    "dependencies": {
-        "a": ""
++   "version": "^1.2.0",
+    "peerDependencies": {
+-       "a": "",
++       "b": "^1.2.0"
     }
 }
 ```
 
-<img width="662" alt="version" src="https://user-images.githubusercontent.com/33840671/204488114-4e5cbc2d-9142-436a-8d6f-57bde6133306.png">
-
+Typically, you would use [semantic-release-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) with CI to automate the version and release commands.
