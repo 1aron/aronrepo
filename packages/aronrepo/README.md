@@ -53,10 +53,17 @@
 </div>
 
 ## Features
-All features are enabled with zero configuration.
+
+##### Monorepo
+![turbo-your-monorepo-excalidraw](https://user-images.githubusercontent.com/33840671/204612389-1dc6ac11-ee16-46a4-9d24-fcfa7aa1085c.jpeg)
+- Using a high-performance build system —— [Turborepo](https://turbo.build/repo)
+- Run the `build`, `dev`, `test`, `lint` commands across all workspaces
+- Remember what you've built and skip the stuff that's already been computed
+- Multiple workspaces work simultaneously, just like one workspace used to.
 
 ##### Packing
-- Output or watch multiple formats on one command
+- An extremely fast bundler built on top of [esbuild](https://esbuild.github.io/)
+- Output or watch multiple formats in one-linear command
 - Support **ESM**, **CJS**, and **IIFE** JavaScript modules
 - Support **CSS** bundle
 - Generate `.d.ts` type declarations
@@ -71,7 +78,7 @@ All features are enabled with zero configuration.
 
 ## Getting Started
 
-Add workspaces `packages/*` to `./package.json` in project root
+Add `packages/*` to `.workspaces` of the root `./package.json`
 ```json
 {
     "workspaces": [
@@ -85,7 +92,7 @@ npm i aronrepo -D
 ```
 - Requires `npm@>=7` when using `npm`
 - Set [`auto-install-peers`](https://pnpm.io/next/npmrc#auto-install-peers) when using `pnpm`
-- You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions.
+- You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions
 
 To create your first package, you may automate the required steps to define a new workspace using `npm init`.
 
@@ -93,11 +100,11 @@ To create your first package, you may automate the required steps to define a ne
 npm init -w ./packages/a
 ```
 
-After all, packages are configured, including dependencies, run `npm i` in the root directory to install dependencies in all workspaces and root.
+When the package is ready, including the dependencies setup, run `npm i` in the project root directory to install all dependencies, including the workspaces.
 
 ## `aron pack [entryPaths...]`
 
-Packing your TypeScript and CSS packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/).
+Packing your TypeScript and CSS packages with zero configuration.
 
 [Check out the available options here for now](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/src/commands/pack.ts#L17-L25)
 
@@ -127,7 +134,8 @@ Simultaneously output `cjs`, `esm`, `iife`, `type declarations` respectively acc
 {
     "name": "a",
     "scripts": {
-        "build": "aron pack"
+        "build": "aron pack",
+        "dev": "npm run build -- --watch"
     },
     "main": "dist/index.cjs",
     "browser": "dist/index.browser.js",
@@ -183,7 +191,8 @@ Packaging CSS is more straightforward, configuring `style` and `main` entry poin
 {
     "name": "b",
     "scripts": {
-        "build": "aron pack"
+        "build": "aron pack",
+        "dev": "npm run build -- --watch"
     },
     "main": "./dist/index.css",
     "style": "./dist/index.css",
@@ -372,3 +381,76 @@ aron version 1.2.0
 ```
 
 Typically, you would use [semantic-release-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) with CI to automate the version and release commands.
+
+## Monorepo Setup
+
+Most workspace packages will pre-set script commands, such as `build`, `test`, and `lint`. Since features depend on each other, builds will be executed sequentially.
+
+![turborepo-excalidraw](https://user-images.githubusercontent.com/33840671/204613029-cc4eaef9-ed82-400f-aa65-a1f1ec5864c7.jpeg)
+*You can now use [Turborepo](https://turbo.build/repo) to easily build complex systems and improve development performance.*
+
+Set up the `turbo.json`:
+
+```json
+{
+    "$schema": "https://turbo.build/schema.json",
+    "pipeline": {
+        "dev": {
+            "cache": false,
+            "dependsOn": ["^build"]
+        },
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**"]
+        },
+        "test": {
+            "outputs": [],
+            "inputs": [
+                "src/**/*.tsx",
+                "src/**/*.ts",
+                "tests/**/*.ts"
+            ]
+        },
+        "lint": {
+            "outputs": []
+        },
+        "type-check": {
+            "outputs": ["dist/**"]
+        }
+    }
+}
+```
+
+Set up the scripts of `package.json`:
+```json
+{
+    "scripts": {
+        "dev": "turbo run dev",
+        "build": "turbo run build",
+        "test": "turbo run test --parallel",
+        "lint": "turbo run lint --parallel",
+        "type-check": "turbo run type-check --parallel"
+    }
+}
+```
+In most cases, `dev` and `build` cannot add the `--parallel` flag, which breaks their dependencies.
+
+From now on all you need to do to open a project is to run in root:
+
+```bash
+npm run dev
+```
+
+And the commands below are usually automated through CI:
+```bash
+npm run build
+```
+```bash
+npm run test
+```
+```bash
+npm run lint
+```
+```bash
+npm run type-check
+```
