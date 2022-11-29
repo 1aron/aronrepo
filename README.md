@@ -45,6 +45,18 @@
 
 </div>
 
+## Ecosystem
+
+- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - A monorepo workflow, including packaging, versioning, and build management
+- [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
+- [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
+- [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits
+- [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
+- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config
+- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
+
+With continuous integration, most commands and actions can be automated.
+
 ## Built on the top
 - [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
 - [esbuild](https://esbuild.github.io/) - An extremely fast JavaScript and CSS bundler and minifier
@@ -54,20 +66,6 @@
 - [conventional-changelog](https://github.com/conventional-changelog/conventional-changelog) - Generate changelogs and release notes from a project's commit messages and metadata
 - [eslint](https://eslint.org/) - Find and fix problems in your JavaScript code
 - [husky](https://typicode.github.io/husky) - Modern native Git hooks made easy
-
-## Ecosystem
-
-`aronrepo` builds on the top above-mentioned tools, systems and languages, with useful commands, utilities and conventional workflows.
-
-- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - Packaging, version control, and core package installation, starting with zero configuration
-- [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
-- [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
-- [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits
-- [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
-- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config
-- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
-
-With continuous integration, most commands and actions can be automated.
 
 ## Who's using aronrepo?
 
