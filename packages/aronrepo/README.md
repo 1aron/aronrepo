@@ -95,7 +95,7 @@ npm init -w ./packages/a
 
 After all, packages are configured, including dependencies, run `npm i` in the root directory to install dependencies in all workspaces and root.
 
-## `aron pack`
+## `aron pack [entryPaths...]`
 
 Packing your TypeScript and CSS packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/).
 
@@ -261,9 +261,9 @@ Usually, it would be best to bundle CSS packages through a main `index.css` and 
 
 `src/index.ts`
 ```ts
-import 'a'
-import 'b'
-import 'c'
+import '@master/css'
+import '@master/css.webpack'
+import '@master/style-element.react'
 ```
 
 `package.json`
@@ -280,14 +280,14 @@ import 'c'
         "dist"
     ],
     "dependencies": {
-        "package-a": "^1.0.0"
+        "@master/css": "^2.0.0-beta.55"
     },
     "peerDependencies": {
-        "package-b": "^1.0.0"
+        "@master/style-element.react": "^1.1.6"
     },
     "devDependencies": {
-        "package-c": "^1.0.0"
-    },
+        "@master/css.webpack": "^2.0.0-beta.55"
+    }
 }
 
 ```
@@ -295,17 +295,62 @@ import 'c'
 Run with the above setup:
 
 ```bash
-aron pack
+aron pack --platform node
 ```
 
 <img width="568" alt="exclude-externals-pack" src="https://user-images.githubusercontent.com/33840671/204489494-10854837-be15-49fd-a1c8-0e02fb3e174a.png">
 
-Only `package-c` is bundled into `dist/index.cjs`, except for `package-a` and `package-b`.
+`@master/css.webpack` is bundled into `dist/index.cjs`, except for `@master/css` and `@master/style-element.react`.
 
 So if there is an external package that needs to be bundled, you just install it to `devDependencies` via `npm i <some-package> --save-dev`, then `aron pack` will not exclude it.
 
-## `aron version`
+## `aron version <version>`
 
-Smartly bump packages to a specific version by the `.workspaces` of `package.json`.
+Smartly bump packages to specific versions by the `.workspaces` of the root `package.json`.
+
+The command automatically bumps the version of all packages by scanning all workspaces and analyzing `dependencies` and `peerDependencies` of `package.json`
+
+```diff
+.
+├── package.json
+└── packages
+    ├─── a
+    |    └─── package.json
+    ├─── b
+    |    └─── package.json
+    └─── c
+         └─── package.json
+```
+
+`packages/a/package.json`
+
+```json
+{
+    "name": "a",
+    "dependencies": {
+        "b": ""
+    }
+}
+```
+
+`packages/b/package.json`
+
+```json
+{
+    "name": "b"
+}
+```
+
+`packages/c/package.json`
+
+```json
+{
+    "name": "c",
+    "dependencies": {
+        "a": ""
+    }
+}
+```
 
 <img width="662" alt="version" src="https://user-images.githubusercontent.com/33840671/204488114-4e5cbc2d-9142-436a-8d6f-57bde6133306.png">
+
