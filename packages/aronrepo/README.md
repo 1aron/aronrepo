@@ -102,9 +102,13 @@ npm init -w ./packages/a
 
 When the package is ready, including the dependencies setup, run `npm i` in the project root directory to install all dependencies, including the workspaces.
 
-## `aron pack [entryPaths...]`
+## Pack
 
-Packing your TypeScript and CSS packages with zero configuration.
+Bundling your TypeScript and CSS packages with zero configuration.
+
+```bash
+aron pack [entryPaths...]
+```
 
 [Check out the available options here for now](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/src/commands/pack.ts#L17-L25)
 
@@ -315,9 +319,12 @@ aron pack --platform node
 
 So if there is an external package that needs to be bundled, you just install it to `devDependencies` via `npm i <some-package> --save-dev`, then `aron pack` will not exclude it.
 
-## `aron version <version>`
-
+## Version
 Smartly bump packages to specific versions by the `.workspaces` of the root `package.json`.
+
+```bash
+aron version <version>
+```
 
 [Check out the available options here for now](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/src/commands/version.ts#L16-L18)
 
