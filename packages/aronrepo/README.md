@@ -72,7 +72,7 @@ All features are enabled with zero configuration.
 ## Getting Started
 
 Add workspaces `packages/*` to `./package.json` in project root
-```
+```json
 {
     "workspaces": [
         "packages/*"
