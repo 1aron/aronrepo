@@ -53,15 +53,8 @@
 </div>
 
 ## Getting Started
-Automatically install core packages by installing `aronrepo`:
-```bash
-npm i aronrepo -D
-```
-- Requires `npm@>=7` when using `npm`
-- Set [`auto-install-peers`](https://pnpm.io/next/npmrc#auto-install-peers) when using `pnpm`
-- You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions.
 
-Add `packages/*` workspace to project root `./package.json`
+Add workspaces `packages/*` to `./package.json` in project root
 ```
 {
     "workspaces": [
@@ -69,23 +62,47 @@ Add `packages/*` workspace to project root `./package.json`
     ]
 }
 ```
+Quickly install core packages by `aronrepo`:
+```bash
+npm i aronrepo -D
+```
+- Requires `npm@>=7` when using `npm`
+- Set [`auto-install-peers`](https://pnpm.io/next/npmrc#auto-install-peers) when using `pnpm`
+- You can also manually install [`peerDependencies`](https://github.com/1aron/aronrepo/blob/beta/packages/aronrepo/package.json#L32-L41) for fixed versions.
 
 To create your first package, you may automate the required steps to define a new workspace using `npm init`.
 
-```
+```bash
 npm init -w ./packages/a
 ```
 
+After all, packages are configured including dependencies, run `npm i` in the root directory to install dependencies in all workspaces and root.
+
 ## `aron pack`
 
-Packing your typescript and css packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/) so it's fast.
+Packing your TypeScript and CSS packages with zero configuration. Built on top of [esbuild](https://esbuild.github.io/) so it's fast.
 
-`aron pack` analyzes your `package.json` entry point and uses the default `src` directory as relative input sources for builds.
+The command analyzes your `package.json` entry point and relative to input sources in the `src` directory for builds.
 
 ### Javascript packages
-Simultaneously output `cjs`, `esm`, `iife`, `type declarations` respectively according to the configuration of `main`, `module`, `browser`, `types` in `package.json`
 
-If you only want to package javascript modules in a specific format, remove the corresponding entry point from `package.json`.
+```diff
+.
+├── package.json
+└── packages
+    └─── a
+         ├─── src
+         │    ├─── index.ts
+         │    └─── index.browser.ts
++        ├─── dist
++        │    ├─── index.cjs
++        │    ├─── index.mjs
++        │    ├─── index.d.ts
++        │    └─── index.browser.ts
+         └─── package.json
+```
+
+Simultaneously output `cjs`, `esm`, `iife`, `type declarations` respectively according to `main`, `module`, `browser`, `types` of `package.json`
 
 ```json
 {
@@ -111,17 +128,31 @@ If you only want to package javascript modules in a specific format, remove the 
     ]
 }
 ```
-Now with the configuration above you just need to run:
+If you only want to pack specific javascript modules, remove the corresponding entry point from `package.json`.
+
+Now run with the above configuration:
 
 ```bash
 npm run build
 ```
 
-Everything happens as you would expect.
-
 <img width="628" alt="cjs-esm-iife-type-pack" src="https://user-images.githubusercontent.com/33840671/204300928-23e2d2f9-b0ed-4feb-b7cf-1b9ba6cf8127.png">
 
 ### CSS packages
+
+```diff
+.
+├── package.json
+└── packages
+    └─── a
+         ├─── src
+         │    └─── index.css
++        ├─── dist
++        │    └─── index.css
+         └─── package.json
+```
+
+Packaging CSS is simpler, configure `style` and `main` entry points in `package.json`.
 
 ```json
 {
@@ -137,7 +168,7 @@ Everything happens as you would expect.
 }
 ```
 
-Now with the configuration above you just need to run:
+Now run with the above configuration:
 
 ```bash
 npm run build
@@ -145,5 +176,14 @@ npm run build
 
 <img width="628" alt="cjs-esm-iife-type-pack-w" src="https://user-images.githubusercontent.com/33840671/204301220-9f35d7cf-9f53-497d-8e7d-92bd46de93b4.png">
 
+### Multiple entry points
 
+The command supports glob patterns that let you specify multiple entry points at once, including the output of nested directories.
 
+```
+aron src/**/*.ts --format cjs,esm,iife
+```
+
+```
+aron src/**/*.css
+```
