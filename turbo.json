@@ -1,13 +1,31 @@
 {
     "$schema": "https://turbo.build/schema.json",
     "pipeline": {
-        "dev": {
-            "cache": false,
+        "build": {
             "dependsOn": [
                 "^build"
+            ],
+            "outputs": [
+                "dist/**"
             ]
         },
-        "build": {
+        "build:esm": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "dist/**"
+            ]
+        },
+        "build:cjs": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "dist/**"
+            ]
+        },
+        "build:type": {
             "dependsOn": [
                 "^build"
             ],
