@@ -2,6 +2,9 @@ name: Aron Actions
 author: Aron <aron@master.co>
 description: A set of GitHub Actions for aronrepo ecosystem
 inputs:
+    action:
+        description: The action to execute.
+        required: true
     pr-title-check-valid-message:
         description: Description of the status check if validation succeeds.
         required: false

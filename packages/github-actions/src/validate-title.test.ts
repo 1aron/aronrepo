@@ -1,15 +1,4 @@
 const validateTitle = require('./validate-title')
-const installPreset = require('./install-preset')
-
-const preset = 'conventional-changelog-conventionalcommits'
-
-// Install preset (takes some time)
-jest.setTimeout(30000)
-beforeAll(async () => {
-    return new Promise(resolve => {
-        resolve(installPreset(preset))
-    })
-})
 
 it('detects valid PR titles', async () => {
     const inputs = [
