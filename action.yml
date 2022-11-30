@@ -1,26 +1,26 @@
-name: aron-conventional-action
+name: Aronrepo
 author: Aron <aron@master.co>
-description: A conventional GitHub Actions built on aronrepo ecosystem
+description: A conventional GitHub Actions for aronrepo ecosystem
 inputs:
-    success-state:
+    pr-title-check-valid-message:
         description: Description of the status check if validation succeeds.
         required: false
         default: follows the aron-conventional-commits
-    failure-state:
+    pr-title-check-invalid-message:
         description: Description of the status check if validation fails.
         required: false
         default: doesn't follow the aron-conventional-commits
-    context-name:
+    pr-title-check-name:
         description: Persistent status check context key
         required: false
         default: Title of pull request
-    target-url:
+    pr-title-check-detail-url:
         description: URL to be used when linking the "Details" in the actions overview.
         required: false
         default: https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits
 runs:
     using: docker
-    image: packages/conventional-action/Dockerfile
+    image: packages/github-action/Dockerfile
 branding:
     icon: shield
     color: green

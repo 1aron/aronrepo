@@ -6,10 +6,10 @@ const validateTitle = require('./validate-title')
 
 async function run() {
     try {
-        let contextName = core.getInput('context-name')
-        let successState = core.getInput('success-state')
-        let failureState = core.getInput('failure-state')
-        let targetUrl = core.getInput('target-url')
+        let contextName = core.getInput('pr-title-check-name')
+        let successState = core.getInput('pr-title-check-valid-message')
+        let failureState = core.getInput('pr-title-check-invalid-message')
+        let targetUrl = core.getInput('pr-title-check-detail-url')
         const installPresetPackage = 'conventional-changelog-aron'
         const requirePresetPackage = npa(installPresetPackage).name
 

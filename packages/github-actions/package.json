@@ -1,12 +1,12 @@
 {
-    "name": "aron-conventional-action",
+    "name": "aron-github-actions",
+    "private": true,
     "scripts": {
-        "test": "jest src",
-        "release": "semantic-release"
+        "test": "jest"
     },
     "license": "MIT",
     "version": "0.1.0",
-    "description": "A conventional GitHub Actions built on aronrepo ecosystem",
+    "description": "A conventional GitHub Actions for aronrepo ecosystem",
     "main": "src/index.js",
     "author": {
         "name": "Aron",
@@ -20,12 +20,13 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
-        "directory": "packages/conventional-action"
+        "directory": "packages/github-action"
     },
     "keywords": [
         "conventional-commits",
         "commitlint",
-        "pull-request",
+        "pull-request-title",
+        "pr",
         "title",
         "check",
         "aron"
@@ -38,11 +39,5 @@
         "conventional-changelog-conventionalcommits": "^5.0.0",
         "conventional-commits-parser": "^3.2.4",
         "npm-package-arg": "^10.0.0"
-    },
-    "devDependencies": {
-        "jest": "29.3.0"
-    },
-    "engines": {
-        "node": ">= 16.16.0"
     }
 }
