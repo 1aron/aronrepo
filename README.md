@@ -47,9 +47,10 @@
 
 ## Ecosystem
 
-- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - A monorepo workflow, including packaging, versioning, and build management
+- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - A monorepo workflow, including packing, versioning, and build management
 - [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
 - [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
+- [aron-github-actions](https://github.com/1aron/aronrepo/tree/beta/packages/github-actions) - A set of GitHub Actions for aronrepo ecosystem
 - [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Lint commits with Aron's conventional commits
 - [conventional-changelog-config](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog) - Beautiful changelog based on Aron's conventional commits
 - [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config

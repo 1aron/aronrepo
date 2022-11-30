@@ -54,7 +54,7 @@
 
 ## Features
 
-##### Monorepo
+**Monorepo**
 - Using a high-performance build system —— [Turborepo](https://turbo.build/repo)
 - Run the `build`, `dev`, `test`, `lint` commands across all workspaces
 - Remember what you've built and skip the stuff that's already been computed
@@ -62,7 +62,7 @@
 
 ![turbo-your-monorepo-excalidraw](https://user-images.githubusercontent.com/33840671/204612389-1dc6ac11-ee16-46a4-9d24-fcfa7aa1085c.jpeg)
 
-##### Packing
+**Packing**
 - An extremely fast bundler built on top of [esbuild](https://esbuild.github.io/)
 - Output or watch multiple formats in one-linear command
 - Support **ESM**, **CJS**, and **IIFE** JavaScript modules
@@ -71,7 +71,7 @@
 - Extract options from `package.json`
 - Prevent bundling `dependencies` and `peerDependencies` by `package.json`
 
-##### Versing
+**Versing**
 - Synchronize versions of packages in all workspaces
 - Bump packages to a specific version by the `.workspaces` of `package.json`
 - Bump versions by analyzing `dependencies` and `peerDependencies` of the workspace
@@ -398,7 +398,7 @@ You can now use [Turborepo](https://turbo.build/repo) to easily build complex sy
 
 ![turborepo-excalidraw](https://user-images.githubusercontent.com/33840671/204613029-cc4eaef9-ed82-400f-aa65-a1f1ec5864c7.jpeg)
 
-Set up the `turbo.json`:
+Set up the `/turbo.json`:
 
 ```json
 {
@@ -430,7 +430,7 @@ Set up the `turbo.json`:
 }
 ```
 
-Set up the scripts of `package.json`:
+Set up the scripts of `/package.json`:
 ```json
 {
     "scripts": {
@@ -444,22 +444,82 @@ Set up the scripts of `package.json`:
 ```
 In most cases, `dev` and `build` cannot add the `--parallel` flag, which breaks their dependencies.
 
-From now on, you only need to run in the project root after opening the project.
+Typical workspace scripts for authoring a package:
+
+```json
+{
+    "scripts": {
+        "build": "aron pack",
+        "dev": "npm run build -- --watch",
+        "test": "jest",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint src"
+    }
+}
+```
+
+From now on, you only need to **run the command in the project root** after opening the project.
 
 ```bash
 npm run dev
 ```
+Build your application or package:
 ```bash
 npm run build
 ```
+Test your business logic or UI by running scripts:
 ```bash
 npm run test
 ```
+Find and fix problems in JavaScript code before building:
 ```bash
 npm run lint
 ```
+Improve reliability with TypeScript's type checking:
 ```bash
 npm run type-check
 ```
 
-## Automation
+### Automation
+
+With the well-configured build system, almost all commands can be automated through CI, taking GitHub Actions as an example:
+
+Build an automated test on `beta` and `main` branches:
+```yml
+name: Test
+on:
+    push:
+        branches:
+            - main
+            - beta
+
+jobs:
+    version:
+        timeout-minutes: 15
+        runs-on: ubuntu-20.04
+        strategy:
+            matrix:
+                node-version: [18.12.1]
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'npm'
+            - run: npm ci
+            - run: npm run build
+            - run: npm run test
+```
+The same goes for `lint` and `type-check`.
+
+While the `build` command will work with `deploy` and `release`, aronrepo builds a complete package release workflow and the tools needed during it.
+
+Next, check out the [Aron's semantic release config](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config)
+
+<a aria-label="overview" href="https://github.com/1aron/aronrepo">
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=212022&style=for-the-badge">
+    <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=f6f7f8&style=for-the-badge">
+    <img alt="NPM Version" src="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=f6f7f8&style=for-the-badge">
+</picture>
+</a>
