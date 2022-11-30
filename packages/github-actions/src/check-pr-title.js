@@ -2,7 +2,7 @@ const core = require('@actions/core')
 const github = require('@actions/github')
 const validateTitle = require('./validate-title')
 
-export async function checkPRTitle() {
+module.exports = async function checkPRTitle() {
     try {
         const contextName = core.getInput('pr-title-check-name')
         const successState = core.getInput('pr-title-check-valid-message')
