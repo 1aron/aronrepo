@@ -1,40 +1,48 @@
 {
-  "name": "aron-conventional-action",
-  "version": "0.1.0",
-  "description": "Ensure your PR title matches the Conventional Commits spec.",
-  "main": "src/index.js",
-  "scripts": {
-    "test": "jest src",
-    "release": "semantic-release"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/aslafy-z/conventional-pr-title-action.git"
-  },
-  "keywords": [
-    "github-action",
-    "conventional-commits"
-  ],
-  "author": "Zadkiel <hello@zadkiel.fr>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/aslafy-z/conventional-pr-title-action/issues"
-  },
-  "homepage": "https://github.com/aslafy-z/conventional-pr-title-action#readme",
-  "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1",
-    "aron-conventional-commits": "",
-    "conventional-changelog-aron": "",
-    "conventional-changelog-conventionalcommits": "^5.0.0",
-    "conventional-commit-types": "^3.0.0",
-    "conventional-commits-parser": "^3.2.4",
-    "npm-package-arg": "^10.0.0"
-  },
-  "devDependencies": {
-    "jest": "29.3.0"
-  },
-  "engines": {
-    "node": ">= 16.16.0"
-  }
+    "name": "aron-conventional-action",
+    "scripts": {
+        "test": "jest src",
+        "release": "semantic-release"
+    },
+    "license": "MIT",
+    "version": "0.1.0",
+    "description": "A conventional GitHub Actions built on aronrepo ecosystem",
+    "main": "src/index.js",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/aronrepo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/conventional-action"
+    },
+    "keywords": [
+        "conventional-commits",
+        "commitlint",
+        "pull-request",
+        "title",
+        "check",
+        "aron"
+    ],
+    "dependencies": {
+        "@actions/core": "^1.10.0",
+        "@actions/github": "^5.1.1",
+        "aron-conventional-commits": "",
+        "conventional-changelog-aron": "",
+        "conventional-changelog-conventionalcommits": "^5.0.0",
+        "conventional-commits-parser": "^3.2.4",
+        "npm-package-arg": "^10.0.0"
+    },
+    "devDependencies": {
+        "jest": "29.3.0"
+    },
+    "engines": {
+        "node": ">= 16.16.0"
+    }
 }

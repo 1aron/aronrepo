@@ -18,7 +18,7 @@ async function run() {
         const contextPullRequest = github.context.payload.pull_request
         if (!contextPullRequest) {
             throw new Error(
-                "This action can only be invoked in `pull_request` events. Otherwise the pull request can't be inferred."
+                'This action can only be invoked in `pull_request` events. Otherwise the pull request can\'t be inferred.'
             )
         }
 
@@ -65,6 +65,6 @@ async function run() {
         core.setOutput('error', error.message)
         core.setFailed(error.message)
     }
-};
+}
 
 run().catch(console.error)
