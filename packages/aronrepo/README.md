@@ -343,7 +343,7 @@ The command automatically bumps the version of all packages by scanning all work
          └─── package.json
 ```
 
-This command identifies whether it is a package in the workspace by scanning packages of the workspace and its dependencies that don't specify a version `""`, and replaces `""` with the next version.
+This command scans all workspaces for dependencies with unspecified versions `""` considered a project package, then replaces them with the next version.
 
 Now bump all dependent and workspace packages to a specified version:
 
@@ -388,7 +388,9 @@ aron version 1.2.0
 }
 ```
 
-Typically, you would use [semantic-release-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) with CI to automate the version and release commands.
+For version range, check out the [semver](https://github.com/npm/node-semver#versions)
+
+Typically, you would use [Aron's semantic release](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) with CI to automate the version and release commands.
 
 ## Build system for monorepo
 
@@ -514,7 +516,7 @@ The same goes for `lint` and `type-check`.
 
 While the `build` command will work with `deploy` and `release`, aronrepo builds a complete package release workflow and the tools needed during it.
 
-Next, check out the [Aron's semantic release config](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config)
+Next, check out the [Aron's semantic release](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config)
 
 <a aria-label="overview" href="https://github.com/1aron/aronrepo#ecosystem">
 <picture>
