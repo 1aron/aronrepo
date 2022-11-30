@@ -99,15 +99,15 @@ program.command('pack [entryPaths...]')
                 formats.push('css')
             }
             if (pkg.main && !pkg.main.endsWith('.css')) {
-                addBuildTask([changeFilePath(pkg.main, options.srcdir, '.ts')], 'cjs')
+                addBuildTask([changeFilePath(pkg.main, options.srcdir, '.{tsx,ts}')], 'cjs')
                 formats.push('cjs')
             }
             if (pkg.module) {
-                addBuildTask([changeFilePath(pkg.module, options.srcdir, '.ts')], 'esm')
+                addBuildTask([changeFilePath(pkg.module, options.srcdir, '.{tsx,ts}')], 'esm')
                 formats.push('esm')
             }
             if (pkg.browser) {
-                addBuildTask([changeFilePath(pkg.browser, options.srcdir, '.ts')], 'iife')
+                addBuildTask([changeFilePath(pkg.browser, options.srcdir, '.{tsx,ts}')], 'iife')
                 formats.push('iife')
             }
             if (!tasks.length) {

@@ -1,7 +1,6 @@
 {
-    "name": "cjs-esm-iife-type",
+    "name": "tsx",
     "main": "dist/index.cjs",
-    "browser": "dist/index.browser.js",
     "module": "dist/index.mjs",
     "types": "dist/index.d.ts",
     "jsnext:main": "dist/index.mjs",
