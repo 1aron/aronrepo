@@ -1,13 +1,13 @@
 {
     "scripts": {
         "install": "npm ls --link=true",
+        "build": "turbo run build",
         "build:clean": "rm -rf ./packages/**/*dist && turbo run build --force --no-cache",
-        "build": "turbo run build:cjs build:esm build:type --parallel",
-        "dev": "turbo run build:cjs build:esm build:type --parallel --no-cache -- --watch",
         "check": "turbo run test lint type-check --parallel",
         "test": "turbo run test --parallel",
         "lint": "turbo run lint --parallel",
         "type-check": "turbo run type-check",
+        "dev": "turbo run dev",
         "version": "node ./packages/aronrepo/dist/bin/index version",
         "analyze:commit": "semantic-release --debug",
         "prepare": "husky install"
@@ -22,6 +22,7 @@
     "devDependencies": {
         "@types/fs-extra": "^9.0.13",
         "@types/node": "^18.11.9",
+        "concurrently": "^7.5.0",
         "eslint-plugin-react-hooks": "^4.6.0",
         "husky": "^8.0.0",
         "jest-environment-jsdom": "^29.3.1",

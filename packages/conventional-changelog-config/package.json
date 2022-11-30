@@ -4,6 +4,8 @@
         "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --minify --sourcemap --platform=node",
         "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --minify --sourcemap --platform=node",
         "build:type": "tsc --emitDeclarationOnly --preserveWatchOutput",
+        "build": "conc 'npm:build:*'",
+        "dev": "conc 'npm:build:* -- --watch'",
         "test": "jest",
         "type-check": "tsc --noEmit",
         "lint": "eslint src"
