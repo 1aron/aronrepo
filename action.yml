@@ -1,6 +1,6 @@
-name: Aronrepo
+name: Aron Actions
 author: Aron <aron@master.co>
-description: A conventional GitHub Actions for aronrepo ecosystem
+description: A set of GitHub Actions for aronrepo ecosystem
 inputs:
     pr-title-check-valid-message:
         description: Description of the status check if validation succeeds.
