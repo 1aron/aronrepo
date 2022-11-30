@@ -55,11 +55,12 @@
 ## Features
 
 ##### Monorepo
-![turbo-your-monorepo-excalidraw](https://user-images.githubusercontent.com/33840671/204612389-1dc6ac11-ee16-46a4-9d24-fcfa7aa1085c.jpeg)
 - Using a high-performance build system —— [Turborepo](https://turbo.build/repo)
 - Run the `build`, `dev`, `test`, `lint` commands across all workspaces
 - Remember what you've built and skip the stuff that's already been computed
 - Multiple workspaces work simultaneously, just like one workspace used to.
+
+![turbo-your-monorepo-excalidraw](https://user-images.githubusercontent.com/33840671/204612389-1dc6ac11-ee16-46a4-9d24-fcfa7aa1085c.jpeg)
 
 ##### Packing
 - An extremely fast bundler built on top of [esbuild](https://esbuild.github.io/)
@@ -389,12 +390,13 @@ aron version 1.2.0
 
 Typically, you would use [semantic-release-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) with CI to automate the version and release commands.
 
-## Monorepo Setup
+## Build system for monorepo
 
 Most workspace packages will pre-set script commands, such as `build`, `test`, and `lint`. Since features depend on each other, builds will be executed sequentially.
 
+You can now use [Turborepo](https://turbo.build/repo) to easily build complex systems and run commands in one-linear.
+
 ![turborepo-excalidraw](https://user-images.githubusercontent.com/33840671/204613029-cc4eaef9-ed82-400f-aa65-a1f1ec5864c7.jpeg)
-*You can now use [Turborepo](https://turbo.build/repo) to easily build complex systems and improve development performance.*
 
 Set up the `turbo.json`:
 
@@ -442,13 +444,11 @@ Set up the scripts of `package.json`:
 ```
 In most cases, `dev` and `build` cannot add the `--parallel` flag, which breaks their dependencies.
 
-From now on all you need to do to open a project is to run in root:
+From now on, you only need to run in the project root after opening the project.
 
 ```bash
 npm run dev
 ```
-
-And the commands below are usually automated through CI:
 ```bash
 npm run build
 ```
@@ -461,3 +461,5 @@ npm run lint
 ```bash
 npm run type-check
 ```
+
+## Automation
