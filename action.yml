@@ -1,0 +1,26 @@
+name: aron-action
+author: Aron <aron@master.co>
+description: Aron's action
+inputs:
+  success-state:
+    description: Description of the status check if validation succeeds.
+    required: false
+    default: Title follows the specification.
+  failure-state:
+    description: Description of the status check if validation fails.
+    required: false
+    default: Title does not follow the specification.
+  context-name:
+    description: Persistent status check context key
+    required: false
+    default: conventional-pr-title
+  target-url:
+    description: URL to be used when linking the "Details" in the actions overview.
+    required: false
+    default: https://www.conventionalcommits.org/en/v1.0.0/#summary
+runs:
+  using: docker
+  image: packages/conventional-action/Dockerfile
+branding:
+  icon: shield
+  color: green
