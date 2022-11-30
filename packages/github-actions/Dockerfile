@@ -1,6 +1,6 @@
 FROM node:19-alpine
 
-ADD package.json package-lock.json /action/
+ADD package.json /action/
 RUN cd /action && npm i
 
 ADD src /action/src
