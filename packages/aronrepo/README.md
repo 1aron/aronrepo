@@ -516,7 +516,7 @@ While the `build` command will work with `deploy` and `release`, aronrepo builds
 
 Next, check out the [Aron's semantic release config](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config)
 
-<a aria-label="overview" href="https://github.com/1aron/aronrepo">
+<a aria-label="overview" href="https://github.com/1aron/aronrepo#ecosystem">
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=212022&style=for-the-badge">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/%E2%AC%85%20back-%20?color=f6f7f8&style=for-the-badge">
