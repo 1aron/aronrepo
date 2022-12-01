@@ -64,7 +64,7 @@
 ## Commit Message Header
 The header has a particular format that includes a `Type`, a `Target`, and a `Summary`:
 
-```
+```md
 Type(Target): Summary
   ┊     ┊
   ┊     └─⫸ Target: Workspace, Package or Role
@@ -89,7 +89,7 @@ Type(Target): Summary
 ### Bug Fixes
 A change to a system or product designed to handle a programming bug/glitch.
 
-```
+```md
 Fix: <Summary>
 Fix(Target): <Summary>
 ```
@@ -113,38 +113,38 @@ Fix: Fix issues by extracting hex codes with strict rules
 ```
 
 ### Performance Upgrades
-```
+```md
 Perf: <Summary>
 Perf(Target): <Summary>
 ```
-```
+```md
 Perf: Refresh cache when configuration changes
 ```
 
 ### Additions
-```
+```md
 Add: <Summary>
 Add(Target): <Summary>
 ```
-```
+```md
 Add(CSS): Option `.preference` for default theme
 ```
 
 ### Improvements
-```
+```md
 Improve: <Summary>
 Improve(Target): <Summary>
 ```
-```
+```md
 Improve(Home): Swap the order of **Feature** and **Pricing**
 ```
 
 ### Updates
-```
+```md
 Update: <Summary>
 Update(Target): <Summary>
 ```
-```
+```md
 Update(Team): The member's job title changed
 ```
 
@@ -156,28 +156,28 @@ Upgrade(Target): <Summary>
 Deps: <Summary>
 Deps(Target): <Summary>
 ```
-```
+```md
 Deps(Compiler): `@master/css` to `v2.0.0`
 ```
 
 ### Deprecations
-```
+```md
 Depreciate: <Summary>
 Depreciate(Target): <Summary>
 
 Drop: <Summary>
 Drop(Target): <Summary>
 ```
-```
+```md
 Drop(Normal CSS): `--font-mono` `--font-sans` `--font-serif` CSS variables
 ```
 
 ### Update README <sub><sup>Ungrouped<sup><sub>
 The `README.md` of the NPM package can only be updated by releasing a new version. At this time, it's very convenient to trigger the patch through:
-```
+```md
 Docs(README): <Summary>
 ```
-```
+```md
 Docs(README): Features section
 ```
 
@@ -188,7 +188,7 @@ Docs(README): Features section
 Bumping to the next major version should be triggered manually by the manager rather than relying on a flag in a given commit.
 
 <sub>Format</sub>
-```
+```md
 Bump(Major): <Summary>
 ```
 No clear motivation for `<Summary>` yet? Hit `Version` or the next version, like `v2.0.0`.
