@@ -95,7 +95,7 @@ Fix(Target): <Summary>
 ```
 <sub>🟢 Good for a monorepo</sub>
 ```
-Fix(CSS): Hex codes were incorrectly parsed as selectors
+Fix(CSS): HEX codes were incorrectly parsed as selectors
      ┊    ┊
      ┊    └─⫸ A brief description of the specific error
      ┊
@@ -105,7 +105,7 @@ Fix(CSS): Hex codes were incorrectly parsed as selectors
 ```
 Fix: Fix issues by extracting hex codes with strict rules
    ┊  ┊                 ┊
-   ┊  ┊                 └─⫸ Describe the problem rather than the solution.
+   ┊  ┊                 └─⫸ Describe the problem rather than the solution
    ┊  ┊
    ┊  └─⫸ Don't repeat the word `Fix` in Summary
    ┊
