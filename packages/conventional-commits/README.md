@@ -65,9 +65,9 @@
 The header has a particular format that includes a `Type`, a `Target`, and a `Summary`:
 
 ```
-       ┌─⫸ Target: Workspace, Package or Role
-       ┊
 Type(Target): Summary
+  ┊     ┊
+  ┊     └─⫸ Target: Workspace, Package or Role
   ┊
   └─⫸ Type: Bump, Feat, New, Perf, Add, Update, Improve, Fix, Depreciate, Drop, Docs, Upgrade, Deps, Revert, Example, Test, Refactor, Chore, Misc
 ```
@@ -77,32 +77,114 @@ Type(Target): Summary
 - `Target`
   - Sentense case only
   - Accept starting with Markdown characters \` \* \_ # ~
+  - Can be omitted in one workspace
 - `Summary`
   - Sentense case only
   - Accept starting with Markdown characters \` \* \_ # ~
   - No period at the end
 
-### Patch
+## Patch
+`Perf` `Add` `Update` `Improve` `Fix` `Depreciate` `Drop` `Upgrade` `Deps` `Revert` `Bump(Patch)` `Docs(README)`
 
-#### Bug Fixes
+### Bug Fixes
+A change to a system or product designed to handle a programming bug/glitch.
+
 ```
 Fix: <Summary>
 Fix(Target): <Summary>
 ```
-
-<sub>✅ Good for a monorepo</sub>
+<sub>🟢 Good for a monorepo</sub>
 ```
 Fix(CSS): Hex codes were incorrectly parsed as selectors
      ┊    ┊
-     ┊    └─⫸ A brief description of the specific error situation
+     ┊    └─⫸ A brief description of the specific error
      ┊
      └─⫸ CSS is a workspace package
 ```
+<sub>🔴 Bad for a monorepo</sub>
+```
+Fix: Fix issues by extracting hex codes with strict rules
+   ┊  ┊                 ┊
+   ┊  ┊                 └─⫸ Describe the problem rather than the solution.
+   ┊  ┊
+   ┊  └─⫸ Don't repeat the word `Fix` in Summary
+   ┊
+   └─⫸ Without a `(Target)`, the viewer cannot identify the participating workspace
+```
+
+### Performance Upgrades
+```
+Perf: <Summary>
+Perf(Target): <Summary>
+```
+```
+Perf: Refresh cache when configuration changes
+```
+
+### Additions
+```
+Add: <Summary>
+Add(Target): <Summary>
+```
+```
+Add(CSS): Option `.preference` for default theme
+```
+
+### Improvements
+```
+Improve: <Summary>
+Improve(Target): <Summary>
+```
+```
+Improve(Home): Swap the order of **Feature** and **Pricing**
+```
+
+### Updates
+```
+Update: <Summary>
+Update(Target): <Summary>
+```
+```
+Update(Team): The member's job title changed
+```
+
+### Dependency Upgrades
+```
+Upgrade: <Summary>
+Upgrade(Target): <Summary>
+
+Deps: <Summary>
+Deps(Target): <Summary>
+```
+```
+Deps(Compiler): `@master/css` to `v2.0.0`
+```
+
+### Deprecations
+```
+Depreciate: <Summary>
+Depreciate(Target): <Summary>
+
+Drop: <Summary>
+Drop(Target): <Summary>
+```
+```
+Drop(Normal CSS): `--font-mono` `--font-sans` `--font-serif` CSS variables
+```
+
+### Update README <sub><sup>Ungrouped<sup><sub>
+The `README.md` of the NPM package can only be updated by releasing a new version. At this time, it's very convenient to trigger the patch through:
+```
+Docs(README): <Summary>
+```
+```
+Docs(README): Features section
+```
 
 
-### Minor
+## Minor
 
-### Major
+## Major
 Bumping to the next major version should be triggered manually by the manager rather than relying on a flag in a given commit.
 
 <sub>Format</sub>
@@ -111,13 +193,11 @@ Bump(Major): <Summary>
 ```
 No clear motivation for `<Summary>` yet? Hit `Version` or the next version, like `v2.0.0`.
 
-<sub>✅ Good</sub>
+<sub>🟢 Good for a monorepo</sub>
 ```
 git commit --allow-empty -m 'Bump(Major): Master CSS v2.0'
 ```
 This is just a commit used to trigger version analysis, don't be obsessed with changes in files, so add `--allow-empty`
-
-### Others
 
 <br>
 
