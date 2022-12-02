@@ -22,8 +22,8 @@ const commits = [
     { type: 'Docs', release: false, group: 'Documentation' },
     { type: 'Docs', scope: 'README', release: 'patch' },
 
-    { type: 'Upgrade', release: 'patch', group: 'Dependency Upgrades' },
-    { type: 'Deps', release: 'patch', group: 'Dependency Upgrades' },
+    { type: 'Upgrade', release: 'patch', group: 'Upgrades' },
+    { type: 'Deps', release: 'patch', group: 'Upgrades' },
 
     { type: 'Revert', release: 'patch', group: 'Reversions' },
 

@@ -140,6 +140,7 @@ Improve(Home): Swap the order of **Feature** and **Pricing**
 ```
 
 ### Updates
+Static content updates such as articles, news, about, profile, etc.
 ```
 Update: <Summary>
 Update(Target): <Summary>
@@ -148,11 +149,16 @@ Update(Target): <Summary>
 Update(Team): The member's job title changed
 ```
 
-### Dependency Upgrades
+### Upgrades
+Upgrade environment, system, dependencies, etc.
 ```
 Upgrade: <Summary>
 Upgrade(Target): <Summary>
-
+```
+```
+Upgrade(Node): `v18.12.1`
+```
+```
 Deps: <Summary>
 Deps(Target): <Summary>
 ```
@@ -161,6 +167,7 @@ Deps(Compiler): `@master/css` to `v2.0.0`
 ```
 
 ### Deprecations
+Deprecate features, options, parameters, units, pages, etc.
 ```
 Depreciate: <Summary>
 Depreciate(Target): <Summary>
