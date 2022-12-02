@@ -20,7 +20,8 @@ module.exports = ({
             name: 'alpha',
             prerelease: true
         }
-    ]
+    ],
+    plugins = []
 } = {}) => {
     return {
         plugins: [
@@ -30,7 +31,8 @@ module.exports = ({
                 prepareCmd: scripts.prepare,
                 publishCmd: scripts.publish
             }],
-            ['@semantic-release/github', { assets }]
+            ['@semantic-release/github', { assets }],
+            ...plugins
         ],
         branches
     }
