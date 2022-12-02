@@ -23,7 +23,6 @@ const commits = [
     { type: 'Docs', scope: 'README', release: 'patch' },
 
     { type: 'Upgrade', release: 'patch', group: 'Upgrades' },
-    { type: 'Deps', release: 'patch', group: 'Upgrades' },
 
     { type: 'Revert', release: 'patch', group: 'Reversions' },
 

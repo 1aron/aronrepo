@@ -117,6 +117,7 @@ Fix: Fix issues by extracting hex codes with strict rules
 Perf: <Summary>
 Perf(Target): <Summary>
 ```
+Example
 ```
 Perf: Refresh cache when configuration changes
 ```
@@ -126,6 +127,7 @@ Perf: Refresh cache when configuration changes
 Add: <Summary>
 Add(Target): <Summary>
 ```
+Example
 ```
 Add(CSS): Option `.preference` for default theme
 ```
@@ -135,6 +137,7 @@ Add(CSS): Option `.preference` for default theme
 Improve: <Summary>
 Improve(Target): <Summary>
 ```
+Example
 ```
 Improve(Home): Swap the order of **Feature** and **Pricing**
 ```
@@ -145,6 +148,7 @@ Static content updates such as articles, news, about, profile, etc.
 Update: <Summary>
 Update(Target): <Summary>
 ```
+Example
 ```
 Update(Team): The member's job title changed
 ```
@@ -155,28 +159,45 @@ Upgrade environment, system, dependencies, etc.
 Upgrade: <Summary>
 Upgrade(Target): <Summary>
 ```
+Example
 ```
-Upgrade(Node): `v18.12.1`
-```
-```
-Deps: <Summary>
-Deps(Target): <Summary>
-```
-```
-Deps(Compiler): `@master/css` to `v2.0.0`
+Upgrade(Compiler): Dependency `@master/css@^2.0.0`
 ```
 
 ### Deprecations
 Deprecate features, options, parameters, units, pages, etc.
+
+- Alias: `Drop`
 ```
 Depreciate: <Summary>
 Depreciate(Target): <Summary>
-
-Drop: <Summary>
-Drop(Target): <Summary>
 ```
+
+Example
 ```
 Drop(Normal CSS): `--font-mono` `--font-sans` `--font-serif` CSS variables
+```
+
+### Reversions
+```
+Revert: "<Reverted Commit Header>"
+
+
+This reverts commit <Reverted Commit Hash>.
+```
+If you are using [Git Graph extension for VSCode](https://marketplace.visualstudio.com/items?itemName=mhutchie.git-graph), Clicking `Revert` will automatically generate the following format:
+```
+Revert "<Reverted Commit Header>"
+
+
+This reverts commit <Reverted Commit Hash>.
+```
+Example
+```
+Revert "Fix(Repo): PeerDependencies -> Dependencies"
+
+
+This reverts commit 779347237eef77e9137f88095e1fb813e5101c2b.
 ```
 
 ### Update README <sub><sup>Ungrouped<sup><sub>
@@ -187,7 +208,6 @@ Docs(README): <Summary>
 ```
 Docs(README): Features section
 ```
-
 
 ## Minor
 
