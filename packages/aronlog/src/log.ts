@@ -14,8 +14,7 @@ import { warn } from './warn'
 import { pass } from './pass'
 import { tree } from './tree'
 import { fail } from './fail'
-import { load } from './load'
-import type { Options, Ora } from 'ora'
+// import { load } from './load'
 
 const log = <{
     (strings: TemplateStringsArray, ...messages: any[]): void
@@ -31,7 +30,7 @@ const log = <{
     ok: Log,
     d: Log, delete: Log,
     a: Log, add: Log
-    load: (event: string, message?: string, options?: Options) => Ora
+    // load: (event: string, message?: string, options?: any) => any
     tree: (object: object | JSON) => void
 }>((strings, ...slots) => {
     handle({ strings, slots })
@@ -51,7 +50,7 @@ Object.assign(log, {
     conflict,
     ok,
     tree,
-    load,
+    // load,
     mark
 })
 

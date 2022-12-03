@@ -52,7 +52,6 @@
     "devDependencies": {
         "chalk": "^5.1.2",
         "dedent": "^0.7.0",
-        "object-treeify": "^3.3.1",
-        "ora": "^6.1.2"
+        "object-treeify": "^3.3.1"
     }
 }

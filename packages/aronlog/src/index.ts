@@ -14,7 +14,7 @@ import { warn } from './warn'
 import { pass } from './pass'
 import { tree } from './tree'
 import { fail } from './fail'
-import { load } from './load'
+// import { load } from './load'
 
 export default log
 export {
@@ -36,7 +36,7 @@ export {
     conflict,
     ok,
     // special
-    load,
+    // load,
     tree,
     mark
 }
