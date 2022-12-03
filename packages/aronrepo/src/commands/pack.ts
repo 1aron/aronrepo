@@ -52,7 +52,6 @@ program.command('pack [entryPaths...]')
             }
             tasks.push(
                 async () => {
-                    loading.clear()
                     const { metafile } = await build({
                         entryPoints: eachEntryPoints,
                         outExtension: isCSSTask
@@ -73,7 +72,6 @@ program.command('pack [entryPaths...]')
                         metafile: true,
                         format: isCSSTask ? undefined : eachFormat
                     } as BuildOptions)
-                    loading.clear()
                     if (metafile) {
                         for (const outputFilePath in metafile.outputs) {
                             const eachOutput = metafile.outputs[outputFilePath]
@@ -120,7 +118,6 @@ program.command('pack [entryPaths...]')
             tasks.push(
                 () => new Promise<void>((resolve) => {
                     if (options.watch) {
-                        loading.stop()
                         log.i`${'type'} type declarations`
                     }
                     execaCommand(literal`
@@ -135,7 +132,6 @@ program.command('pack [entryPaths...]')
                             process.exit()
                         })
                         .finally(() => {
-                            loading.clear()
                             log.i`${'type'} type declarations`
                             resolve()
                         })
@@ -147,10 +143,9 @@ program.command('pack [entryPaths...]')
         }
         log.tree(options)
         const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
-        const loading = log.load(event, options.watch ? ' ' : formatLogText)
+        log.info`${event} ${options.watch ? ' ' : formatLogText}`
         await pAll(tasks)
         if (!options.watch) {
-            loading.stop()
             log.success`${'Success'} ${formatLogText} ${`.${options.outdir}.`}`
             console.log('')
         }
