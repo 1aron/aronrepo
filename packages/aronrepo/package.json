@@ -49,6 +49,7 @@
         "execa": "^6.1.0",
         "fast-glob": "^3.2.12",
         "fs-extra": "^10.1.0",
+        "normalize-path": "^3.0.0",
         "p-all": "^4.0.0",
         "pretty-bytes": "^6.0.0",
         "semantic-release-config-aron": ""

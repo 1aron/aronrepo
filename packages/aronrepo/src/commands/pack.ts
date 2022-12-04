@@ -11,6 +11,7 @@ import { changeFilePath } from '../utils/change-file-path'
 import literal from '@master/literal'
 import type { PackageJson } from 'pkg-types'
 import prettyBytes from 'pretty-bytes'
+import normalizePath from 'normalize-path'
 
 program.command('pack [entryPaths...]')
     .allowUnknownOption()
@@ -44,7 +45,9 @@ program.command('pack [entryPaths...]')
         const tasks = []
         const event = options.watch ? 'watching' : 'building'
         const addBuildTask = async (eachEntries: string[], eachFormat: string) => {
-            const eachEntryPoints = fg.sync([...new Set(eachEntries)])
+            const eachEntryPoints = fg.sync(
+                [...new Set(eachEntries)].map((eachEntry) => normalizePath(eachEntry))
+            )
             const isCSSTask = eachFormat === 'css'
             if (!eachEntryPoints.length) {
                 log.e`${eachFormat} Cannot find any entry file specified ${markJoin(eachEntries)}`
