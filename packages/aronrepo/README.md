@@ -482,11 +482,11 @@ Improve reliability with TypeScript's type checking:
 npm run type-check
 ```
 
-### Automation
+### Continuous Integration
 
 With the well-configured build system, almost all commands can be automated through CI, taking GitHub Actions as an example:
 
-Build an automated test on `beta` and `main` branches:
+Build automated tests on the `beta`, the `main`, and the pull request stream:
 ```yml
 name: Test
 on:
@@ -494,6 +494,10 @@ on:
         branches:
             - main
             - beta
+    pull_request_target:
+        types:
+            - opened
+            - synchronize
 
 jobs:
     version:
@@ -517,6 +521,8 @@ The same goes for `lint` and `type-check`.
 While the `build` command will work with `deploy` and `release`, aronrepo builds a complete package release workflow and the tools needed during it.
 
 Next, check out the [Aron's semantic release](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config)
+
+<br>
 
 <a aria-label="overview" href="https://github.com/1aron/aronrepo#ecosystem">
 <picture>
