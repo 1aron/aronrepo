@@ -44,7 +44,7 @@ program.command('pack [entryPaths...]')
         }, this.opts())
         const tasks = []
         const event = options.watch ? 'watching' : 'building'
-        const addBuildTask = async (eachEntries: string[], eachFormat: string) => {
+        const addBuildTask = async (eachEntries: string[], eachFormat: string, eachExt?: string) => {
             const eachEntryPoints = fg.sync(
                 [...new Set(eachEntries)].map((eachEntry) => normalizePath(eachEntry))
             )
@@ -59,7 +59,11 @@ program.command('pack [entryPaths...]')
                         entryPoints: eachEntryPoints,
                         outExtension: isCSSTask
                             ? { '.css': '.css' }
-                            : { '.js': { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat] },
+                            : {
+                                '.js': eachExt
+                                    ? eachExt
+                                    : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat]
+                            },
                         external: externalDependencies,
                         watch: options.watch ? {
                             onRebuild(error, result) {
@@ -100,15 +104,15 @@ program.command('pack [entryPaths...]')
                 formats.push('css')
             }
             if (pkg.main && !pkg.main.endsWith('.css')) {
-                addBuildTask([changeFilePath(pkg.main, options.srcdir, '.{tsx,ts}')], 'cjs')
+                addBuildTask([changeFilePath(pkg.main, options.srcdir, '.{tsx,ts}')], 'cjs', path.extname(pkg.main))
                 formats.push('cjs')
             }
             if (pkg.module) {
-                addBuildTask([changeFilePath(pkg.module, options.srcdir, '.{tsx,ts}')], 'esm')
+                addBuildTask([changeFilePath(pkg.module, options.srcdir, '.{tsx,ts}')], 'esm', path.extname(pkg.module))
                 formats.push('esm')
             }
             if (pkg.browser) {
-                addBuildTask([changeFilePath(pkg.browser, options.srcdir, '.{tsx,ts}')], 'iife')
+                addBuildTask([changeFilePath(pkg.browser, options.srcdir, '.{tsx,ts}')], 'iife', path.extname(pkg.browser))
                 formats.push('iife')
             }
             if (!tasks.length) {
