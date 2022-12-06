@@ -7,19 +7,14 @@ it('detects valid PR titles', async () => {
         'Feat: Add feature',
         'Feat: Add feature\n\nBREAKING CHANGE: Add feature',
         'Refactor: Internal cleanup',
-        'Feat: Add feature with breaking change'
+        'Feat: Add feature with breaking change',
+        'Update README.md'
     ]
 
     for (let index = 0; index < inputs.length; index++) {
         const input = inputs[index]
         await validateTitle(input)
     }
-})
-
-it('throws for PR titles without a type', async () => {
-    await expect(validateTitle('Fix bug')).rejects.toThrow(
-        /No release type found in pull request title "Fix bug"./
-    )
 })
 
 it('throws for PR titles with an unknown type', async () => {
