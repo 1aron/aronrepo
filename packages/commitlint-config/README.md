@@ -71,7 +71,7 @@ extends: aron
 Use Husky to register Git Hooks to automatically check whether it is legal before committing.
 
 ```
-npx husky add .husky/commit-msg 'npx --no-install commitlint --edit {$1}'
+npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
 ```
 
 ### package.json
