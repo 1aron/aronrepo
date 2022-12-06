@@ -1,5 +1,8 @@
 {
     "name": "commitlint-config-aron",
+    "scripts": {
+        "test": "jest"
+    },
     "license": "MIT",
     "description": "Aron's commitlint config",
     "author": {
