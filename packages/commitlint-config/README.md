@@ -78,6 +78,13 @@ npx husky install
 npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
 ```
 
+Check if the `.husky` is successfully generated in project root:
+```diff
++ └── .husky
++     ├─── _
++     └─── commit-msg
+```
+
 ### package.json
 Pre-commit checks via Git Hook are only enabled when other team members clone the project and run `npm install`.
 
