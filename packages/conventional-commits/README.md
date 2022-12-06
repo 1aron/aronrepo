@@ -61,6 +61,8 @@
 - Groups are used to group changelogs
 - This also applies to the [conventional-changelog](https://github.com/conventional-changelog) ecosystem
 
+<br>
+
 ## Commit Message Header
 The header has a particular format that includes a `Type`, a `Target`, and a `Summary`:
 
@@ -69,7 +71,7 @@ Type(Target): Summary
   ┊     ┊
   ┊     └─⫸ Target: Workspace, Package or Role
   ┊
-  └─⫸ Type: Bump, Feat, New, Perf, Add, Update, Improve, Fix, Depreciate, Drop, Docs, Upgrade, Deps, Revert, Example, Test, Refactor, Chore, Misc
+  └─⫸ Type: Bump, Feat, New, Perf, Add, Update, Improve, Fix, Depreciate, Drop, Docs, Upgrade, Revert, Example, Test, Refactor, Chore, Misc
 ```
 
 - `Type`
@@ -86,11 +88,13 @@ Type(Target): Summary
 ## Semver Commits
 Such commits result in version bumps.
 
-## Patch
+### Patch
 `Perf` `Add` `Update` `Improve` `Fix` `Depreciate` `Drop` `Upgrade` `Revert` `Bump(Patch)` `Docs(README)`
 
-### Bug Fixes
-A change to a system or product designed to handle a programming bug/glitch.
+---
+
+#### 📝 Bug Fixes
+`Changelog` `+0.0.1` A change to a system or product designed to handle a programming bug/glitch.
 
 ```
 Fix: <Summary>
@@ -115,7 +119,11 @@ Fix: Fix issues by extracting hex codes with strict rules
    └─⫸ Without a `(Target)`, the viewer cannot identify the participating workspace
 ```
 
-### Performance Upgrades
+---
+
+#### 📝 Performance Upgrades
+`Changelog` `+0.0.1`
+
 ```
 Perf: <Summary>
 Perf(Target): <Summary>
@@ -125,7 +133,11 @@ Example
 Perf: Refresh cache when configuration changes
 ```
 
-### Additions
+---
+
+#### 📝 Additions
+`Changelog` `+0.0.1`
+
 ```
 Add: <Summary>
 Add(Target): <Summary>
@@ -135,7 +147,11 @@ Example
 Add(CSS): Option `.preference` for default theme
 ```
 
-### Improvements
+---
+
+#### 📝 Improvements
+`Changelog` `+0.0.1`
+
 ```
 Improve: <Summary>
 Improve(Target): <Summary>
@@ -145,8 +161,10 @@ Example
 Improve(Home): Swap the order of **Feature** and **Pricing**
 ```
 
-### Updates
-Static content updates such as articles, news, about, profile, etc.
+---
+
+#### 📝 Updates
+`Changelog` `+0.0.1` Static content updates such as articles, news, about, profile, etc.
 ```
 Update: <Summary>
 Update(Target): <Summary>
@@ -156,8 +174,10 @@ Example
 Update(Team): The member's job title changed
 ```
 
-### Upgrades
-Upgrade environment, system, dependencies, etc.
+---
+
+#### 📝 Upgrades
+`Changelog` `+0.0.1` Upgrade environment, system, dependencies, etc.
 ```
 Upgrade: <Summary>
 Upgrade(Target): <Summary>
@@ -167,10 +187,10 @@ Example
 Upgrade(Compiler): Dependency `@master/css@^2.0.0`
 ```
 
-### Deprecations
-Deprecate features, options, parameters, units, pages, etc.
+---
 
-- Alias: `Drop`
+#### 📝 Deprecations
+`Changelog` `+0.0.1` `Alias: Drop` Deprecate features, options, parameters, units, pages, etc.
 ```
 Depreciate: <Summary>
 Depreciate(Target): <Summary>
@@ -181,7 +201,11 @@ Example
 Drop(Normal CSS): `--font-mono` `--font-sans` `--font-serif` CSS variables
 ```
 
-### Reversions
+---
+
+#### 📝 Reversions
+`Changelog` `+0.0.1`
+
 ```
 Revert: "<Reverted Commit Header>"
 
@@ -203,8 +227,10 @@ Revert "Fix(Repo): PeerDependencies -> Dependencies"
 This reverts commit 779347237eef77e9137f88095e1fb813e5101c2b.
 ```
 
-### Update README <sub><sup>Ungrouped<sup><sub>
-The `README.md` of the NPM package can only be updated by releasing a new version. At this time, it's very convenient to trigger the patch through:
+---
+
+#### 📝 Update README <sub><sup>Ungrouped<sup><sub>
+`+0.0.1` The `README.md` of the NPM package can only be updated by releasing a new version. At this time, it's very convenient to trigger the patch through:
 ```
 Docs(README): <Summary>
 ```
@@ -213,8 +239,10 @@ Docs(README): Features section
 ```
 It's reasonable to update `README.md` by bumping to the patch version because the documentation is part of this version.
 
-### Manual
-Manually bump a patch version due to special reasons.
+---
+
+#### 📝 Manual
+`+0.0.1` Manually bump a patch version due to special reasons.
 ```
 Bump(Patch): <Summary>
 ```
@@ -223,11 +251,15 @@ Example
 git commit --allow-empty -m 'Bump(Patch): `+0.0.1`'
 ```
 
-## Minor
+<br>
+
+### Minor
 `Feat` `New` `Bump(Minor)`
 
-### New Features
-- Alias: `New`
+---
+
+#### 📝 New Features
+`Changelog` `+0.1.0` `Alias: New`
 ```
 Feat: <Summary>
 Feat(Target): <Summary>
@@ -237,8 +269,10 @@ Example
 New(Syntax): A new shorthand `WxH` for `width:` and `height:`
 ```
 
-### Manual
-Manually bump a minor version due to special reasons.
+---
+
+#### 📝 Manual
+`+0.1.0` Manually bump a minor version due to special reasons.
 ```
 Bump(Minor): <Summary>
 ```
@@ -247,7 +281,9 @@ Example
 git commit --allow-empty -m 'Bump(Minor): `+0.1.0`'
 ```
 
-## Major
+<br>
+
+### Major
 Bumping to the next major version should be triggered manually by the manager rather than relying on a flag in a given commit.
 
 <sub>Format</sub>
@@ -262,12 +298,16 @@ git commit --allow-empty -m 'Bump(Major): Master CSS v2.0'
 ```
 This is just a commit used to trigger version analysis, don't be obsessed with changes in files, so add `--allow-empty`
 
+<br>
+
 ## Other Commits
 Trivial routine commits include test cases, examples, and environment configurations.
 
 `Docs` `Tests` `Example` `Chore` `Misc`
 
-### Documentation
+---
+
+#### 📝 Documentation
 ```
 Docs: <Summary>
 Docs(Target): <Summary>
@@ -277,7 +317,9 @@ Example
 Docs(CSS): Initialize Master CSS with custom configuration
 ```
 
-### Tests
+---
+
+#### 📝 Tests
 ```
 Test: <Summary>
 Test(Target): <Summary>
@@ -287,7 +329,9 @@ Example
 Test(Syntax): Check CSS rules for `WxH` output
 ```
 
-### Examples
+---
+
+#### 📝 Examples
 ```
 Example: <Summary>
 Example(Target): <Summary>
@@ -297,7 +341,9 @@ Example
 Example(Next.js 13): Update to layouts RFC
 ```
 
-### Miscellaneous
+---
+
+#### 📝 Miscellaneous
 - Alias: `Chore` or no prefix
 ```
 Misc: <Summary>
@@ -309,7 +355,7 @@ Example
 ```
 Chore: Update README.md
 ```
-I actually prefer no prefix, having to keep prefixing every frequent trivial item is very annoying, and marking trivial items doesn't make much sense.
+I prefer no prefix; having to keep prefixing every frequent trivial item is annoying, and marking trivial items doesn't make much sense.
 
 <sub>🟢 Better day-to-day development experience</sub>
 ```

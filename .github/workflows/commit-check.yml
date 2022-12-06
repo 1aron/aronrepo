@@ -1,4 +1,4 @@
-name: Type Check
+name: Commit Check
 on:
     push:
         branches:
@@ -24,5 +24,4 @@ jobs:
                   node-version: ${{ matrix.node-version }}
                   cache: 'npm'
             - run: npm ci
-            - run: npm run build
-            - run: npm run type-check
+            - run: npm run lint

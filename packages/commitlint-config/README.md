@@ -10,7 +10,7 @@
         </picture>
     </a>
 </p>
-<p align="center">Aron's ESLint config</p>
+<p align="center">Check your commits with Aron's commitlint config</p>
 
 <p align="center">
     <a aria-label="overview" href="https://github.com/1aron/aronrepo">
@@ -58,17 +58,79 @@
 
 Skip if you have already run `npm install aronrepo`:
 ```
-npm install eslint-config-aron -D
+npm install commitlint-config-aron -D
 ```
 
 ### Configuration
-Create a `.eslintrc.yml` file in your project root and extend `aron`:
+Create a `.commitlintrc.yml` file in your project root and extend `aron`:
 ```yml
 extends: aron
 ```
-For full configuration, check out the [`eslintrc.js` source code](https://github.com/1aron/aronrepo/blob/beta/packages/eslint-config/.eslintrc.js)
 
-That's it.
+### Husky
+Use Husky to register Git Hooks to automatically check whether it is legal before committing.
+
+```
+npx husky add .husky/commit-msg 'npx --no-install commitlint --edit {$1}'
+```
+
+### package.json
+Save the `commit-check` command for teamwork and CI:
+
+```json
+{
+    "scripts": {
+        "commit-check": "commitlint --edit ${1}"
+    }
+}
+```
+
+### Continuous Integration
+Typically, you double-check commits before publishing and on relevant workflows, using GitHub Actions as an example:
+
+[Create a workflow](https://docs.github.com/en/actions/quickstart) for commit check `/.github/workflows/commit-check.yml`:
+```yml
+name: Commit Check
+on:
+    push:
+        branches:
+            - '**'
+    pull_request_target:
+        types:
+            - opened
+            - reopened
+            - edited
+            - synchronize
+
+jobs:
+    check:
+        timeout-minutes: 15
+        runs-on: ubuntu-20.04
+        strategy:
+            matrix:
+                node-version: [18.12.1]
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'npm'
+            - run: npm ci
+            - run: npm run commit-check
+```
+
+## Commit Header Format
+The header has a particular format that includes a `Type`, a `Target`, and a `Summary`:
+
+```
+Type(Target): Summary
+  ┊     ┊
+  ┊     └─⫸ Target: Workspace, Package or Role
+  ┊
+  └─⫸ Type: Bump, Feat, New, Perf, Add, Update, Improve, Fix, Depreciate, Drop, Docs, Upgrade, Revert, Example, Test, Refactor, Chore, Misc
+```
+
+For the full documentation, check out the [Aron's conventional commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits)
 
 <br>
 

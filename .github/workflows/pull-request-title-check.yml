@@ -1,8 +1,5 @@
-name: Lint
+name: Check title of pull request
 on:
-    push:
-        branches:
-            - '**'
     pull_request_target:
         types:
             - opened
@@ -11,17 +8,16 @@ on:
             - synchronize
 
 jobs:
-    lint:
+    check:
         timeout-minutes: 15
         runs-on: ubuntu-20.04
         strategy:
             matrix:
                 node-version: [18.12.1]
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
+            - name: Aron Actions
+              uses: 1aron/aronrepo@latest
               with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: 'npm'
-            - run: npm ci
-            - run: npm run lint
+                  action: 'check-pull-request-title'
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

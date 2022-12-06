@@ -10,7 +10,7 @@
         </picture>
     </a>
 </p>
-<p align="center">Aron's ESLint config</p>
+<p align="center">Aron's semantic release config</p>
 
 <p align="center">
     <a aria-label="overview" href="https://github.com/1aron/aronrepo">
@@ -58,17 +58,54 @@
 
 Skip if you have already run `npm install aronrepo`:
 ```
-npm install eslint-config-aron -D
+npm install semantic-release-config-aron -D
 ```
 
 ### Configuration
-Create a `.eslintrc.yml` file in your project root and extend `aron`:
-```yml
-extends: aron
+Create a `release.config.js` file in your project root and extend `aron`:
+```js
+module.exports = {
+    extends: 'semantic-release-config-aron'
+}
 ```
-For full configuration, check out the [`eslintrc.js` source code](https://github.com/1aron/aronrepo/blob/beta/packages/eslint-config/.eslintrc.js)
 
-That's it.
+For full configuration, check out the [configure.js](https://github.com/1aron/aronrepo/blob/beta/packages/semantic-release-config/configure.js) file and [Aron's conventional commits for the release rules](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits)
+
+Since `.plugins` use arrays for configuration, even `extends` will override all preset plugins.
+
+So I provide a `configure(options)` API to allow you to set additional config friendly:
+```js
+const configure = require('semantic-release-config-aron/configure')
+
+module.exports = configure({
+    // for @semantic-release/commit-analyzer and @semantic-release/release-notes-generator preset
+    preset: 'aron',
+    // for @semantic-release/github assets
+    assets: [],
+    // for @semantic-release/commit-analyzer
+    scripts: {
+        prepare: 'npm run check && npm run build',
+        publish: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
+    },
+    branches: [
+        '+([0-9])?(.{+([0-9]),x}).x',
+        'main',
+        'next',
+        'next-major',
+        {
+            name: 'beta',
+            prerelease: true
+        },
+        {
+            name: 'alpha',
+            prerelease: true
+        }
+    ],
+    // additional plugins
+    plugins: []
+})
+```
+The above example is equivalent to the `extends: 'semantic-release-config-aron'` preset.
 
 <br>
 

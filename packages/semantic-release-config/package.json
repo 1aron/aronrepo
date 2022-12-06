@@ -35,9 +35,11 @@
         "rules.js",
         "release.config.js"
     ],
-    "dependencies": {
+    "peerDependencies": {
         "@semantic-release/exec": "^6.0.3",
-        "semantic-release": "^19.0.5",
+        "semantic-release": "^19.0.5"
+    },
+    "dependencies": {
         "aron-conventional-commits": "",
         "conventional-changelog-aron": ""
     }
