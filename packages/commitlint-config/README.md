@@ -67,7 +67,7 @@ Create a `.commitlintrc.yml` file in your project root and extend `aron`:
 extends: aron
 ```
 
-### Husky
+### Set up Husky
 Use Husky to register Git Hooks to automatically check whether it is legal before committing.
 
 ```
@@ -85,6 +85,8 @@ Check if the `.husky` is successfully generated in project root:
 +     └─── commit-msg
 ```
 
+From now on, you just need to commit; the check happens after the commit. If everything is legal, there will be no prompts.
+
 ### package.json
 Pre-commit checks via Git Hook are only enabled when other team members clone the project and run `npm install`.
 
@@ -98,11 +100,11 @@ Save `commit-check` and `husky install` commands for teamwork and CI:
 }
 ```
 
-Now try `npm run commit-check`:
+`npm run commit-check`:
 
 <img width="581" alt="commit-check" src="https://user-images.githubusercontent.com/33840671/205993191-bf48b3ef-8884-4ea3-991c-4ec782151d4b.png">
 
-### Continuous Integration
+## Continuous Integration
 Typically, you double-check commits before publishing and on relevant workflows, using GitHub Actions as an example:
 
 [Create a workflow](https://docs.github.com/en/actions/quickstart) for commit check `/.github/workflows/commit-check.yml`:
