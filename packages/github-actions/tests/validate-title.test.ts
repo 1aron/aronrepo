@@ -7,8 +7,7 @@ it('detects valid PR titles', async () => {
         'Feat: Add feature',
         'Feat: Add feature\n\nBREAKING CHANGE: Add feature',
         'Refactor: Internal cleanup',
-        'Feat: Add feature with breaking change',
-        'Update README.md'
+        'Feat: Add feature with breaking change'
     ]
 
     for (let index = 0; index < inputs.length; index++) {
