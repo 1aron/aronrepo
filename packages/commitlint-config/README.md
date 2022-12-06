@@ -78,7 +78,7 @@ npx husky install
 npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
 ```
 
-Check if the `.husky` is successfully generated in project root:
+Check if the `.husky` is successfully generated in the project root:
 ```diff
 + └── .husky
 +     ├─── _
