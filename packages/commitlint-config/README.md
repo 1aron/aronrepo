@@ -71,18 +71,26 @@ extends: aron
 Use Husky to register Git Hooks to automatically check whether it is legal before committing.
 
 ```
+npx husky install
+```
+
+```
 npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
 ```
 
 ### package.json
-Save the `commit-check` command for teamwork and CI:
+Pre-commit checks via Git Hook are only enabled when other team members clone the project and run `npm install`.
+
+Save `commit-check` and `husky install` commands for teamwork and CI:
 ```json
 {
     "scripts": {
+        "install": "husky install",
         "commit-check": "commitlint --from=HEAD~1 --verbose"
     }
 }
 ```
+
 Now try `npm run commit-check`:
 
 <img width="581" alt="commit-check" src="https://user-images.githubusercontent.com/33840671/205993191-bf48b3ef-8884-4ea3-991c-4ec782151d4b.png">

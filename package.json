@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "install": "npm ls --link=true",
+        "install": "husky install && npm ls --link=true",
         "build": "turbo run build",
         "build:clean": "rm -rf ./packages/**/*dist && turbo run build --force --no-cache",
         "check": "npm run commit-check && turbo run test lint type-check --parallel",
