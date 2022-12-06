@@ -91,9 +91,7 @@ Such commits result in version bumps.
 ### Patch
 `Perf` `Add` `Update` `Improve` `Fix` `Depreciate` `Drop` `Upgrade` `Revert` `Bump(Patch)` `Docs(README)`
 
----
-
-#### 📝 Bug Fixes
+#### Bug Fixes
 `Changelog` `+0.0.1` A change to a system or product designed to handle a programming bug/glitch.
 
 ```
@@ -119,9 +117,7 @@ Fix: Fix issues by extracting hex codes with strict rules
    └─⫸ Without a `(Target)`, the viewer cannot identify the participating workspace
 ```
 
----
-
-#### 📝 Performance Upgrades
+#### Performance Upgrades
 `Changelog` `+0.0.1`
 
 ```
@@ -133,9 +129,7 @@ Example
 Perf: Refresh cache when configuration changes
 ```
 
----
-
-#### 📝 Additions
+#### Additions
 `Changelog` `+0.0.1`
 
 ```
@@ -147,9 +141,7 @@ Example
 Add(CSS): Option `.preference` for default theme
 ```
 
----
-
-#### 📝 Improvements
+#### Improvements
 `Changelog` `+0.0.1`
 
 ```
@@ -161,9 +153,7 @@ Example
 Improve(Home): Swap the order of **Feature** and **Pricing**
 ```
 
----
-
-#### 📝 Updates
+#### Updates
 `Changelog` `+0.0.1` Static content updates such as articles, news, about, profile, etc.
 ```
 Update: <Summary>
@@ -174,9 +164,7 @@ Example
 Update(Team): The member's job title changed
 ```
 
----
-
-#### 📝 Upgrades
+#### Upgrades
 `Changelog` `+0.0.1` Upgrade environment, system, dependencies, etc.
 ```
 Upgrade: <Summary>
@@ -187,9 +175,7 @@ Example
 Upgrade(Compiler): Dependency `@master/css@^2.0.0`
 ```
 
----
-
-#### 📝 Deprecations
+#### Deprecations
 `Changelog` `+0.0.1` `Alias: Drop` Deprecate features, options, parameters, units, pages, etc.
 ```
 Depreciate: <Summary>
@@ -201,9 +187,7 @@ Example
 Drop(Normal CSS): `--font-mono` `--font-sans` `--font-serif` CSS variables
 ```
 
----
-
-#### 📝 Reversions
+#### Reversions
 `Changelog` `+0.0.1`
 
 ```
@@ -227,9 +211,7 @@ Revert "Fix(Repo): PeerDependencies -> Dependencies"
 This reverts commit 779347237eef77e9137f88095e1fb813e5101c2b.
 ```
 
----
-
-#### 📝 Update README <sub><sup>Ungrouped<sup><sub>
+#### Update README <sub><sup>Ungrouped<sup><sub>
 `+0.0.1` The `README.md` of the NPM package can only be updated by releasing a new version. At this time, it's very convenient to trigger the patch through:
 ```
 Docs(README): <Summary>
@@ -239,9 +221,7 @@ Docs(README): Features section
 ```
 It's reasonable to update `README.md` by bumping to the patch version because the documentation is part of this version.
 
----
-
-#### 📝 Manual
+#### Manual
 `+0.0.1` Manually bump a patch version due to special reasons.
 ```
 Bump(Patch): <Summary>
@@ -251,14 +231,10 @@ Example
 git commit --allow-empty -m 'Bump(Patch): `+0.0.1`'
 ```
 
-<br>
-
 ### Minor
 `Feat` `New` `Bump(Minor)`
 
----
-
-#### 📝 New Features
+#### New Features
 `Changelog` `+0.1.0` `Alias: New`
 ```
 Feat: <Summary>
@@ -269,9 +245,7 @@ Example
 New(Syntax): A new shorthand `WxH` for `width:` and `height:`
 ```
 
----
-
-#### 📝 Manual
+#### Manual
 `+0.1.0` Manually bump a minor version due to special reasons.
 ```
 Bump(Minor): <Summary>
@@ -280,8 +254,6 @@ Example
 ```
 git commit --allow-empty -m 'Bump(Minor): `+0.1.0`'
 ```
-
-<br>
 
 ### Major
 Bumping to the next major version should be triggered manually by the manager rather than relying on a flag in a given commit.
@@ -298,16 +270,12 @@ git commit --allow-empty -m 'Bump(Major): Master CSS v2.0'
 ```
 This is just a commit used to trigger version analysis, don't be obsessed with changes in files, so add `--allow-empty`
 
-<br>
-
 ## Other Commits
 Trivial routine commits include test cases, examples, and environment configurations.
 
 `Docs` `Tests` `Example` `Chore` `Misc`
 
----
-
-#### 📝 Documentation
+#### Documentation
 ```
 Docs: <Summary>
 Docs(Target): <Summary>
@@ -317,9 +285,7 @@ Example
 Docs(CSS): Initialize Master CSS with custom configuration
 ```
 
----
-
-#### 📝 Tests
+#### Tests
 ```
 Test: <Summary>
 Test(Target): <Summary>
@@ -329,9 +295,7 @@ Example
 Test(Syntax): Check CSS rules for `WxH` output
 ```
 
----
-
-#### 📝 Examples
+#### Examples
 ```
 Example: <Summary>
 Example(Target): <Summary>
@@ -341,9 +305,7 @@ Example
 Example(Next.js 13): Update to layouts RFC
 ```
 
----
-
-#### 📝 Miscellaneous
+#### Miscellaneous
 - Alias: `Chore` or no prefix
 ```
 Misc: <Summary>
