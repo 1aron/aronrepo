@@ -1,5 +1,5 @@
 export default {
-    headerPattern: /^([A-Z]\w*)(?:\(([0-9A-Z`_#~].*)\))?: ([0-9A-Z`_#~].*)$/,
+    headerPattern: /^([A-Z]\w*)(?:\(([0-9A-Z`_#~].*)\))?(?::? ([0-9A-Z`_#~].*)$)?/,
     headerCorrespondence: [
         'type',
         'scope',

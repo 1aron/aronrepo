@@ -6,6 +6,7 @@ import { commits } from 'aron-conventional-commits'
 
 export default {
     transform: (commit, context) => {
+        console.log(context)
         const issues = []
         const conventionalCommit = commits.find(({ type }) => commit.type === type)
         if (commit.type === 'Revert' || commit.revert) {
@@ -15,6 +16,11 @@ export default {
              * To      Revert: `Feat(Scope): First feature`
              */
             commit.header = commit.header.replace(/(Revert|Revert:)\s"([\s\S]+?)"(.*)/, '$1 `$2`$3')
+        } else if (![':', '('].includes(commit.header[commit.type.length])) {
+            /**
+             * filter something like "New items"
+            */
+            return
         } else if (conventionalCommit && !conventionalCommit.hidden && conventionalCommit.group) {
             commit.type = conventionalCommit.group
         } else {
