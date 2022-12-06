@@ -76,14 +76,16 @@ npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
 
 ### package.json
 Save the `commit-check` command for teamwork and CI:
-
 ```json
 {
     "scripts": {
-        "commit-check": "commitlint --edit ${1}"
+        "commit-check": "commitlint --from=HEAD~1 --verbose"
     }
 }
 ```
+Now try `npm run commit-check`:
+
+<img width="581" alt="commit-check" src="https://user-images.githubusercontent.com/33840671/205993191-bf48b3ef-8884-4ea3-991c-4ec782151d4b.png">
 
 ### Continuous Integration
 Typically, you double-check commits before publishing and on relevant workflows, using GitHub Actions as an example:
@@ -118,7 +120,8 @@ jobs:
                   node-version: ${{ matrix.node-version }}
                   cache: 'npm'
             - run: npm ci
-            - run: npx --no -- commitlint --from=HEAD~1
+            - run: npm run commit-check
+
 ```
 
 ## Commit Header Format

@@ -28,4 +28,4 @@ jobs:
             - run: npm ci
             # The build is for this repo
             - run: npm run build
-            - run: npx --no -- commitlint --from=HEAD~1
+            - run: npm run commit-check
