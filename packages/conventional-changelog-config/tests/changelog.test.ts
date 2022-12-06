@@ -42,7 +42,10 @@ describe('aron preset', () => {
                 'Feat(Awesome): Addresses the issue brought up in #133',
                 'Feat(API): New option for test #88',
                 'Feat(Search): Issue brought up by @1aron! on Friday',
-                'Revert \\"Fix: Content not changed\\"'
+                'Revert \\"Fix: Content not changed\\"',
+                'new: lowercase type',
+                'New: lowercase summary',
+                'New starts with `New` and sentense case'
             ],
             (changelog) => {
                 expect(changelog).toMatch('Amazing new module')
