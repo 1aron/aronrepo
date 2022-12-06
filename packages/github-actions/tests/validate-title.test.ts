@@ -1,4 +1,4 @@
-const validateTitle = require('./validate-title')
+const validateTitle = require('../src/validate-title')
 
 it('detects valid PR titles', async () => {
     const inputs = [
