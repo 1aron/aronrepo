@@ -1,7 +1,7 @@
 {
     "name": "eslint-config-aron",
     "license": "MIT",
-    "description": "Aron's eslint config",
+    "description": "Aron's ESLint config",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",
