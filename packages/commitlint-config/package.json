@@ -4,7 +4,7 @@
         "test": "jest"
     },
     "license": "MIT",
-    "description": "Aron's commitlint config",
+    "description": "Check your commit with Aron's commitlint config",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",

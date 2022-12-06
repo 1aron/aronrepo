@@ -6,7 +6,7 @@
     },
     "license": "MIT",
     "version": "0.1.0",
-    "description": "A set of GitHub Actions for aronrepo ecosystem",
+    "description": "A set of GitHub Actions for aronrepo ecosystem includes PR title checks",
     "main": "src/index.js",
     "author": {
         "name": "Aron",
