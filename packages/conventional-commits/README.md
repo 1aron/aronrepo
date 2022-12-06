@@ -298,15 +298,22 @@ Example(Next.js 13): Update to layouts RFC
 ```
 
 ### Miscellaneous
-- Alias: `Chore`
+- Alias: `Chore` or no prefix
 ```
 Misc: <Summary>
 Misc(Target): <Summary>
+<Summary>
 ```
 
 Example
 ```
-Misc: Organize and categorize files
+Chore: Update README.md
+```
+I actually prefer no prefix, having to keep prefixing every frequent trivial item is very annoying, and marking trivial items doesn't make much sense.
+
+<sub>🟢 Better day-to-day development experience</sub>
+```
+Update README.md
 ```
 
 <br>
