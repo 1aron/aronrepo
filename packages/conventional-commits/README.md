@@ -87,7 +87,7 @@ Type(Target): Summary
 Such commits result in version bumps.
 
 ## Patch
-`Perf` `Add` `Update` `Improve` `Fix` `Depreciate` `Drop` `Upgrade` `Deps` `Revert` `Bump(Patch)` `Docs(README)`
+`Perf` `Add` `Update` `Improve` `Fix` `Depreciate` `Drop` `Upgrade` `Revert` `Bump(Patch)` `Docs(README)`
 
 ### Bug Fixes
 A change to a system or product designed to handle a programming bug/glitch.
@@ -224,6 +224,7 @@ git commit --allow-empty -m 'Bump(Patch): `+0.0.1`'
 ```
 
 ## Minor
+`Feat` `New` `Bump(Minor)`
 
 ### New Features
 - Alias: `New`
@@ -263,6 +264,8 @@ This is just a commit used to trigger version analysis, don't be obsessed with c
 
 ## Other Commits
 Trivial routine commits include test cases, examples, and environment configurations.
+
+`Docs` `Tests` `Example` `Chore` `Misc`
 
 ### Documentation
 ```
