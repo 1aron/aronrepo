@@ -34,6 +34,17 @@ test('Docs(README) -> +0.0.1 Patch', async () => {
     logSpy.mockRestore()
 })
 
+test('Update README.md -> No version bump', async () => {
+    const logSpy = createLogSpy()
+    const commits = commitFalsely('Update README.md')
+    const releaseType = await analyzeCommits(
+        { preset: 'aron', releaseRules },
+        { cwd: process.cwd(), commits, logger: console }
+    )
+    expect(releaseType).toBe(null)
+    logSpy.mockRestore()
+})
+
 test('Bump(Major) -> +1.0.0 Major', async () => {
     const logSpy = createLogSpy()
     const commits = commitFalsely('Bump(Major): Master CSS `v2.0.0`')
