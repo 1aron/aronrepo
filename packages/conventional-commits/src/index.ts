@@ -30,7 +30,7 @@ const commits = [
 
     { type: 'Test', release: false, group: 'Tests' },
 
-    { type: 'Refactor', release: false, group: 'Others' },
+    { type: 'Refactor', release: false, hidden: false },
     { type: 'Chore', release: false, hidden: false },
     { type: 'Misc', release: false, hidden: false }
 ]

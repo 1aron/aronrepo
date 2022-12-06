@@ -83,6 +83,9 @@ Type(Target): Summary
   - Accept starting with Markdown characters \` \* \_ # ~
   - No period at the end
 
+## Semver Commits
+Such commits result in version bumps.
+
 ## Patch
 `Perf` `Add` `Update` `Improve` `Fix` `Depreciate` `Drop` `Upgrade` `Deps` `Revert` `Bump(Patch)` `Docs(README)`
 
@@ -208,8 +211,40 @@ Docs(README): <Summary>
 ```
 Docs(README): Features section
 ```
+It's reasonable to update `README.md` by bumping to the patch version because the documentation is part of this version.
+
+### Manual
+Manually bump a patch version due to special reasons.
+```
+Bump(Patch): <Summary>
+```
+Example
+```
+git commit --allow-empty -m 'Bump(Patch): `+0.0.1`'
+```
 
 ## Minor
+
+### New Features
+- Alias: `New`
+```
+Feat: <Summary>
+Feat(Target): <Summary>
+```
+Example
+```
+New(Syntax): A new shorthand `WxH` for `width:` and `height:`
+```
+
+### Manual
+Manually bump a minor version due to special reasons.
+```
+Bump(Minor): <Summary>
+```
+Example
+```
+git commit --allow-empty -m 'Bump(Minor): `+0.1.0`'
+```
 
 ## Major
 Bumping to the next major version should be triggered manually by the manager rather than relying on a flag in a given commit.
@@ -225,6 +260,51 @@ No clear motivation for `<Summary>` yet? Hit `Version` or the next version, like
 git commit --allow-empty -m 'Bump(Major): Master CSS v2.0'
 ```
 This is just a commit used to trigger version analysis, don't be obsessed with changes in files, so add `--allow-empty`
+
+## Other Commits
+Trivial routine commits include test cases, examples, and environment configurations.
+
+### Documentation
+```
+Docs: <Summary>
+Docs(Target): <Summary>
+```
+Example
+```
+Docs(CSS): Initialize Master CSS with custom configuration
+```
+
+### Tests
+```
+Test: <Summary>
+Test(Target): <Summary>
+```
+Example
+```
+Test(Syntax): Check CSS rules for `WxH` output
+```
+
+### Examples
+```
+Example: <Summary>
+Example(Target): <Summary>
+```
+Example
+```
+Example(Next.js 13): Update to layouts RFC
+```
+
+### Miscellaneous
+- Alias: `Chore`
+```
+Misc: <Summary>
+Misc(Target): <Summary>
+```
+
+Example
+```
+Misc: Organize and categorize files
+```
 
 <br>
 
