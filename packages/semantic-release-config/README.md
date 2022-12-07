@@ -78,11 +78,11 @@ So I provide a `configure(options)` API to allow you to set additional config fr
 const configure = require('semantic-release-config-aron/configure')
 
 module.exports = configure({
-    // for @semantic-release/commit-analyzer and @semantic-release/release-notes-generator preset
+    /* for @semantic-release/commit-analyzer and @semantic-release/release-notes-generator preset */
     preset: 'aron',
-    // for @semantic-release/github assets
+    /* for @semantic-release/github assets */
     assets: [],
-    // for @semantic-release/commit-analyzer
+    /* for @semantic-release/commit-analyzer */
     scripts: {
         prepare: 'npm run check && npm run build',
         publish: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
