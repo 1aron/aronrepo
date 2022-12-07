@@ -41,6 +41,7 @@
     },
     "dependencies": {
         "aron-conventional-commits": "",
-        "conventional-changelog-aron": ""
+        "conventional-changelog-aron": "",
+        "to-extend": "^1.0.1"
     }
 }

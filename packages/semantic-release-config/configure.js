@@ -1,13 +1,8 @@
 const releaseRules = require('./rules')
+const extend = require('to-extend').default
 
-module.exports = ({
-    preset = 'aron',
-    assets = [],
-    scripts = {
-        prepare: 'npm run check && npm run build',
-        publish: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
-    },
-    branches = [
+const defaultConfig = {
+    branches: [
         '+([0-9])?(.{+([0-9]),x}).x',
         'main',
         'next',
@@ -21,19 +16,30 @@ module.exports = ({
             prerelease: true
         }
     ],
-    plugins = []
-} = {}) => {
-    return {
-        plugins: [
-            ['@semantic-release/commit-analyzer', { preset, releaseRules }],
-            ['@semantic-release/release-notes-generator', { preset }],
-            ['@semantic-release/exec', {
-                prepareCmd: scripts.prepare,
-                publishCmd: scripts.publish
-            }],
-            ['@semantic-release/github', { assets }],
-            ...plugins
-        ],
-        branches
+    plugins: {
+        '@semantic-release/commit-analyzer': { preset: 'aron', releaseRules },
+        '@semantic-release/release-notes-generator': { preset: 'aron' },
+        '@semantic-release/exec': {
+            prepareCmd: 'npm run check && npm run build',
+            publishCmd: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
+        },
+        '@semantic-release/github': true
     }
+}
+
+module.exports = (config) => {
+    const newConfig = extend(defaultConfig, config)
+    newConfig.plugins = Object.keys(newConfig.plugins)
+        .map((eachPluginName) => {
+            const eachPluginConfig = newConfig.plugins[eachPluginName]
+            if (eachPluginConfig === true) {
+                return eachPluginName
+            } else if (eachPluginConfig) {
+                return [eachPluginName, eachPluginConfig]
+            } else {
+                return null
+            }
+        })
+        .filter((eachPlugin) => eachPlugin)
+    return newConfig
 }

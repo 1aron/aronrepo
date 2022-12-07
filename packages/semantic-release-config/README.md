@@ -73,20 +73,12 @@ For full configuration, check out the [configure.js](https://github.com/1aron/ar
 
 Since `.plugins` use arrays for configuration, even `extends` will override all preset plugins.
 
-So I provide a `configure(options)` API to allow you to set additional config friendly:
+I provide `configure(options)` API to allow you to set additional config friendly:
 ```js
+const releaseRules = require('semantic-release-config-aron/rules')
 const configure = require('semantic-release-config-aron/configure')
 
 module.exports = configure({
-    /* for @semantic-release/commit-analyzer and @semantic-release/release-notes-generator preset */
-    preset: 'aron',
-    /* for @semantic-release/github assets */
-    assets: [],
-    /* for @semantic-release/commit-analyzer */
-    scripts: {
-        prepare: 'npm run check && npm run build',
-        publish: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
-    },
     branches: [
         '+([0-9])?(.{+([0-9]),x}).x',
         'main',
@@ -101,11 +93,35 @@ module.exports = configure({
             prerelease: true
         }
     ],
-    // additional plugins
-    plugins: []
+    plugins: {
+        '@semantic-release/commit-analyzer': { preset: 'aron', releaseRules },
+        '@semantic-release/release-notes-generator': { preset: 'aron' },
+        '@semantic-release/exec': {
+            prepareCmd: 'npm run check && npm run build',
+            publishCmd: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
+        },
+        '@semantic-release/github': true
+    }
 })
 ```
 The above example is equivalent to the `extends: 'semantic-release-config-aron'` preset.
+
+For example, to add assets for a GitHub Release and keep the default plugins:
+```js
+module.exports = configure({
+    plugins: {
+        '@semantic-release/github': {
+            assets: [
+                 {
+                    path: 'packages/css/dist/index.browser.js',
+                    name: 'master-css.js',
+                    label: 'master-css.js'
+                }
+            ]
+        }
+    }
+})
+```
 
 <br>
 
