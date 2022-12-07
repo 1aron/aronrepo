@@ -1,4 +1,5 @@
 {
+    "private": true,
     "scripts": {
         "install": "husky install && npm ls --link=true",
         "build": "turbo run build",
