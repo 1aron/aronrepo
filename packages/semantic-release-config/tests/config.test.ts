@@ -24,8 +24,8 @@ test('Customize config and extend default', () => {
                 prepareCmd: 'npm run check && npm run build && aron version ${nextRelease.version}'
             }],
             ['aron-semantic-release-npm', {
-                publishArgs: ['--workspace', 'packages'],
-                versionArgs: ['--workspace', 'packages']
+                publishArgs: ['--workspace', 'packages', '--workspace', 'packages/*'],
+                versionArgs: ['--workspace', 'packages', '--workspace', 'packages/*']
             }],
             '@semantic-release/github'
         ]
@@ -59,8 +59,8 @@ test('Disable the @semantic-release/github plugin', () => {
                 prepareCmd: 'npm run check && npm run build && aron version ${nextRelease.version}'
             }],
             ['aron-semantic-release-npm', {
-                publishArgs: ['--workspace', 'packages'],
-                versionArgs: ['--workspace', 'packages']
+                publishArgs: ['--workspace', 'packages', '--workspace', 'packages/*'],
+                versionArgs: ['--workspace', 'packages', '--workspace', 'packages/*']
             }]
         ]
     })

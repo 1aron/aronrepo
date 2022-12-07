@@ -23,8 +23,8 @@ const defaultConfig = {
             prepareCmd: 'npm run check && npm run build && aron version ${nextRelease.version}'
         },
         'aron-semantic-release-npm': {
-            publishArgs: ['--workspace', 'packages'],
-            versionArgs: ['--workspace', 'packages']
+            publishArgs: ['--workspace', 'packages', '--workspace', 'packages/*'],
+            versionArgs: ['--workspace', 'packages', '--workspace', 'packages/*']
         },
         '@semantic-release/github': true
     }
