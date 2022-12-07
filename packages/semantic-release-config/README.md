@@ -98,8 +98,9 @@ module.exports = configure({
         '@semantic-release/release-notes-generator': { preset: 'aron' },
         '@semantic-release/exec': {
             prepareCmd: 'npm run check && npm run build',
-            publishCmd: 'aron version ${nextRelease.version} && npm publish --workspaces --access public'
+            publishCmd: 'aron version ${nextRelease.version}'
         },
+        '@semantic-release/npm': true,
         '@semantic-release/github': true
     }
 })
