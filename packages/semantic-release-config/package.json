@@ -41,6 +41,7 @@
     },
     "dependencies": {
         "aron-conventional-commits": "",
+        "aron-semantic-release-npm": "^1.0.0",
         "conventional-changelog-aron": "",
         "to-extend": "^1.0.1"
     }
