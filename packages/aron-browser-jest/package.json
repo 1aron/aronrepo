@@ -1,0 +1,40 @@
+{
+    "name": "aron-jest",
+    "license": "MIT",
+    "description": "Aron's jest preset for browser",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/aronrepo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/aron-jest"
+    },
+    "keywords": [
+        "jest",
+        "preset",
+        "config",
+        "aron",
+        "puppeteer",
+        "jest-puppeteer",
+        "chromeless",
+        "chrome-headless"
+    ],
+    "files": [
+        "jest-preset.js"
+    ],
+    "peerDependencies": {
+        "puppeteer": ">= 1.5.0"
+    },
+    "dependencies": {
+        "aron-jest": "",
+        "expect-puppeteer": "^6.1.1",
+        "jest-environment-puppeteer": "^6.1.1"
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "name": "aron-browser-jest",
+    "license": "MIT",
+    "description": "Aron's jest preset to improve performance",
+    "author": {
+        "name": "Aron",
+        "email": "aron@master.co",
+        "url": "http://aron.tw"
+    },
+    "homepage": "https://aron.tw",
+    "bugs": {
+        "url": "https://github.com/1aron/aronrepo/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/aron-browser-jest"
+    },
+    "keywords": [
+        "jest",
+        "browser",
+        "preset",
+        "config",
+        "aron"
+    ],
+    "files": [
+        "jest-preset.js"
+    ],
+    "peerDependencies": {
+        "jest": "",
+        "@swc/core": "",
+        "@swc/jest": "",
+        "@types/jest": ""
+    }
+}
