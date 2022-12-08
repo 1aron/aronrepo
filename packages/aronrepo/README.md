@@ -79,11 +79,11 @@
 
 ## Getting Started
 
-Add `packages/*` to `.workspaces` of the root `./package.json`
+Add `packages/**` to `.workspaces` of the root `./package.json`
 ```json
 {
     "workspaces": [
-        "packages/*"
+        "packages/**"
     ]
 }
 ```
