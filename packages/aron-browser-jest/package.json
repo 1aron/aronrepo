@@ -1,5 +1,5 @@
 {
-    "name": "aron-jest",
+    "name": "aron-browser-jest",
     "license": "MIT",
     "description": "Aron's jest preset for browser",
     "author": {
@@ -14,7 +14,7 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
-        "directory": "packages/aron-jest"
+        "directory": "packages/aron-browser-jest"
     },
     "keywords": [
         "jest",
