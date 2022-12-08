@@ -41,8 +41,9 @@
     },
     "dependencies": {
         "aron-conventional-commits": "",
-        "aron-semantic-release-npm": "^1.0.0",
         "conventional-changelog-aron": "",
+        "fast-glob": "^3.2.12",
+        "fs-extra": "^11.1.0",
         "to-extend": "^1.0.1"
     }
 }

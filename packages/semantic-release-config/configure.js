@@ -1,5 +1,8 @@
 const releaseRules = require('./rules')
 const extend = require('to-extend').default
+const fs = require('fs-extra')
+const fg = require('fast-glob')
+const path = require('path')
 
 const defaultConfig = {
     branches: [
@@ -22,15 +25,13 @@ const defaultConfig = {
         '@semantic-release/exec': {
             prepareCmd: 'npm run check && npm run build && aron version ${nextRelease.version}'
         },
-        'aron-semantic-release-npm': {
-            publishArgs: ['--workspace', 'packages', '--workspace', 'packages/*'],
-            versionArgs: ['--workspace', 'packages', '--workspace', 'packages/*']
-        },
         '@semantic-release/github': true
     }
 }
 
 module.exports = (config) => {
+    const { workspaces } = fs.readJSONSync(path.join(process.cwd(), 'package.json'), { throws: false }) || {}
+    const workspacePaths = workspaces ? fg.sync(workspaces, { onlyFiles: false }) : null
     const newConfig = extend(defaultConfig, config)
     newConfig.plugins = Object.keys(newConfig.plugins)
         .map((eachPluginName) => {
@@ -44,5 +45,12 @@ module.exports = (config) => {
             }
         })
         .filter((eachPlugin) => eachPlugin)
+    if (workspacePaths) {
+        newConfig.plugins.push(
+            ...workspacePaths.map((eachWorkspacePath) => ['@semantic-release/npm', {
+                pkgRoot: eachWorkspacePath
+            }])
+        )
+    }
     return newConfig
 }
