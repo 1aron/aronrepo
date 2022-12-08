@@ -71,7 +71,7 @@
 - Extract options from `package.json`
 - Prevent bundling `dependencies` and `peerDependencies` by `package.json`
 
-**Versing**
+**Version**
 - Synchronize versions of packages in all workspaces
 - Bump packages to a specific version by the `.workspaces` of `package.json`
 - Bump versions by analyzing `dependencies` and `peerDependencies` of the workspace
@@ -321,7 +321,7 @@ aron pack --platform node
 So if there is an external package that needs to be bundled, you just install it to `devDependencies` via `npm i <some-package> --save-dev`, then `aron pack` will not exclude it.
 
 ## Version
-Smartly bump packages to specific versions by the `.workspaces` of the root `package.json`.
+Smartly bump all workspace-dependent packages to specific versions.
 
 ```bash
 aron version <version>
