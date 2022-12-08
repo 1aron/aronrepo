@@ -10,7 +10,7 @@
         </picture>
     </a>
 </p>
-<p align="center">Aron's semantic release config</p>
+<p align="center">Aron's semantic release config for publishing workspace packages</p>
 
 <p align="center">
     <a aria-label="overview" href="https://github.com/1aron/aronrepo">

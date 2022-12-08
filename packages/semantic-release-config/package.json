@@ -5,7 +5,7 @@
         "lint": "eslint"
     },
     "license": "MIT",
-    "description": "Aron's semantic release config",
+    "description": "Aron's semantic release config for publishing workspace packages",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",

@@ -54,7 +54,7 @@
 - [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/commitlint-config) - Check your commits with Aron's commitlint config
 - [conventional-changelog-aron](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog-config) - Beautiful changelog based on Aron's conventional commits
 - [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config
-- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config
+- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config for publishing workspace packages
 
 ## Built on the top
 - [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
