@@ -47,18 +47,21 @@
 
 ## Ecosystem
 
-- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - A monorepo workflow, including packing, versioning, and build management
+[Aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) is a monorepo ecosystem, including packing, versioning, conventional workflows, and build management.
+
+##### Convention
+
 - [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
+- [conventional-changelog-aron](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog-config) - Beautiful changelog based on Aron's conventional commits
+
+##### Release
+- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config for publishing workspace packages
 
 ##### Packing
 - [aron pack](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo#pack) - Bundling your TypeScript and CSS packages with zero configuration
 
-##### Version
+##### Versioning
 - [aron version](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo#version) - Smartly bump all workspace-dependent packages to specific versions
-
-##### Release
-- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/semantic-release-config) - Aron's semantic release config for publishing workspace packages
-- [conventional-changelog-aron](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-changelog-config) - Beautiful changelog based on Aron's conventional commits
 
 ##### Linting
 - [eslint-config-aron](https://github.com/1aron/aronrepo/tree/beta/packages/eslint-config) - Aron's eslint config

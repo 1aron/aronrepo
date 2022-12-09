@@ -71,7 +71,7 @@
 - Extract options from `package.json`
 - Prevent bundling `dependencies` and `peerDependencies` by `package.json`
 
-**Version**
+**Versioning**
 - Synchronize versions of packages in all workspaces
 - Bump packages to a specific version by the `.workspaces` of `package.json`
 - Bump versions by analyzing `dependencies` and `peerDependencies` of the workspace
