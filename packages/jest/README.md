@@ -69,6 +69,22 @@ export default {
 }
 ```
 
+## Preset
+```js
+module.exports = {
+    transform: {
+        '^.+\\.(t|j)sx?$': '@swc/jest'
+    },
+    globals: {
+        'ts-jest': {
+            tsConfig: {
+                importHelpers: true
+            }
+        }
+    }
+}
+```
+
 <br>
 
 <a aria-label="overview" href="https://github.com/1aron/aronrepo#ecosystem">

@@ -41,7 +41,6 @@
         "conventional-changelog-aron": "",
         "eslint-config-aron": "",
         "aron-jest": "",
-        "aron-browser-jest": "",
         "semantic-release-config-aron": "",
         "@master/literal": "^1.0.11",
         "commander": "^9.4.1",

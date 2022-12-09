@@ -55,8 +55,6 @@
 <br>
 
 ## Getting Started
-
-Skip if you have already run `npm install aronrepo`:
 ```
 npm install aron-browser-jest -D
 ```
@@ -66,6 +64,26 @@ Create a `jest.config.ts` file in your project root and preset `aron-browser-jes
 ```ts
 export default {
     preset: 'aron-browser-jest'
+}
+```
+
+## Preset
+```js
+module.exports = {
+    globalSetup: require.resolve('jest-environment-puppeteer/setup'),
+    globalTeardown: require.resolve('jest-environment-puppeteer/teardown'),
+    testEnvironment: require.resolve('jest-environment-puppeteer'),
+    setupFilesAfterEnv: [require.resolve('expect-puppeteer')],
+    transform: {
+        '^.+\\.(t|j)sx?$': '@swc/jest'
+    },
+    globals: {
+        'ts-jest': {
+            tsConfig: {
+                importHelpers: true
+            }
+        }
+    }
 }
 ```
 
