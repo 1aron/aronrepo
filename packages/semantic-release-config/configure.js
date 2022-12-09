@@ -1,8 +1,6 @@
 const releaseRules = require('./rules')
 const extend = require('to-extend').default
-const fs = require('fs-extra')
-const fg = require('fast-glob')
-const path = require('path')
+const queryWorkspaces = require('to-query-workspaces').default
 
 const defaultConfig = {
     branches: [
@@ -30,8 +28,6 @@ const defaultConfig = {
 }
 
 module.exports = (config) => {
-    const { workspaces } = fs.readJSONSync(path.join(process.cwd(), 'package.json'), { throws: false }) || {}
-    const workspacePaths = workspaces ? fg.sync(workspaces, { onlyFiles: false }) : null
     const newConfig = extend(defaultConfig, config)
     newConfig.plugins = Object.keys(newConfig.plugins)
         .map((eachPluginName) => {
@@ -45,10 +41,11 @@ module.exports = (config) => {
             }
         })
         .filter((eachPlugin) => eachPlugin)
-    if (workspacePaths) {
+    const workspaces = queryWorkspaces()
+    if (workspaces?.length) {
         newConfig.plugins.push(
-            ...workspacePaths.map((eachWorkspacePath) => ['@semantic-release/npm', {
-                pkgRoot: eachWorkspacePath
+            ...workspaces.map((eachWorkspace) => ['@semantic-release/npm', {
+                pkgRoot: eachWorkspace
             }])
         )
     }
