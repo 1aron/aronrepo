@@ -10,7 +10,7 @@
         </picture>
     </a>
 </p>
-<p align="center">A monorepo ecosystem integrating first-class packages and conventional workflows</p>
+<p align="center">A monorepo ecosystem integrating first-class packages and build systems</p>
 
 <p align="center">
     <a aria-label="overview" href="https://github.com/1aron/aronrepo">

@@ -10,7 +10,7 @@
         </picture>
     </a>
 </p>
-<p align="center">A monorepo ecosystem integrating first-class packages and conventional workflows</p>
+<p align="center">A monorepo ecosystem integrating first-class packages and build systems</p>
 
 <p align="center">
     <a aria-label="GitHub release (latest by date including pre-releases)" href="https://github.com/1aron/aronrepo/releases">
@@ -47,7 +47,8 @@
 
 ## Ecosystem
 
-[Aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) is a monorepo ecosystem, including packing, versioning, conventional workflows, and build management.
+##### Build System
+- [aronrepo](https://github.com/1aron/aronrepo/tree/beta/packages/aronrepo) - A monorepo build system and workflow
 
 ##### Convention
 
