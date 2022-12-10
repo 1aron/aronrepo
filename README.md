@@ -70,7 +70,7 @@
 
 ##### Testing
 - [aron-jest](https://github.com/1aron/aronrepo/tree/beta/packages/jest) - Aron's jest preset to improve performance
-- [aron-browser-jest](https://github.com/1aron/aronrepo/tree/beta/packages/browser-jest) - Aron's jest preset for browser
+- [aron-web-jest](https://github.com/1aron/aronrepo/tree/beta/packages/web-jest) - Aron's jest preset for web
 
 ##### Continuous Integration
 - [aron-github-actions](https://github.com/1aron/aronrepo/tree/beta/packages/github-actions) - A set of GitHub Actions for aronrepo ecosystem includes PR title checks

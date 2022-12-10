@@ -1,7 +1,7 @@
 {
-    "name": "aron-browser-jest",
+    "name": "aron-web-jest",
     "license": "MIT",
-    "description": "Aron's jest preset for browser",
+    "description": "Aron's jest preset for web",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",
@@ -14,7 +14,7 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
-        "directory": "packages/aron-browser-jest"
+        "directory": "packages/aron-web-jest"
     },
     "keywords": [
         "jest",
@@ -29,12 +29,8 @@
     "files": [
         "jest-preset.js"
     ],
-    "peerDependencies": {
-        "puppeteer": ">= 1.5.0"
-    },
     "dependencies": {
         "aron-jest": "",
-        "expect-puppeteer": "^6.1.1",
-        "jest-environment-puppeteer": "^6.1.1"
+        "jest-environment-jsdom": "^29.3.1"
     }
 }
