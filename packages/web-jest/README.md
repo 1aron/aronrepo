@@ -70,8 +70,17 @@ export default {
 ## Preset
 ```js
 module.exports = {
-    preset: 'aron-jest',
-    testEnvironment: 'jsdom'
+    testEnvironment: 'jsdom',
+    transform: {
+        '^.+\\.(t|j)sx?$': '@swc/jest'
+    },
+    globals: {
+        'ts-jest': {
+            tsConfig: {
+                importHelpers: true
+            }
+        }
+    }
 }
 ```
 
