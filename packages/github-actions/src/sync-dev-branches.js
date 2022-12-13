@@ -6,13 +6,8 @@ module.exports = async function syncDevBranches() {
     try {
         const currentBranchName = process.env.GITHUB_REF_NAME
         const targetBranchName = `dev/${currentBranchName}`
-        switch (currentBranchName) {
-            case 'main':
-            case 'beta':
-                if (await checkBranchExists(targetBranchName)) {
-                    await merge(targetBranchName)
-                }
-                break
+        if (await checkBranchExists(targetBranchName)) {
+            await merge(targetBranchName)
         }
     } catch (error) {
         core.setOutput('error', error.message)
