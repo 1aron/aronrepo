@@ -2,13 +2,13 @@ const github = require('@actions/github')
 
 module.exports = async function checkBranchExists(branchName) {
     try {
-        const gh = new github.GitHub(process.env.GITHUB_TOKEN)
+        const client = new github.getOctokit(process.env.GITHUB_TOKEN)
         const repository = process.env.GITHUB_REPOSITORY
         const [owner = null, repo = null] = repository.split('/')
-        await gh.repos.getBranch({
+        await client.request('GET /repos/{owner}/{repo}/branches/{branch}', {
+            owner,
             repo,
-            branchName,
-            owner
+            branch: branchName
         })
         return true
     } catch (e) {
