@@ -18,7 +18,3 @@ test('bump to specific version by analyzing dependencies', () => {
       ⏺ Success bump version to ^1.2.0 for 3 packages in all workspace
     `)
 })
-
-test('failed', async () => {
-    expect(() => []).toContain('something')
-})
