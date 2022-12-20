@@ -13,7 +13,7 @@ jobs:
             matrix:
                 node-version: [18.12.1]
         steps:
-            - name: Wait for test to succeed
+            - name: Wait for required workflow to succeed
               uses: lewagon/wait-on-check-action@v1.2.0
               with:
                 ref: ${{ github.ref }}
