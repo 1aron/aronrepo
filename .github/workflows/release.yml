@@ -13,6 +13,38 @@ jobs:
             matrix:
                 node-version: [18.12.1]
         steps:
+            - name: Wait for commit-check to succeed
+              uses: lewagon/wait-on-check-action@v1.2.0
+              with:
+                ref: ${{ github.ref }}
+                check-name: 'Commit Check'
+                repo-token: ${{ secrets.GITHUB_TOKEN }}
+                wait-interval: 10
+                allowed-conclusions: success
+            - name: Wait for test to succeed
+              uses: lewagon/wait-on-check-action@v1.2.0
+              with:
+                ref: ${{ github.ref }}
+                check-name: 'Test'
+                repo-token: ${{ secrets.GITHUB_TOKEN }}
+                wait-interval: 10
+                allowed-conclusions: success
+            - name: Wait for type-check to succeed
+              uses: lewagon/wait-on-check-action@v1.2.0
+              with:
+                ref: ${{ github.ref }}
+                check-name: 'Type Check'
+                repo-token: ${{ secrets.GITHUB_TOKEN }}
+                wait-interval: 10
+                allowed-conclusions: success
+            - name: Wait for lint to succeed
+              uses: lewagon/wait-on-check-action@v1.2.0
+              with:
+                ref: ${{ github.ref }}
+                check-name: 'Lint'
+                repo-token: ${{ secrets.GITHUB_TOKEN }}
+                wait-interval: 10
+                allowed-conclusions: success
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
               with:
