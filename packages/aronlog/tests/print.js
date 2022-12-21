@@ -41,14 +41,3 @@ console.log('')
 log.success`All files exported to desktop ${3}`
 log.warn`${'Warn'} Same file name`
 log.fail`Too many requests`
-
-console.log('')
-const loading = log.load('building', 'process modules')
-
-setTimeout(() => {
-    loading.log('building', 'test')
-}, 2000)
-
-setTimeout(() => {
-    loading.stop()
-}, 5000)

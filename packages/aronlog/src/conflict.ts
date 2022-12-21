@@ -1,13 +1,11 @@
 import chalk from 'chalk'
 import type { Log } from './log'
-import { handle } from './handle'
+import processLog from './process-log'
 
 const conflict: Log = (strings, ...slots) => {
-    return handle({
-        strings, slots,
-        message: chalk.bgYellow.bold.white(' ‼ CONFLICT '),
-        markEvent: (event) => chalk.bgBlack.yellow(` ${event} `)
-    })
+    const message = chalk.bgYellow.bold.white(' ⚠️ CONFLICT ') + ' ' + chalk.yellow(processLog(strings, slots))
+    console.log(message)
+    return message
 }
 
 export { conflict }

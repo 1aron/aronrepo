@@ -9,11 +9,16 @@ export function parseError(error: any) {
         .replace(/^Error: /, '')
     )
         .split('\n')
-        .forEach((line) => {
+        .forEach((line: string) => {
             stackTree[
                 line
-                    .replace(/\((.+)\)/g, (_, m) => `(${chalk.cyan(m)})`)
-                    .replace(/^at /g, m => chalk.dim(m))
+                    .split(' ')
+                    .map((eachSplit) => eachSplit
+                        .replace(/^\((.+)\)$/, `${chalk.cyan('$1')}`)
+                        .replace(/\./g, `${chalk.dim('.')}`)
+                        .replace(/^at$/, m => chalk.dim(m))
+                    )
+                    .join(' ')
             ] = null
         })
     return {

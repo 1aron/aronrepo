@@ -1,5 +1,4 @@
-import { handle } from './handle'
-import { mark } from './mark'
+import treeify from 'object-treeify'
 
 import { add } from './add'
 import { error } from './error'
@@ -14,7 +13,11 @@ import { warn } from './warn'
 import { pass } from './pass'
 import { tree } from './tree'
 import { fail } from './fail'
-// import { load } from './load'
+import { paint } from './paint'
+
+import processLog from './process-log'
+import { parseError } from './utils/parse-error'
+import chalk from 'chalk'
 
 const log = <{
     (strings: TemplateStringsArray, ...messages: any[]): void
@@ -33,12 +36,28 @@ const log = <{
     // load: (event: string, message?: string, options?: any) => any
     tree: (object: object | JSON) => void
 }>((strings, ...slots) => {
-    handle({ strings, slots })
+    if (strings instanceof Error) {
+        const { message, stackTree } = parseError(strings)
+        console.log('')
+        console.log(chalk.bgRed.bold.white(' 𝗫 ERROR ') + ' ' + chalk.bold.red(message))
+        console.log(treeify(stackTree, {
+            spacerNeighbour: chalk.redBright.dim('│  '),
+            keyNoNeighbour: chalk.redBright.dim('└─ '),
+            keyNeighbour: chalk.redBright.dim('├─ '),
+            separator: chalk.redBright.dim(': ')
+        }))
+        console.log('')
+        return message
+    } else {
+        const message = processLog(strings, slots)
+        console.log(message)
+        return message
+    }
 })
 
 Object.assign(log, {
     a: add, add,
-    d: del, del,
+    d: del, del, delete: del,
     o: valid, valid,
     x: invalid, invalid,
     i: info, info,
@@ -50,8 +69,7 @@ Object.assign(log, {
     conflict,
     ok,
     tree,
-    // load,
-    mark
+    paint
 })
 
 export { log }

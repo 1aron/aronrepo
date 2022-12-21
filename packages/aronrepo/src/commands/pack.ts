@@ -157,11 +157,3 @@ program.command('pack [entryPaths...]')
             console.log('')
         }
     })
-
-function reveal(arr: string[], target) {
-    if (arr.length > 2) {
-        return `${markJoin(arr.slice(0, 2))}, and ${arr.length - 2} other ${target}`
-    } else {
-        return `${markJoin(arr)} ${target}`
-    }
-}

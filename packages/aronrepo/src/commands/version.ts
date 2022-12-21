@@ -2,7 +2,7 @@ import { program } from 'commander'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
 import path from 'path'
-import log, { mark } from 'aronlog'
+import log, { paint } from 'aronlog'
 import { readPackage } from '../utils/read-package'
 
 const pkg = readPackage()
@@ -60,14 +60,14 @@ program.command('version <version>')
         const workspaceDepsTree = {}
         for (const name in packagesOfName) {
             const { dependencies, peerDependencies } = packagesOfName[name]
-            const workspacePackage: any = workspaceDepsTree[mark('*' + name + '*')] = {}
+            const workspacePackage: any = workspaceDepsTree[paint('**' + name + '**')] = {}
             const analyzeDeps = (eachDeps, key: string) => {
                 if (eachDeps) {
                     workspacePackage[key] = {}
                     for (const dependencyName in eachDeps) {
                         if (dependencyName in packagesOfName) {
                             const eachDependencyVersion = eachDeps[dependencyName]
-                            workspacePackage[key][mark('*' + dependencyName + '*')] =
+                            workspacePackage[key][paint('**' + dependencyName + '**')] =
                                 eachDependencyVersion === nextVersion ? null : nextVersion
                         }
                     }

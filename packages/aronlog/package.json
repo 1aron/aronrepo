@@ -11,7 +11,7 @@
         "lint": "eslint src",
         "test": "jest"
     },
-    "description": "A set of human-friendly and beautiful terminal log syntax",
+    "description": "A set of human-friendly and beautiful console log syntax",
     "author": {
         "name": "Aron",
         "email": "aron@master.co",

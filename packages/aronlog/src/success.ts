@@ -1,14 +1,11 @@
 import chalk from 'chalk'
 import type { Log } from './log'
-import { handle } from './handle'
+import processLog from './process-log'
 
 const success: Log = (strings, ...slots) => {
-    return handle({
-        strings, slots,
-        header: chalk.green('⏺'),
-        event: 'Success',
-        markEvent: (event) => chalk.bold.green(event),
-    })
+    const message = chalk.green('⏺ Success ') + processLog(strings, slots)
+    console.log(message)
+    return message
 }
 
 export { success }

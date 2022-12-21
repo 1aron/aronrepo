@@ -1,4 +1,3 @@
-import { mark } from './mark'
 import { log } from './log'
 
 import { add } from './add'
@@ -14,6 +13,7 @@ import { warn } from './warn'
 import { pass } from './pass'
 import { tree } from './tree'
 import { fail } from './fail'
+import { paint } from './paint'
 // import { load } from './load'
 
 export default log
@@ -38,5 +38,5 @@ export {
     // special
     // load,
     tree,
-    mark
+    paint
 }
