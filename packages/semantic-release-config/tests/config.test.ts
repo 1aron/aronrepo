@@ -21,7 +21,7 @@ test('Customize config and extend default', () => {
             ['@semantic-release/commit-analyzer', { preset: 'aron', releaseRules }],
             ['@semantic-release/release-notes-generator', { preset: 'aron' }],
             ['@semantic-release/exec', {
-                prepareCmd: 'npm run check && npm run build && aron version ${nextRelease.version}'
+                prepareCmd: 'aron version ${nextRelease.version}'
             }],
             '@semantic-release/github'
         ]
@@ -52,7 +52,7 @@ test('Disable the @semantic-release/github plugin', () => {
             ['@semantic-release/commit-analyzer', { preset: 'aron', releaseRules }],
             ['@semantic-release/release-notes-generator', { preset: 'aron' }],
             ['@semantic-release/exec', {
-                prepareCmd: 'npm run check && npm run build && aron version ${nextRelease.version}'
+                prepareCmd: 'aron version ${nextRelease.version}'
             }]
         ]
     })

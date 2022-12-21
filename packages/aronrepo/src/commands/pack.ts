@@ -6,7 +6,6 @@ import pAll from 'p-all'
 import log from 'aronlog'
 import path from 'path'
 import { readPackage } from '../utils/read-package'
-import { markJoin } from '../utils/mark-join'
 import { changeFilePath } from '../utils/change-file-path'
 import literal from '@master/literal'
 import type { PackageJson } from 'pkg-types'
@@ -50,7 +49,7 @@ program.command('pack [entryPaths...]')
             )
             const isCSSTask = eachFormat === 'css'
             if (!eachEntryPoints.length) {
-                log.e`${eachFormat} Cannot find any entry file specified ${markJoin(eachEntries)}`
+                log.e`[${eachFormat}] Cannot find any entry file specified ${eachEntries}`
                 process.exit()
             }
             tasks.push(
@@ -82,7 +81,7 @@ program.command('pack [entryPaths...]')
                     if (metafile) {
                         for (const outputFilePath in metafile.outputs) {
                             const eachOutput = metafile.outputs[outputFilePath]
-                            log.i`${eachFormat} ${`*${outputFilePath}*`} ${`+${prettyBytes(eachOutput.bytes)}+`} ${`.${Object.keys(eachOutput.inputs)?.length} inputs.`}`
+                            log.i`[${eachFormat}] **${outputFilePath}** ++${prettyBytes(eachOutput.bytes)}++ ..${Object.keys(eachOutput.inputs)?.length}.. ..inputs..`
                         }
                     }
                 }
@@ -125,7 +124,7 @@ program.command('pack [entryPaths...]')
             tasks.push(
                 () => new Promise<void>((resolve) => {
                     if (options.watch) {
-                        log.i`${'type'} type declarations`
+                        log.i`[${'type'}] type declarations`
                     }
                     execaCommand(literal`
                         npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
@@ -139,7 +138,7 @@ program.command('pack [entryPaths...]')
                             process.exit()
                         })
                         .finally(() => {
-                            log.i`${'type'} type declarations`
+                            log.i`[${'type'}] type declarations`
                             resolve()
                         })
                 })
@@ -150,10 +149,10 @@ program.command('pack [entryPaths...]')
         }
         log.tree(options)
         const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
-        log.info`${event} ${options.watch ? ' ' : formatLogText}`
+        log.info`[${event}] ${options.watch ? ' ' : formatLogText}`
         await pAll(tasks)
         if (!options.watch) {
-            log.success`${'Success'} ${formatLogText} ${`.${options.outdir}.`}`
+            log.success`${formatLogText} ${`.${options.outdir}.`}`
             console.log('')
         }
     })

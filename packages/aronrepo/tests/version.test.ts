@@ -7,14 +7,14 @@ test('bump to specific version by analyzing dependencies', () => {
         { cwd: __dirname, stdio: 'pipe' })
         .toString()
     expect(outputLog).toContain(dedent`
-      📦
-      ├─ a
-      │  └─ dependencies
-      │     └─ b
-      ├─ b
-      └─ c
-         └─ peerDependencies
-            └─ a
-      ⏺ Success bump version to ^1.2.0 for 3 packages in all workspace
+        📦
+        ├─ a
+        │  └─ dependencies
+        │     └─ b
+        ├─ b
+        └─ c
+           └─ peerDependencies
+              └─ a
+        ⏺ Success bump version to ^1.2.0 for 3 packages in all workspace
     `)
 })
