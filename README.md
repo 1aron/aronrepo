@@ -75,9 +75,6 @@
 ##### Continuous Integration
 - [aron-github-actions](https://github.com/1aron/aronrepo/tree/beta/packages/github-actions) - A set of GitHub Actions for aronrepo ecosystem includes PR title checks
 
-##### Others
-- [aronlog](https://github.com/1aron/aronrepo/tree/beta/packages/aronlog) - A set of human-friendly and beautiful terminal log syntax
-
 ## Built on the top
 - [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
 - [esbuild](https://esbuild.github.io/) - An extremely fast JavaScript and CSS bundler and minifier

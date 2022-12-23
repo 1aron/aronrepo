@@ -3,7 +3,7 @@ import fg from 'fast-glob'
 import { execaCommand } from 'execa'
 import { build, BuildOptions } from 'esbuild'
 import pAll from 'p-all'
-import log from 'aronlog'
+import log from '@techor/log'
 import path from 'path'
 import { readPackage } from '../utils/read-package'
 import { changeFilePath } from '../utils/change-file-path'
@@ -49,7 +49,7 @@ program.command('pack [entryPaths...]')
             )
             const isCSSTask = eachFormat === 'css'
             if (!eachEntryPoints.length) {
-                log.e`[${eachFormat}] Cannot find any entry file specified ${eachEntries}`
+                log.e`[${eachFormat}] Cannot find any entry file specified **${eachEntries}**`
                 process.exit()
             }
             tasks.push(
@@ -124,7 +124,7 @@ program.command('pack [entryPaths...]')
             tasks.push(
                 () => new Promise<void>((resolve) => {
                     if (options.watch) {
-                        log.i`[${'type'}] type declarations`
+                        log.i`[type] type declarations`
                     }
                     execaCommand(literal`
                         npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
@@ -138,21 +138,21 @@ program.command('pack [entryPaths...]')
                             process.exit()
                         })
                         .finally(() => {
-                            log.i`[${'type'}] type declarations`
+                            log.i`[type] type declarations`
                             resolve()
                         })
                 })
             )
         }
         if (Object.keys(pkg).length) {
-            log`📦 extract and merge options from ${`+${pkg.name}+`} ${'*package.json*'}`
+            log`📦 extract and merge options from +${pkg.name}+ **package.json**`
         }
         log.tree(options)
         const formatLogText = formats.join(', ').toUpperCase() + (options.type ? ', Type Declarations' : '')
         log.info`[${event}] ${options.watch ? ' ' : formatLogText}`
         await pAll(tasks)
         if (!options.watch) {
-            log.success`${formatLogText} ${`.${options.outdir}.`}`
+            log.success`${formatLogText} ..${options.outdir}..`
             console.log('')
         }
     })
