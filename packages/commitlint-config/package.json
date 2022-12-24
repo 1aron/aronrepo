@@ -27,7 +27,8 @@
     ],
     "main": ".commitlintrc.js",
     "files": [
-        ".commitlintrc.js"
+        ".commitlintrc.js",
+        "parser-preset.js"
     ],
     "dependencies": {
         "@commitlint/cli": "",

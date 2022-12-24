@@ -1,7 +1,7 @@
 const { types } = require('aron-conventional-commits')
 
 module.exports = {
-    parserPreset: 'conventional-changelog-aron',
+    parserPreset: './parser-preset',
     rules: {
         'subject-exclamation-mark': [2, 'never'],
         'header-case': [2, 'always', 'sentence-case'],

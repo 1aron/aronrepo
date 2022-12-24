@@ -21,11 +21,15 @@ describe('Invalid', () => {
         expectErrorCommand(`echo 'update something' | commitlint`)
     })
 
-    test('"type(scope): summary"', () => {
+    test('type(scope): summary', () => {
         expectErrorCommand(`echo 'new(css): syntax' | commitlint`)
     })
 
-    test('"type: summary"', () => {
+    test('Type(scope): Summary', () => {
+        expectErrorCommand(`echo 'Update(scope): Summary' | commitlint`)
+    })
+
+    test('type: summary', () => {
         expectErrorCommand(`echo 'fix: syntax' | commitlint`)
     })
 
@@ -33,4 +37,5 @@ describe('Invalid', () => {
         expectErrorCommand(`echo 'Omg: What is this?' | commitlint`)
         expectErrorCommand(`echo 'Omg(Really?): What is this?' | commitlint`)
     })
+
 })
