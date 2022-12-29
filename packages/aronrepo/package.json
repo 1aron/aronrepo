@@ -7,8 +7,8 @@
         "type-check": "tsc --noEmit",
         "test": "jest",
         "lint": "eslint src",
-        "prepublish": "shx mkdir dist/bin/.github && shx cp -rf ../../.github/workflows dist/bin/.github",
-        "postinstall": "node -e \"if (process.env.INIT_CWD === process.cwd()) {process.exit();}const path = require('path');const shell = require('shelljs');const fs = require('fs');const projectPath = path.resolve(process.cwd(), '../..');try {fs.mkdirSync(path.join(projectPath, '.github'), { recursive: true });shell.cp('-rf', path.join(process.cwd(), 'dist', 'bin', '.github', 'workflows'), path.join(projectPath, '.github'));} catch (_) {}\""
+        "prepublish": "shx mkdir .github && shx cp -rf ../../.github/workflows .github",
+        "postinstall": "node scripts/postinstall.js"
     },
     "description": "A monorepo ecosystem integrating first-class packages and build systems 📦",
     "author": {
@@ -29,7 +29,9 @@
         "aron": "./dist/bin/index"
     },
     "files": [
-        "dist"
+        "dist",
+        "scripts",
+        ".github"
     ],
     "peerDependencies": {
         "@types/node": "",
