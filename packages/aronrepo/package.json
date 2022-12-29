@@ -6,7 +6,9 @@
         "dev": "conc 'npm:build -- --watch'",
         "type-check": "tsc --noEmit",
         "test": "jest",
-        "lint": "eslint src"
+        "lint": "eslint src",
+        "prepublish": "shx mkdir .github && shx cp -rf ../../.github/workflows .github",
+        "postinstall": "node scripts/postinstall.js"
     },
     "description": "A monorepo ecosystem integrating first-class packages and build systems 📦",
     "author": {
@@ -49,7 +51,9 @@
         "fs-extra": "^10.1.0",
         "normalize-path": "^3.0.0",
         "p-all": "^4.0.0",
-        "pretty-bytes": "^6.0.0"
+        "pretty-bytes": "^6.0.0",
+        "shelljs": "^0.8.5",
+        "shx": "^0.3.4"
     },
     "devDependencies": {
         "dedent": "^0.7.0",
