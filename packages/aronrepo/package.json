@@ -2,7 +2,7 @@
     "name": "aronrepo",
     "license": "MIT",
     "scripts": {
-        "build": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:@techor/log --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob && shx mkdir .github && shx cp -rf ../../.github/workflows .github",
+        "build": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:@techor/log --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
         "dev": "conc 'npm:build -- --watch'",
         "type-check": "tsc --noEmit",
         "test": "jest",
@@ -30,7 +30,7 @@
     "files": [
         "dist",
         "scripts",
-        ".github"
+        "../../.github"
     ],
     "peerDependencies": {
         "@types/node": "",

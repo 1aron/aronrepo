@@ -8,8 +8,7 @@ const fs = require('fs')
 const projectPath = path.resolve(process.cwd(), '../..')
 
 try {
-    fs.mkdirSync(path.join(projectPath, '.github'), { recursive: true })
-    shell.cp('-rf', path.join(process.cwd(), '.github', 'workflows'), path.join(projectPath, '.github'))
+    shell.ln('-sf', path.join(process.cwd(), '.github'), path.join(projectPath, '.github'))
 } catch (_) {
     /* empty */
 }
