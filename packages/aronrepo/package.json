@@ -6,8 +6,7 @@
         "dev": "conc 'npm:build -- --watch'",
         "type-check": "tsc --noEmit",
         "test": "jest",
-        "lint": "eslint src",
-        "postinstall": "node scripts/postinstall.js"
+        "lint": "eslint src"
     },
     "description": "A monorepo ecosystem integrating first-class packages and build systems 📦",
     "author": {
