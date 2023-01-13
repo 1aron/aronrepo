@@ -7,7 +7,7 @@ import log from '@techor/log'
 import path from 'path'
 import { readPackage } from '../utils/read-package'
 import { changeFilePath } from '../utils/change-file-path'
-import literal from '@master/literal'
+import line from 'to-line'
 import type { PackageJson } from 'pkg-types'
 import prettyBytes from 'pretty-bytes'
 import normalizePath from 'normalize-path'
@@ -126,7 +126,7 @@ program.command('pack [entryPaths...]')
                     if (options.watch) {
                         log.i`[type] type declarations`
                     }
-                    execaCommand(literal`
+                    execaCommand(line`
                         npx tsc --emitDeclarationOnly --preserveWatchOutput --declaration
                         --outDir ${options.outdir}
                         ${options.watch && '--watch'}

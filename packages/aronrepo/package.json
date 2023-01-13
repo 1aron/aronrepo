@@ -2,7 +2,7 @@
     "name": "aronrepo",
     "license": "MIT",
     "scripts": {
-        "build": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:@master/literal --external:@techor/log --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
+        "build": "esbuild src/bin/index.ts --bundle --outfile=dist/bin/index --format=cjs --minify --sourcemap --platform=node --external:esbuild --external:to-line --external:@techor/log --external:commitlint-config-aron --external:conventional-changelog-aron --external:eslint-config-aron --external:fs-extra --external:semantic-release-config-aron --external:commander --external:fast-glob",
         "dev": "conc 'npm:build -- --watch'",
         "type-check": "tsc --noEmit",
         "test": "jest",
@@ -38,22 +38,22 @@
         "typescript": ""
     },
     "dependencies": {
-        "@techor/log": "",
+        "@techor/log": "^1.0.6",
+        "aron-jest": "",
+        "commander": "^9.4.1",
         "commitlint-config-aron": "",
         "conventional-changelog-aron": "",
         "eslint-config-aron": "",
-        "aron-jest": "",
-        "semantic-release-config-aron": "",
-        "@master/literal": "^1.0.11",
-        "commander": "^9.4.1",
         "execa": "^6.1.0",
         "fast-glob": "^3.2.12",
         "fs-extra": "^10.1.0",
         "normalize-path": "^3.0.0",
         "p-all": "^4.0.0",
         "pretty-bytes": "^6.0.0",
+        "semantic-release-config-aron": "",
         "shelljs": "^0.8.5",
-        "shx": "^0.3.4"
+        "shx": "^0.3.4",
+        "to-line": "^1.5.0"
     },
     "devDependencies": {
         "dedent": "^0.7.0",
