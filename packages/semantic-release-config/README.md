@@ -69,7 +69,7 @@ module.exports = {
 }
 ```
 
-For full configuration, check out the [configure.js](https://github.com/1aron/aronrepo/blob/beta/packages/semantic-release-config/configure.js) file and [Aron's conventional commits for the release rules](https://github.com/1aron/packages/conventional-commits)
+For full configuration, check out the [configure.js](https://github.com/1aron/aronrepo/blob/beta/packages/semantic-release-config/configure.js) file and [Aron's conventional commits for the release rules](https://github.com/1aron/aronrepo/packages/conventional-commits)
 
 Since `.plugins` use arrays for configuration, even `extends` will override all preset plugins.
 

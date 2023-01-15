@@ -20,7 +20,7 @@ inputs:
     pr-title-check-detail-url:
         description: URL to be used when linking the "Details" in the actions overview.
         required: false
-        default: https://github.com/1aron/packages/conventional-commits
+        default: https://github.com/1aron/aronrepo/packages/conventional-commits
 runs:
     using: docker
     image: packages/github-actions/Dockerfile

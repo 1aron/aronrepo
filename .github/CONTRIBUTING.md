@@ -1,10 +1,10 @@
 # Contributing
 This guide follows the relevant specifications and presets of [Aronrepo](https://github.com/1aron/aronrepo):
 
-- [Aron's Conventional Commits](https://github.com/1aron/packages/conventional-commits)
-- [Aron's ESLint Config](https://github.com/1aron/packages/eslint-config)
-- [Aron's Jest Preset](https://github.com/1aron/packages/jest)
-- [Aron's Web Jest Preset](https://github.com/1aron/packages/web-jest)
+- [Aron's Conventional Commits](https://github.com/1aron/aronrepo/packages/conventional-commits)
+- [Aron's ESLint Config](https://github.com/1aron/aronrepo/packages/eslint-config)
+- [Aron's Jest Preset](https://github.com/1aron/aronrepo/packages/jest)
+- [Aron's Web Jest Preset](https://github.com/1aron/aronrepo/packages/web-jest)
 
 ## Developing
 Split a new terminal and run `npm run dev` in the project root to watch all packages change and build:
