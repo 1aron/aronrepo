@@ -390,7 +390,7 @@ aron version 1.2.0
 
 For version range, check out the [semver](https://github.com/npm/node-semver#versions)
 
-Typically, you would use [Aron's semantic release](https://github.com/1aron/aronrepo/packages/semantic-release-config) with CI to automate the version and release commands.
+Typically, you would use [Aron's semantic release](https://github.com/1aron/aronrepo/tree/main/packages/semantic-release-config) with CI to automate the version and release commands.
 
 ## Build system for monorepo
 
@@ -520,7 +520,7 @@ The same goes for `lint` and `type-check`.
 
 While the `build` command will work with `deploy` and `release`, aronrepo builds a complete package release workflow and the tools needed during it.
 
-Next, check out the [Aron's semantic release](https://github.com/1aron/aronrepo/packages/semantic-release-config)
+Next, check out the [Aron's semantic release](https://github.com/1aron/aronrepo/tree/main/packages/semantic-release-config)
 
 <br>
 

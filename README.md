@@ -48,32 +48,32 @@
 ## Ecosystem
 
 ##### Build System
-- [aronrepo](https://github.com/1aron/aronrepo/packages/aronrepo) - A monorepo build system and workflow
+- [aronrepo](https://github.com/1aron/aronrepo/tree/main/packages/aronrepo) - A monorepo build system and workflow
 
 ##### Convention
 
-- [aron-conventional-commits](https://github.com/1aron/aronrepo/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
-- [conventional-changelog-aron](https://github.com/1aron/aronrepo/packages/conventional-changelog-config) - Beautiful changelog based on Aron's conventional commits
+- [aron-conventional-commits](https://github.com/1aron/aronrepo/tree/main/packages/conventional-commits) - A human-readable set of conventional commits, with version rules and changelog groupings
+- [conventional-changelog-aron](https://github.com/1aron/aronrepo/tree/main/packages/conventional-changelog-config) - Beautiful changelog based on Aron's conventional commits
 
 ##### Release
-- [semantic-release-config-aron](https://github.com/1aron/aronrepo/packages/semantic-release-config) - Aron's semantic release config for publishing workspace packages
+- [semantic-release-config-aron](https://github.com/1aron/aronrepo/tree/main/packages/semantic-release-config) - Aron's semantic release config for publishing workspace packages
 
 ##### Packing
-- [aron pack](https://github.com/1aron/aronrepo/packages/aronrepo#pack) - Bundling your TypeScript and CSS packages with zero configuration
+- [aron pack](https://github.com/1aron/aronrepo/tree/main/packages/aronrepo#pack) - Bundling your TypeScript and CSS packages with zero configuration
 
 ##### Versioning
-- [aron version](https://github.com/1aron/aronrepo/packages/aronrepo#version) - Smartly bump all workspace-dependent packages to specific versions
+- [aron version](https://github.com/1aron/aronrepo/tree/main/packages/aronrepo#version) - Smartly bump all workspace-dependent packages to specific versions
 
 ##### Linting
-- [eslint-config-aron](https://github.com/1aron/aronrepo/packages/eslint-config) - Aron's eslint config
-- [commitlint-config-aron](https://github.com/1aron/aronrepo/packages/commitlint-config) - Check your commits with Aron's commitlint config
+- [eslint-config-aron](https://github.com/1aron/aronrepo/tree/main/packages/eslint-config) - Aron's eslint config
+- [commitlint-config-aron](https://github.com/1aron/aronrepo/tree/main/packages/commitlint-config) - Check your commits with Aron's commitlint config
 
 ##### Testing
-- [aron-jest](https://github.com/1aron/aronrepo/packages/jest) - Aron's jest preset to improve performance
-- [aron-web-jest](https://github.com/1aron/aronrepo/packages/web-jest) - Aron's jest preset for web
+- [aron-jest](https://github.com/1aron/aronrepo/tree/main/packages/jest) - Aron's jest preset to improve performance
+- [aron-web-jest](https://github.com/1aron/aronrepo/tree/main/packages/web-jest) - Aron's jest preset for web
 
 ##### Continuous Integration
-- [aron-github-actions](https://github.com/1aron/aronrepo/packages/github-actions) - A set of GitHub Actions for aronrepo ecosystem includes PR title checks
+- [aron-github-actions](https://github.com/1aron/aronrepo/tree/main/packages/github-actions) - A set of GitHub Actions for aronrepo ecosystem includes PR title checks
 
 ## Built on the top
 - [turborepo](https://turbo.build/repo) - A high-performance build system for monorepo
