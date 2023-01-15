@@ -152,7 +152,7 @@ Type(Target): Summary
   └─⫸ Type: Bump, Feat, New, Perf, Add, Update, Improve, Fix, Depreciate, Drop, Docs, Upgrade, Revert, Example, Test, Refactor, Chore, Misc
 ```
 
-For the full documentation, check out the [Aron's conventional commits](https://github.com/1aron/aronrepo/tree/beta/packages/conventional-commits)
+For the full documentation, check out the [Aron's conventional commits](https://github.com/1aron/packages/conventional-commits)
 
 <br>
 
