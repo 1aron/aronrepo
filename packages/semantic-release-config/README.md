@@ -124,12 +124,6 @@ module.exports = configure({
 })
 ```
 
-## FAQ
-
-### HttpError: You have exceeded a secondary rate limit. Please wait a few minutes before you try again.
-
-Occasionally encounter this limitation error when releasing multiple packages at once, it's recommended to submit an empty commit like `Fix: 1.0.3 doesn't release all packages correctly` to quickly fix the problem.
-
 <br>
 
 <a aria-label="overview" href="https://github.com/1aron/aronrepo#ecosystem">
