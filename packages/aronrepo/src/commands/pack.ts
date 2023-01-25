@@ -22,6 +22,7 @@ program.command('pack [entryPaths...]')
     .option('-p, --platform <node,browser,neutral>', 'Platform target')
     .option('-t, --type', 'Emit typescript declarations')
     .option('-o, --outdir <dir>', 'The output directory for the build operation')
+    .option('-e, --external <packages...>', 'External packages to exclude from the build')
     .option('--srcdir <dir>', 'The source directory')
     .action(async function (entries: string[]) {
         const pkg: PackageJson = readPackage()
@@ -39,7 +40,7 @@ program.command('pack [entryPaths...]')
             type: !!pkg.types,
             srcdir: 'src',
             outdir: path.dirname(pkgEntry) || 'dist',
-            externals: externalDependencies
+            external: externalDependencies
         }, this.opts())
         const tasks = []
         const event = options.watch ? 'watching' : 'building'
@@ -63,7 +64,7 @@ program.command('pack [entryPaths...]')
                                     ? eachExt
                                     : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachFormat]
                             },
-                        external: externalDependencies,
+                        external: options.external,
                         watch: options.watch ? {
                             onRebuild(error, result) {
                                 // make esbuild log mute and depend on `tsx`

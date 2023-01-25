@@ -1,0 +1,15 @@
+{
+    "name": "externals",
+    "main": "dist/index.cjs",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "devDependencies": {
+        "@master/css.webpack": "^2.0.0-beta.55"
+    }
+}
