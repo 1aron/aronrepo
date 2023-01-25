@@ -6,5 +6,5 @@ test('prevent bundling deps and peerDeps by `package.json`', () => {
     expectFileIncludes('dist/index.cjs', [
         'require("@master/css")',
         'require("@master/style-element.react")'
-    ])
+    ],  { cwd: __dirname })
 })
