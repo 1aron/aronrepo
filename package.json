@@ -11,7 +11,9 @@
         "dev": "turbo run dev",
         "version": "node ./packages/aronrepo/dist/bin/index version",
         "analyze:commit": "semantic-release --debug",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "clean:dist": "rm -rf ./packages/**/*dist",
+        "clean:node": "rm -rf ./{examples,packages}/**/*node_modules"
     },
     "repository": {
         "type": "git",

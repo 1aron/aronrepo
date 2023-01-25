@@ -33,7 +33,7 @@
     ],
     "peerDependencies": {
         "@types/node": "",
-        "esbuild": "",
+        "esbuild": "^0.16.17",
         "turbo": "",
         "typescript": ""
     },
