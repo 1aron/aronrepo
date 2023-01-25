@@ -1,5 +1,5 @@
 {
-    "name": "externals",
+    "name": "args-externals",
     "main": "dist/index.cjs",
     "exports": {
         ".": {
@@ -8,8 +8,5 @@
     },
     "files": [
         "dist"
-    ],
-    "devDependencies": {
-        "@master/css.webpack": "^2.0.0-beta.55"
-    }
+    ]
 }
