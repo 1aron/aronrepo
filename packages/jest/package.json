@@ -27,9 +27,9 @@
         "jest-preset.js"
     ],
     "peerDependencies": {
-        "jest": "",
-        "@swc/core": "",
-        "@swc/jest": "",
-        "@types/jest": ""
+        "jest": "^29.3.1",
+        "@swc/core": "^1.3.30",
+        "@swc/jest": "^0.2.24",
+        "@types/jest": "^29.4.0"
     }
 }
