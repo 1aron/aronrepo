@@ -13,7 +13,7 @@ const defaults = {
 
 program.command('version <version>')
     .description('Bump to specific version for workspace\'s packages')
-    .option('-p, --prefix <symbol>', 'version prefix `^`, `~`, `>`, `>=`, `<`, `<=` ', '^')
+    .option('-p, --prefix <symbol>', 'Version prefix `^`, `~`, `>`, `>=`, `<`, `<=` ', '^')
     .option('-w, --workspaces <paths>', 'Specific your workspaces', defaults.workspaces)
     .option('-ls, --list', 'List current bumpable dependency tree in workspaces', false)
     .action((version, { prefix, list, workspaces }) => {
@@ -81,6 +81,6 @@ program.command('version <version>')
         }
         log`📦`
         log.tree(workspaceDepsTree)
-        log.success`bump version to +${nextVersion}+ for +${Object.keys(packagesOfName).length}+ packages in all workspace`
+        log.success`bump version to +${nextVersion}+ for ${Object.keys(packagesOfName).length} packages in all workspace`
     })
 

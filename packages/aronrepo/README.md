@@ -115,7 +115,7 @@ aron pack [entryPaths...]
 
 `aron pack` analyzes the `package.json` entry point relative to input sources in the `src` directory for builds.
 
-### Javascript packages
+### JavaScript packages
 
 ```diff
 .
@@ -225,7 +225,7 @@ Now import the above package `b` in your project or publish it.
 
 `aron pack <entryPaths...>` supports glob patterns that let you specify multiple entry points at once, including the output of nested directories.
 
-Specifying an entry point will cause the Javascript output `format` to be preset to `cjs,esm`.
+Specifying an entry point will cause the JavaScript output `format` to be preset to `cjs,esm`.
 
 ```
 aron src/**/*.ts
@@ -242,11 +242,9 @@ aron src/**/*.ts
 +        ├─── dist
 +        │    ├─── index.cjs
 +        │    ├─── index.mjs
-+        │    ├─── index.d.ts
 +        │    └─── utils
 +        │         ├─── exec.cjs
-+        │         ├─── exec.mjs
-+        │         └─── exec.d.ts
++        │         └─── exec.mjs
          └─── package.json
 ```
 The same goes for multiple CSS entries:
@@ -305,7 +303,6 @@ import '@master/style-element.react'
         "@master/css.webpack": "^2.0.0-beta.55"
     }
 }
-
 ```
 
 Run with the above setup:
@@ -319,6 +316,45 @@ aron pack --platform node
 `@master/css.webpack` is bundled into `dist/index.cjs`, except for `@master/css` and `@master/style-element.react`.
 
 So if there is an external package that needs to be bundled, you just install it to `devDependencies` via `npm i <some-package> --save-dev`, then `aron pack` will not exclude it.
+
+### Multiple outputs
+
+`aron pack` defaults to pack multiple outputs with different formats and platforms according to `exports` `bin` in `package.json`.
+
+```diff
+.
+├── package.json
+└── packages
+    └─── a
+         ├─── src
+         │    ├─── index.ts
+         │    └─── utils
+         │         └─── exec.ts
++        ├─── dist
++        │    ├─── index.cjs
++        │    ├─── index.mjs
++        │    └─── utils
++        │         ├─── exec.cjs
++        │         └─── exec.mjs
+         └─── package.json
+```
+`package.json`
+```json
+{
+    "name": "externals",
+    "exports": {
+        ".": {
+            "require": "./dist/index.cjs",
+            "import": "./dist/index.mjs"
+        },
+        "./utils/exec": {
+            "require": "./dist/utils/exec.cjs",
+            "import": "./dist/utils/exec.mjs"
+        }
+    }
+}
+```
+Any nested conditions in `exports` like `node`, `browser`, `default`, `require`, and `import` will be mapped to ESBuild’s `format` and `platform` options.
 
 ## Version
 Smartly bump all workspace-dependent packages to specific versions.

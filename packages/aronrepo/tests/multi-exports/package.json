@@ -1,0 +1,29 @@
+{
+    "name": "multi-exports",
+    "main": "./dist/index.cjs",
+    "jsnext:main": "./dist/index.mjs",
+    "browser": "./dist/index.browser.js",
+    "esnext": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "node": {
+                "require": "./dist/index.cjs",
+                "import": "./dist/index.mjs"
+            },
+            "browser": {
+                "require": "./dist/index.browser.js",
+                "import": "./dist/index.browser.mjs"
+            },
+            "default": {
+                "require": "./dist/index.default.js",
+                "import": "./dist/index.default.mjs"
+            },
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist"
+    ]
+}
