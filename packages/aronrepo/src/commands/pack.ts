@@ -38,6 +38,7 @@ program.command('pack [entryPaths...]')
     .option('-t, --type', 'Emit typescript declarations', pkg.types)
     .option('-o, --outdir <dir>', 'The output directory for the build operation', 'dist')
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
+    .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('--srcdir <dir>', 'The source directory', 'src')
     .action(async function (entries: string[]) {
         const options = this.opts()
@@ -55,7 +56,7 @@ program.command('pack [entryPaths...]')
                 outExtension: isCSSTask
                     ? { '.css': '.css' }
                     : { '.js': eachOutext ? eachOutext : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachOptions.format] },
-                external: options.external,
+                external: [...options.external, ...options.extraExternal],
                 watch: options.watch ? {
                     onRebuild(error, result) {
                         // make esbuild log mute and depend on `tsx`
