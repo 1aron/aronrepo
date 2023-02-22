@@ -71,13 +71,14 @@ program.command('version <version>')
                                 eachDependencyVersion === nextVersion ? null : nextVersion
                         }
                     }
-                    if (!Object.keys(workspacePackage[key]).length) {
-                        delete workspacePackage[key]
-                    }
                 }
             }
             analyzeDeps(dependencies, 'dependencies')
             analyzeDeps(peerDependencies, 'peerDependencies')
+            /* 防止沒有印出空 {} 的項目 */
+            if (!Object.keys(workspaceDepsTree[paint('**' + name + '**')]).length) {
+                workspaceDepsTree[paint('**' + name + '**')] = null
+            }
         }
         log`📦`
         log.tree(workspaceDepsTree)
