@@ -41,11 +41,13 @@ program.command('pack [entryPaths...]')
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('--srcdir <dir>', 'The source directory', 'src')
-    .option('--no-clean', 'Don\'t clean the previous output directory before the build starts')
+    .option('--no-clean', 'Don\'t clean up the previous output directory before the build starts')
     .action(async function (entries: string[]) {
         const options = this.opts()
-        if (options.clean) {
+        if (options.clean && fs.existsSync(options.outdir)) {
             fs.rmSync(options.outdir, { force: true, recursive: true })
+            console.log('')
+            log.d`Cleaned up the **${options.outdir}** output directory`
         }
         const buildTasks: BuildTask[] = []
         const getFileSrcGlobPattern = (filePath: string, targetExt: string) => {
@@ -98,7 +100,7 @@ program.command('pack [entryPaths...]')
                             console.log('')
                             eachBuildTask.outFile = outputFilePath
                             eachBuildTask.outputSize = prettyBytes(eachOutput.bytes).replace(/ /g, '')
-                            log.i`[${eachOptions.format}] **${outputFilePath}** ${eachBuildTask.outputSize} (${Object.keys(eachOutput.inputs).length} inputs)`
+                            log.t`[${eachOptions.format}] **${outputFilePath}** ${eachBuildTask.outputSize} (${Object.keys(eachOutput.inputs).length} inputs)`
                         }
                         log.tree({
                             entries: buildOptions.entryPoints,
