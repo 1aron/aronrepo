@@ -10,6 +10,7 @@ import line, { l } from 'to-line'
 import type { PackageJson } from 'pkg-types'
 import prettyBytes from 'pretty-bytes'
 import normalizePath from 'normalize-path'
+import fs from 'fs'
 
 const ext2format = {
     'js': 'iife',
@@ -40,8 +41,14 @@ program.command('pack [entryPaths...]')
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('--srcdir <dir>', 'The source directory', 'src')
+    .option('--no-clean', 'Don\'t clean the previous output directory before the build starts')
     .action(async function (entries: string[]) {
         const options = this.opts()
+        if (options.clean) {
+            if (fs.existsSync(options.outdir)) {
+                fs.rmSync(options.outdir, { recursive: true })
+            }
+        }
         const buildTasks: BuildTask[] = []
         const getFileSrcGlobPattern = (filePath: string, targetExt: string) => {
             return path.changeExt(path.join(options.srcdir, path.relative(options.outdir, filePath)), targetExt)
