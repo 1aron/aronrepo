@@ -45,9 +45,7 @@ program.command('pack [entryPaths...]')
     .action(async function (entries: string[]) {
         const options = this.opts()
         if (options.clean) {
-            if (fs.existsSync(options.outdir)) {
-                fs.rmSync(options.outdir, { recursive: true })
-            }
+            fs.rmSync(options.outdir, { force: true, recursive: true })
         }
         const buildTasks: BuildTask[] = []
         const getFileSrcGlobPattern = (filePath: string, targetExt: string) => {
