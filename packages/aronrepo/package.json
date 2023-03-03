@@ -47,6 +47,7 @@
         "execa": "^6.1.0",
         "fast-glob": "^3.2.12",
         "fs-extra": "^10.1.0",
+        "lodash.camelcase": "^4.3.0",
         "lodash.isequal": "^4.5.0",
         "normalize-path": "^3.0.0",
         "p-all": "^4.0.0",

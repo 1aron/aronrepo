@@ -12,6 +12,8 @@ import prettyBytes from 'pretty-bytes'
 import normalizePath from 'normalize-path'
 import fs from 'fs'
 import isEqual from 'lodash.isequal'
+import camelCase from 'lodash.camelcase'
+import { esbuildOptionNames } from '../utils/esbuild-option-names'
 
 const ext2format = {
     'js': 'iife',
@@ -30,7 +32,6 @@ dependencies && externalDependencies.push(...Object.keys(dependencies))
 peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
-    .allowUnknownOption()
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
     .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
     .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
@@ -41,10 +42,10 @@ program.command('pack [entryPaths...]')
     .option('-o, --outdir <dir>', 'The output directory for the build operation', 'dist')
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
+    .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--no-clean', 'Don\'t clean up the previous output directory before the build starts')
-    .action(async function (entries: string[]) {
-        const options = this.opts()
+    .action(async function (entries: string[], options, args) {
         if (options.clean && fs.existsSync(options.outdir)) {
             fs.rmSync(options.outdir, { force: true, recursive: true })
             console.log('')
@@ -58,6 +59,7 @@ program.command('pack [entryPaths...]')
             const isCSSTask = eachOptions.format === 'css'
             const eachOutext = eachOptions.outFile ? path.extname(eachOptions.outFile) : ''
             const buildOptions = {
+                ...options,
                 outExtension: isCSSTask
                     ? { '.css': '.css' }
                     : { '.js': eachOutext ? eachOutext : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachOptions.format] },
@@ -68,15 +70,18 @@ program.command('pack [entryPaths...]')
                     }
                 } : false,
                 logLevel: 'silent',
-                outdir: options.outdir,
                 outbase: options.srcdir,
-                bundle: options.bundle,
-                minify: options.minify,
-                sourcemap: options.sourcemap,
                 platform: eachOptions.platform || options.platform,
                 metafile: true,
                 format: isCSSTask ? undefined : eachOptions.format
             } as BuildOptions
+
+            // 安全地同步選項給 esbuild
+            for (const eachBuildOptionName in buildOptions) {
+                if (!esbuildOptionNames.includes(eachBuildOptionName)) {
+                    delete buildOptions[eachBuildOptionName]
+                }
+            }
 
             buildOptions.entryPoints =
                 fg.sync(
@@ -107,10 +112,9 @@ program.command('pack [entryPaths...]')
                             entries: buildOptions.entryPoints,
                             external: buildOptions.external,
                             outdir: buildOptions.outdir,
-                            bundle: buildOptions.bundle,
-                            minify: buildOptions.minify,
                             format: buildOptions.format,
-                            platform: buildOptions.platform
+                            platform: buildOptions.platform,
+                            [Object.keys(buildOptions).filter((x) => typeof buildOptions[x] === 'boolean').join(', ')]: null
                         })
                     }
                 }
