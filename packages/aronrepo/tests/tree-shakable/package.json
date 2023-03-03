@@ -1,0 +1,12 @@
+{
+    "name": "tree-shakable",
+    "main": "dist/index.cjs",
+    "module": "dist/index.mjs",
+    "sideEffects": false,
+    "files": [
+        "dist"
+    ],
+    "devDependencies": {
+        "esbuild": "^0.17.10"
+    }
+}

@@ -32,7 +32,8 @@
         "parent-module": "^3.0.0",
         "puppeteer": "^19.2.2",
         "strip-ansi": "^7.0.1",
-        "tmp": "^0.2.1"
+        "tmp": "^0.2.1",
+        "ts-dedent": "^2.2.0"
     },
     "engines": {
         "node": "^18"
