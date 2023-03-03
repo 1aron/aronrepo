@@ -6,13 +6,7 @@ it('deeply outputs src directory', () => {
     execSync('../../dist/bin/index pack', { cwd: __dirname, stdio: 'pipe' })
     expectExist([
         'dist/index.cjs',
-        'dist/index.mjs',
-        'dist/components/index.cjs',
-        'dist/components/index.mjs',
-        'dist/components/a.cjs',
-        'dist/components/a.mjs',
-        'dist/components/b.cjs',
-        'dist/components/b.mjs',
+        'dist/index.mjs'
     ])
 })
 

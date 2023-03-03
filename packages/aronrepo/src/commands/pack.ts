@@ -43,7 +43,6 @@ program.command('pack [entryPaths...]')
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--no-clean', 'Don\'t clean up the previous output directory before the build starts')
-    .option('--no-tree-shakable', 'Deeply export by `srcdir` to make the module tree-shakable')
     .action(async function (entries: string[]) {
         const options = this.opts()
         if (options.clean && fs.existsSync(options.outdir)) {
@@ -198,9 +197,6 @@ program.command('pack [entryPaths...]')
                     }
                 }
             })(pkg.exports, '')
-        }
-        if (options.treeShakable) {
-            entries.push(path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}'))
         }
         if (entries.length) {
             const isCSSEntry = entries.find((eachEntry) => eachEntry.includes('.css'))
