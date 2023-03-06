@@ -1,5 +1,5 @@
 {
-    "name": "preserve-class",
+    "name": "test-options",
     "main": "dist/index.cjs",
     "module": "dist/index.mjs",
     "sideEffects": false,

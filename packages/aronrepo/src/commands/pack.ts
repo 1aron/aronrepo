@@ -33,8 +33,6 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
-    .option('-b, --bundle', 'To bundle a file means to inline any imported dependencies into the file itself', true)
-    .option('-m, --minify', 'The generated code will be minified instead of pretty-printed', true)
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-s, --sourcemap', 'Emit a source map')
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
@@ -44,7 +42,11 @@ program.command('pack [entryPaths...]')
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--srcdir <dir>', 'The source directory', 'src')
-    .option('--no-clean', 'Don\'t clean up the previous output directory before the build starts')
+    .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
+    .option('--resolve-extensions', 'The resolution algorithm used by node supports implicit file extensions', ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.css', '.json'])
+    .option('--no-bundle', 'No inline any imported dependencies into the file itself', true)
+    .option('--no-minify', 'The generated code will not be minified instead of pretty-printed')
+    .option('--no-clean', 'No clean up the previous output directory before the build starts')
     .action(async function (entries: string[], options, args) {
         if (options.clean && fs.existsSync(options.outdir)) {
             fs.rmSync(options.outdir, { force: true, recursive: true })
@@ -62,7 +64,11 @@ program.command('pack [entryPaths...]')
                 ...options,
                 outExtension: isCSSTask
                     ? { '.css': '.css' }
-                    : { '.js': eachOutext ? eachOutext : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachOptions.format] },
+                    : {
+                        '.js': eachOutext
+                            ? eachOutext
+                            : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachOptions.format]
+                    },
                 external: [...options.external, ...options.extraExternal],
                 watch: options.watch ? {
                     onRebuild(error, result) {
@@ -73,7 +79,10 @@ program.command('pack [entryPaths...]')
                 outbase: options.srcdir,
                 platform: eachOptions.platform || options.platform,
                 metafile: true,
-                format: isCSSTask ? undefined : eachOptions.format
+                format: isCSSTask ? undefined : eachOptions.format,
+                keepNames: options.keepNames,
+                mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
+                resolveExtensions: options.resolveExtensions
             } as BuildOptions
 
             // 安全地同步選項給 esbuild
@@ -114,7 +123,12 @@ program.command('pack [entryPaths...]')
                             outdir: buildOptions.outdir,
                             format: buildOptions.format,
                             platform: buildOptions.platform,
-                            [Object.keys(buildOptions).filter((x) => typeof buildOptions[x] === 'boolean').join(', ')]: null
+                            [
+                                Object.keys(buildOptions)
+                                    .filter((x) => buildOptions[x] === true)
+                                    .map((x) => chalk.green('✓ ') + x)
+                                    .join(', ')
+                            ]: null
                         })
                     }
                 }
