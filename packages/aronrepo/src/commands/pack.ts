@@ -34,7 +34,7 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 program.command('pack [entryPaths...]')
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
-    .option('-s, --sourcemap', 'Emit a source map')
+    .option('-s, --sourcemap', 'Emit a source map', true)
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
     .option('-t, --type', 'Emit typescript declarations', pkg.types)
     .option('-o, --outdir <dir>', 'The output directory for the build operation', 'dist')
@@ -42,6 +42,7 @@ program.command('pack [entryPaths...]')
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--srcdir <dir>', 'The source directory', 'src')
+    .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
     .option('--resolve-extensions', 'The resolution algorithm used by node supports implicit file extensions', ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.css', '.json'])
     .option('--no-bundle', 'No inline any imported dependencies into the file itself', true)
@@ -60,7 +61,7 @@ program.command('pack [entryPaths...]')
         const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, ext?: string, platform?: string, outFile?: string }) => {
             const isCSSTask = eachOptions.format === 'css'
             const eachOutext = eachOptions.outFile ? path.extname(eachOptions.outFile) : ''
-            const buildOptions = {
+            const buildOptions: BuildOptions = {
                 ...options,
                 outExtension: isCSSTask
                     ? { '.css': '.css' }
@@ -82,8 +83,10 @@ program.command('pack [entryPaths...]')
                 format: isCSSTask ? undefined : eachOptions.format,
                 keepNames: options.keepNames,
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
-                resolveExtensions: options.resolveExtensions
-            } as BuildOptions
+                resolveExtensions: options.resolveExtensions,
+                target: options.target,
+                sourcemap: options.sourcemap
+            }
 
             // 安全地同步選項給 esbuild
             for (const eachBuildOptionName in buildOptions) {
