@@ -2,10 +2,13 @@ import { aUtil } from '../utils/a-util'
 
 const hasFn = typeof Function !== 'undefined'
 
-export class AAA extends (hasFn ? Function : Object) {
-    private _fullAAAMembership = 1
+const AAA = /* @__PURE__ */  (() => class AAA extends (hasFn ? Function : Object) {
+    _fullAAAMembership = 1
+    static staticMembership = 100
     constructor() {
         super()
         console.log(this._fullAAAMembership, aUtil())
     }
-}
+})()
+
+export { AAA }

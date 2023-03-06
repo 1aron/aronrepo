@@ -10,9 +10,9 @@ it('mangle private', () => {
     ], { cwd: __dirname })
 })
 
-it('tree shake and only bundle AAA', () => {
+it('tree shake and only bundle BBB', () => {
     execSync('../../dist/bin/index pack src/tree-shaking.ts --no-minify --no-clean', { cwd: __dirname, stdio: 'pipe' })
     expectFileExcludes('dist/tree-shaking.mjs', [
-        'BBB'
+        'AAA'
     ], { cwd: __dirname })
 })

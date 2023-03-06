@@ -1,3 +1,3 @@
-import { AAA } from '../dist/index.mjs'
+import { BBB } from '../dist/index.mjs'
 
-console.log(AAA)
+console.log(BBB)
