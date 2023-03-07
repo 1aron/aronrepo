@@ -69,7 +69,7 @@ program.command('pack [entryPaths...]')
             if (options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
                 external.push(
                     path.join('./', options.srcdir, '*'),
-                    path.join('./', options.srcdir, '**'),
+                    path.join('./', options.srcdir, '**/*'),
                 )
             }
             const buildOptions: BuildOptions = {
