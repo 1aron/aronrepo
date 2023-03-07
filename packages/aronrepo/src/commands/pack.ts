@@ -66,7 +66,7 @@ program.command('pack [entryPaths...]')
                 ...options.external,
                 ...options.extraExternal
             ]
-            if (options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
+            if (options.bundle, options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
                 external.push(
                     './' + path.join(options.srcdir, '*'),
                 )
@@ -236,6 +236,9 @@ program.command('pack [entryPaths...]')
             } else {
                 options.format.map((eachFormat: string) => addBuildTask(entries, { format: eachFormat }))
             }
+        }
+        if (options.bundle, options.softBundle) {
+            options.format.map((eachFormat: string) => addBuildTask([path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}')], { format: eachFormat, platform: 'node' }))
         }
         if (!buildTasks.length) {
             options.format.map((eachFormat: string) => addBuildTask([path.join(options.srcdir, 'index.ts')], { format: eachFormat }))
