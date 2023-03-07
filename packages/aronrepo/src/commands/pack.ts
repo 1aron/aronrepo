@@ -12,7 +12,6 @@ import prettyBytes from 'pretty-bytes'
 import normalizePath from 'normalize-path'
 import fs from 'fs'
 import isEqual from 'lodash.isequal'
-import camelCase from 'lodash.camelcase'
 import { esbuildOptionNames } from '../utils/esbuild-option-names'
 
 const ext2format = {
@@ -48,6 +47,8 @@ program.command('pack [entryPaths...]')
     .option('--no-bundle', 'No inline any imported dependencies into the file itself', true)
     .option('--no-minify', 'The generated code will not be minified instead of pretty-printed')
     .option('--no-clean', 'No clean up the previous output directory before the build starts')
+    .option('--no-author', 'No clean up the previous output directory before the build starts')
+    .option('--no-soft-bundle', 'Bundle only IIFE and node_modules instead of ESM and CJS source files')
     .action(async function (entries: string[], options, args) {
         if (options.clean && fs.existsSync(options.outdir)) {
             fs.rmSync(options.outdir, { force: true, recursive: true })
@@ -61,6 +62,16 @@ program.command('pack [entryPaths...]')
         const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, ext?: string, platform?: string, outFile?: string }) => {
             const isCSSTask = eachOptions.format === 'css'
             const eachOutext = eachOptions.outFile ? path.extname(eachOptions.outFile) : ''
+            const external = [
+                ...options.external,
+                ...options.extraExternal
+            ]
+            if (options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
+                external.push(
+                    path.join('./', options.srcdir, '*'),
+                    path.join('./', options.srcdir, '**'),
+                )
+            }
             const buildOptions: BuildOptions = {
                 ...options,
                 outExtension: isCSSTask
@@ -70,7 +81,7 @@ program.command('pack [entryPaths...]')
                             ? eachOutext
                             : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachOptions.format]
                     },
-                external: [...options.external, ...options.extraExternal],
+                external,
                 watch: options.watch ? {
                     onRebuild(error, result) {
                         // make esbuild log mute and depend on `tsx`
