@@ -1,3 +1,3 @@
-import { BBB } from '../dist/index.mjs'
+import { BBB } from './'
 
 console.log(BBB)

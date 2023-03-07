@@ -33,7 +33,7 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 program.command('pack [entryPaths...]')
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
-    .option('-s, --sourcemap', 'Emit a source map', true)
+    .option('-s, --sourcemap', 'Emit a source map', process.env.NODE_ENV === 'production')
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
     .option('-t, --type', 'Emit typescript declarations', pkg.types)
     .option('-o, --outdir <dir>', 'The output directory for the build operation', 'dist')
@@ -68,8 +68,7 @@ program.command('pack [entryPaths...]')
             ]
             if (options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
                 external.push(
-                    path.join('./', options.srcdir, '*'),
-                    path.join('./', options.srcdir, '**/*'),
+                    './' + path.join(options.srcdir, '*'),
                 )
             }
             const buildOptions: BuildOptions = {
