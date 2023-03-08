@@ -1,8 +1,8 @@
 {
     "name": "conventional-changelog-aron",
     "scripts": {
-        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --minify --sourcemap --platform=node",
-        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --minify --sourcemap --platform=node",
+        "build:cjs": "esbuild src/index.ts --bundle --outfile=dist/cjs/index.js --format=cjs --minify --sourcemap --platform=node",
+        "build:esm": "esbuild src/index.ts --bundle --outfile=dist/esm/index.js --format=esm --minify --sourcemap --platform=node",
         "build:type": "tsc --emitDeclarationOnly --preserveWatchOutput",
         "build": "conc 'npm:build:*'",
         "dev": "conc 'npm:build:* -- --watch'",
@@ -33,15 +33,15 @@
         "aron",
         "preset"
     ],
-    "main": "./dist/index.cjs",
-    "jsnext:main": "./dist/index.mjs",
-    "esnext": "./dist/index.mjs",
-    "module": "./dist/index.mjs",
+    "main": "./dist/cjs/index.js",
+    "jsnext:main": "./dist/esm/index.js",
+    "esnext": "./dist/esm/index.js",
+    "module": "./dist/esm/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs",
+            "require": "./dist/cjs/index.js",
+            "import": "./dist/esm/index.js",
             "types": "./dist/index.d.ts"
         }
     },

@@ -1,14 +1,14 @@
 {
     "name": "tsx",
-    "main": "dist/index.cjs",
-    "module": "dist/index.mjs",
+    "main": "dist/cjs/index.js",
+    "module": "dist/esm/index.js",
     "types": "dist/index.d.ts",
-    "jsnext:main": "dist/index.mjs",
-    "esnext": "dist/index.mjs",
+    "jsnext:main": "dist/esm/index.js",
+    "esnext": "dist/esm/index.js",
     "exports": {
         ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs",
+            "require": "./dist/cjs/index.js",
+            "import": "./dist/esm/index.js",
             "types": "./dist/index.d.ts"
         }
     },

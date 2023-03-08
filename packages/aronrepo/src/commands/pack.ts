@@ -32,6 +32,7 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
+    .option('-f, --format-outdirs [outdirs...]', 'The output file creates a corresponding directory according to its format', ['cjs', 'esm'])
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-s, --sourcemap', 'Emit a source map', process.env.NODE_ENV === 'production')
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
@@ -42,11 +43,10 @@ program.command('pack [entryPaths...]')
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--cjs-ext', 'Specify CommonJS default file extension', '.js')
     .option('--iife-ext', 'Specify CommonJS default file extension', '.js')
-    .option('--esm-ext', 'Specify CommonJS default file extension', '.mjs')
+    .option('--esm-ext', 'Specify CommonJS default file extension', '.js')
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
-    .option('--resolve-extensions', 'The resolution algorithm used by node supports implicit file extensions', ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.css', '.json'])
     .option('--no-bundle', 'OFF: Inline any imported dependencies into the file itself', true)
     .option('--no-minify', 'OFF: Minify the generated code')
     .option('--no-clean', 'OFF: Clean up the previous output directory before the build starts')
@@ -60,7 +60,13 @@ program.command('pack [entryPaths...]')
         }
         const buildTasks: BuildTask[] = []
         const getFileSrcGlobPattern = (filePath: string, targetExt: string) => {
-            return path.changeExt(path.join(options.srcdir, path.relative(options.outdir, filePath)), targetExt)
+            let subFilePath /* esm/components/a.ts */ = path.relative(options.outdir, filePath)
+            const targetFormat = options.formatOutdirs.find((eachFormat) => subFilePath.startsWith(eachFormat + '/'))
+            if (targetFormat) {
+                subFilePath = /* components/a.ts */ path.relative(targetFormat, subFilePath)
+            }
+            const srcFilePath /* src/components/a.ts */ = path.join(options.srcdir, subFilePath)
+            return path.changeExt(srcFilePath, targetExt)
         }
         const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, ext?: string, platform?: string, outFile?: string }) => {
             const isCSSTask = eachOptions.format === 'css'
@@ -88,15 +94,18 @@ program.command('pack [entryPaths...]')
                     }
                 } : false,
                 logLevel: 'silent',
+                outdir: options.formatOutdirs.includes(eachOptions.format)
+                    ? path.join(options.outdir, eachOptions.format)
+                    : options.outdir,
                 outbase: options.srcdir,
                 platform: eachOptions.platform || options.platform,
                 metafile: true,
                 format: isCSSTask ? undefined : eachOptions.format,
                 keepNames: options.keepNames,
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
-                resolveExtensions: options.resolveExtensions,
                 target: options.target,
-                sourcemap: options.sourcemap
+                sourcemap: options.sourcemap,
+                conditions: ['import', 'require']
             }
 
             // 安全地同步選項給 esbuild

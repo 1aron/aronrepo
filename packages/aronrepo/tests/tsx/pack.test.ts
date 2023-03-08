@@ -3,5 +3,5 @@ import { expectExist } from '../../../../utils/expect-exist'
 
 test('resolve `.tsx` with `package.json`', () => {
     execSync('../../dist/bin/index pack', { cwd: __dirname, stdio: 'pipe' })
-    expectExist(['dist/index.cjs'])
+    expectExist(['dist/cjs/index.js'])
 })

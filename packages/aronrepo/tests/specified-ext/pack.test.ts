@@ -3,5 +3,5 @@ import { expectExist } from '../../../../utils/expect-exist'
 
 test('specified ext `.js` by "main": "dist/index.js"', () => {
     execSync('../../dist/bin/index pack', { cwd: __dirname, stdio: 'pipe' })
-    expectExist(['dist/index.js'])
+    expectExist(['dist/cjs/index.js'])
 })

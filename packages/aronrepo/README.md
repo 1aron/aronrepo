@@ -142,16 +142,16 @@ Simultaneously output `cjs`, `esm`, `iife`, `type declarations` respectively acc
         "build": "aron pack",
         "dev": "npm run build -- --watch"
     },
-    "main": "dist/index.cjs",
+    "main": "dist/cjs/index.js",
     "browser": "dist/index.browser.js",
-    "module": "dist/index.mjs",
+    "module": "dist/esm/index.js",
     "types": "dist/index.d.ts",
-    "jsnext:main": "dist/index.mjs",
-    "esnext": "dist/index.mjs",
+    "jsnext:main": "dist/esm/index.js",
+    "esnext": "dist/esm/index.js",
     "exports": {
         ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs",
+            "require": "./dist/cjs/index.js",
+            "import": "./dist/esm/index.js",
             "types": "./dist/index.d.ts"
         }
     },
@@ -284,10 +284,10 @@ import '@master/style-element.react'
 ```json
 {
     "name": "externals",
-    "main": "dist/index.cjs",
+    "main": "dist/cjs/index.js",
     "exports": {
         ".": {
-            "require": "./dist/index.cjs"
+            "require": "./dist/cjs/index.js"
         }
     },
     "files": [
@@ -313,7 +313,7 @@ aron pack --platform node
 
 <img width="568" alt="exclude-externals-pack" src="https://user-images.githubusercontent.com/33840671/204489494-10854837-be15-49fd-a1c8-0e02fb3e174a.png">
 
-`@master/css.webpack` is bundled into `dist/index.cjs`, except for `@master/css` and `@master/style-element.react`.
+`@master/css.webpack` is bundled into `dist/cjs/index.js`, except for `@master/css` and `@master/style-element.react`.
 
 So if there is an external package that needs to be bundled, you just install it to `devDependencies` via `npm i <some-package> --save-dev`, then `aron pack` will not exclude it.
 
@@ -344,8 +344,8 @@ So if there is an external package that needs to be bundled, you just install it
     "name": "externals",
     "exports": {
         ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs"
+            "require": "./dist/cjs/index.js",
+            "import": "./dist/esm/index.js"
         },
         "./utils/exec": {
             "require": "./dist/utils/exec.cjs",

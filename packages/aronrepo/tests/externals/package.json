@@ -1,9 +1,9 @@
 {
     "name": "externals",
-    "main": "dist/index.cjs",
+    "main": "dist/cjs/index.js",
     "exports": {
         ".": {
-            "require": "./dist/index.cjs"
+            "require": "./dist/cjs/index.js"
         }
     },
     "files": [
