@@ -15,7 +15,7 @@ import isEqual from 'lodash.isequal'
 import { esbuildOptionNames } from '../utils/esbuild-option-names'
 
 const ext2format = {
-    'js': 'iife',
+    'js': 'cjs',
     'cjs': 'cjs',
     'mjs': 'esm',
     'css': 'css'
@@ -40,6 +40,9 @@ program.command('pack [entryPaths...]')
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
+    .option('--cjs-ext', 'Specify CommonJS default file extension', '.js')
+    .option('--iife-ext', 'Specify CommonJS default file extension', '.js')
+    .option('--esm-ext', 'Specify CommonJS default file extension', '.mjs')
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
@@ -61,7 +64,7 @@ program.command('pack [entryPaths...]')
         }
         const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, ext?: string, platform?: string, outFile?: string }) => {
             const isCSSTask = eachOptions.format === 'css'
-            const eachOutext = eachOptions.outFile ? path.extname(eachOptions.outFile) : ''
+            const eachOutext = eachOptions.ext || eachOptions.outFile && path.extname(eachOptions.outFile) || ''
             const external = [
                 ...options.external,
                 ...options.extraExternal
@@ -76,7 +79,7 @@ program.command('pack [entryPaths...]')
                     : {
                         '.js': eachOutext
                             ? eachOutext
-                            : { cjs: '.cjs', esm: '.mjs', iife: '.js' }[eachOptions.format]
+                            : { cjs: options.cjsExt, esm: options.esmExt, iife: options.iifeExt }[eachOptions.format]
                     },
                 external,
                 watch: options.watch ? {
