@@ -104,8 +104,7 @@ program.command('pack [entryPaths...]')
                 keepNames: options.keepNames,
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
                 target: options.target,
-                sourcemap: options.sourcemap,
-                conditions: ['import', 'require']
+                sourcemap: options.sourcemap
             }
 
             // 安全地同步選項給 esbuild
