@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import fg from 'fast-glob'
 import { execaCommand } from 'execa'
-import { build, BuildOptions, Metafile } from 'esbuild'
+import { build, BuildOptions, context, Metafile } from 'esbuild'
 import pAll from 'p-all'
 import log, { chalk } from '@techor/log'
 import path from 'upath'
@@ -39,6 +39,7 @@ program.command('pack [entryPaths...]')
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
     .option('-t, --type', 'Emit typescript declarations', pkg.types)
     .option('-o, --outdir <dir>', 'The output directory for the build operation', 'dist')
+    .option('-o, --serve', 'Serve mode starts a web server that serves your code to your browser on your device', false)
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
@@ -93,12 +94,7 @@ program.command('pack [entryPaths...]')
                             : { cjs: options.cjsExt, esm: options.esmExt, iife: options.iifeExt }[eachOptions.format]
                     },
                 external,
-                watch: options.watch ? {
-                    onRebuild(error, result) {
-                        // make esbuild log mute and depend on `tsx`
-                    }
-                } : false,
-                logLevel: 'silent',
+                logLevel: 'info',
                 outdir: options.formatOutdirs.includes(eachOptions.format)
                     ? path.join(options.outdir, eachOptions.format)
                     : options.outdir,
@@ -112,6 +108,10 @@ program.command('pack [entryPaths...]')
                 sourcemap: options.sourcemap,
                 plugins
             }
+
+            // Fix ERROR: Invalid option in build() call
+            delete buildOptions['watch']
+            delete buildOptions['serve']
 
             // 安全地同步選項給 esbuild
             for (const eachBuildOptionName in buildOptions) {
@@ -135,7 +135,8 @@ program.command('pack [entryPaths...]')
             const eachBuildTask: BuildTask = {
                 options: buildOptions,
                 run: async () => {
-                    const { metafile } = await build(buildOptions)
+                    const ctx = await context(buildOptions)
+                    const { metafile } = await ctx.rebuild()
                     if (metafile) {
                         console.log('')
                         eachBuildTask.metafile = metafile
@@ -158,6 +159,12 @@ program.command('pack [entryPaths...]')
                                     .join(', ')
                             ]: null
                         })
+                    }
+                    if (options.watch) {
+                        await ctx.watch()
+                    }
+                    if (options.serve) {
+                        await ctx.serve()
                     }
                 }
             }
@@ -294,9 +301,11 @@ program.command('pack [entryPaths...]')
         await pAll(buildTasks.map(({ run }) => run))
 
         console.log('')
+
         if (options.watch && typeBuildTask) {
             buildTasks.push(typeBuildTask)
         }
+
         for (const eachBuildTask of buildTasks) {
             if (eachBuildTask.metafile) {
                 Object.keys(eachBuildTask.metafile.outputs)
