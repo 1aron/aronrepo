@@ -9,37 +9,48 @@ export function createFillModuleExtPlugin(outext = '.js', outdir = 'src'): Plugi
     return {
         name: 'fill-module-ext',
         setup(build) {
+            const started: any = {}
+            started.promise = new Promise(resolve => {
+                started.resolve = resolve
+            })
+            build.onStart(() => {
+                started.resolve(true)
+            })
             build.onLoad({ filter: /\.ts$/ }, async (args) => {
-                const content = await fs.promises.readFile(args.path, { encoding: 'utf8' })
-                return {
-                    contents: content
-                        .replace(/((?:(?:import|export)(?:.*from | ))|(?:(?:import))\()'((\.(?:\.)?\/.*)|\.)'/gmi,
-                            (...matches) => {
-                                const modulePath: string = matches[2]
-                                const parsedModulePath = path.parse(modulePath)
-                                if (parsedModulePath.ext) {
-                                    return matches[1]
-                                }
-                                let cd = '../'
-                                if (parsedModulePath.dir.startsWith('../')) {
-                                    cd = '../../'
-                                }
-                                const foundModuleSourcePath = fg.sync([
-                                    path.join(args.path, parsedModulePath.dir, cd, parsedModulePath.name) + '.{ts,js,mjs,jsx,tsx}',
-                                    path.join(args.path, parsedModulePath.dir, cd, parsedModulePath.name, 'index.{ts,js,mjs,jsx,tsx}')
-                                ])[0]
-                                if (!foundModuleSourcePath) {
-                                    return matches[0]
-                                }
-                                let targetModulePath = path.relative(resolvedOutdir, path.changeExt(foundModuleSourcePath, outext))
-                                if (parsedModulePath.dir === '.' || parsedModulePath.dir === '') {
-                                    targetModulePath = './' + targetModulePath
-                                } else {
-                                    targetModulePath = path.join(parsedModulePath.dir, targetModulePath)
-                                }
-                                return `${matches[1]}'${targetModulePath}'`
-                            }),
-                    loader: 'ts',
+                if (await started.promise === true) {
+                    const content = await fs.promises.readFile(args.path, { encoding: 'utf8' })
+                    const currentDirPath = path.dirname(args.path)
+                    return {
+                        contents: content
+                            .replace(/((?:(?:import|export)(?:.*from | ))|(?:(?:import))\()'((\.(?:\.)?\/.*)|\.)'/gmi,
+                                (...matches) => {
+                                    const currentPath = args.path
+                                    const modulePath: string = matches[2]
+                                    const parsedModulePath = path.parse(modulePath)
+                                    if (parsedModulePath.ext) {
+                                        return matches[1]
+                                    }
+                                    const targetDir = path.resolve(currentDirPath, modulePath)
+                                    const foundModuleSourcePath = fg.sync([
+                                        targetDir + '.{ts,js,mjs,jsx,tsx}',
+                                        path.join(targetDir, 'index.{ts,js,mjs,jsx,tsx}')
+                                    ])[0]
+                                    if (!foundModuleSourcePath) {
+                                        return matches[0]
+                                    }
+                                    let targetModulePath = path.relative(resolvedOutdir, path.changeExt(foundModuleSourcePath, outext))
+                                    const parsedTargetModulePath = path.parse(targetModulePath)
+                                    if (modulePath === '.' || modulePath === './') {
+                                        targetModulePath = './index' + outext
+                                    } else if (parsedTargetModulePath.name === parsedModulePath.name) {
+                                        targetModulePath = modulePath + outext
+                                    } else {
+                                        targetModulePath = modulePath + '/index' + outext
+                                    }
+                                    return `${matches[1]}'${targetModulePath}'`
+                                }),
+                        loader: 'ts',
+                    }
                 }
             })
         }

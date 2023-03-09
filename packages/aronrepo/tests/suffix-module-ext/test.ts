@@ -10,7 +10,7 @@ it('suffix es module with outext', () => {
     ], { cwd: __dirname })
     expectFileIncludes('dist/esm/d/index.js', [
         '"../e.js"',
-        '"../f/f"'
+        '"../f/ff.js"'
     ], { cwd: __dirname })
 })
 

@@ -162,6 +162,8 @@ program.command('pack [entryPaths...]')
                     }
                     if (options.watch) {
                         await ctx.watch()
+                    } else {
+                        await ctx.dispose()
                     }
                     if (options.serve) {
                         await ctx.serve()

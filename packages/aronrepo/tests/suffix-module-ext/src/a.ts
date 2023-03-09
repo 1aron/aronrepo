@@ -2,5 +2,6 @@ export * from './b'
 export * from './d'
 export * from '.'
 import { dIndex } from './d'
-console.log(dIndex);
+import { ff } from './f/ff'
+console.log(dIndex, ff);
 (() => import('./c'))()

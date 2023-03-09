@@ -1,4 +1,4 @@
 export const dIndex = 'dIndex'
 export * from '../e'
-import { f } from '../f/f'
-console.log(f)
+import { ff } from '../f/ff'
+console.log(ff)
