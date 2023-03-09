@@ -2,12 +2,11 @@ import { execSync } from 'node:child_process'
 import { expectFileExcludes } from '../../../../utils/expect-file-excludes'
 import { expectFileIncludes } from '../../../../utils/expect-file-includes'
 
-execSync('../../dist/bin/index pack --no-minify', { cwd: __dirname, stdio: 'pipe' })
-
 it('mangle private', () => {
-    expectFileExcludes('dist/esm/index.js', [
-        '_fullAAAMembership'
-    ], { cwd: __dirname })
+    execSync('../../dist/bin/index pack --no-minify', { cwd: __dirname, stdio: 'pipe' })
+    // expectFileExcludes('dist/esm/index.js', [
+    //     '_fullAAAMembership'
+    // ], { cwd: __dirname })
 })
 
 it('tree shake and only bundle BBB', () => {

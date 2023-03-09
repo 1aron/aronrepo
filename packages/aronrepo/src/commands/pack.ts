@@ -13,6 +13,7 @@ import normalizePath from 'normalize-path'
 import fs from 'fs'
 import isEqual from 'lodash.isequal'
 import { esbuildOptionNames } from '../utils/esbuild-option-names'
+import { createFillModuleExtPlugin } from '../utils/esbuild-plugin-fill-module-ext'
 
 const ext2format = {
     'js': 'cjs',
@@ -70,13 +71,17 @@ program.command('pack [entryPaths...]')
         }
         const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, ext?: string, platform?: string, outFile?: string }) => {
             const isCSSTask = eachOptions.format === 'css'
-            const eachOutext = eachOptions.ext || eachOptions.outFile && path.extname(eachOptions.outFile) || ''
+            const eachOutext = eachOptions.ext || eachOptions.outFile && path.extname(eachOptions.outFile) || undefined
             const external = [
                 ...options.external,
                 ...options.extraExternal
             ]
             if (options.bundle, options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
                 external.push('.*')
+            }
+            const plugins = []
+            if (eachOptions.format === 'esm') {
+                plugins.push(createFillModuleExtPlugin(eachOutext))
             }
             const buildOptions: BuildOptions = {
                 ...options,
@@ -104,7 +109,8 @@ program.command('pack [entryPaths...]')
                 keepNames: options.keepNames,
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
                 target: options.target,
-                sourcemap: options.sourcemap
+                sourcemap: options.sourcemap,
+                plugins
             }
 
             // 安全地同步選項給 esbuild
@@ -252,7 +258,6 @@ program.command('pack [entryPaths...]')
         if (!buildTasks.length) {
             options.format.map((eachFormat: string) => addBuildTask([path.join(options.srcdir, 'index.ts')], { format: eachFormat }))
         }
-
         let typeBuildTask: any
         if (options.type) {
             typeBuildTask = {
