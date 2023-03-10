@@ -33,7 +33,7 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
-    .option('-f, --format-outdirs [outdirs...]', 'The output file creates a corresponding directory according to its format', ['cjs', 'esm'])
+    .option('-t, --shakeable-format [formats...]', 'Output tree-shakeable modules by formats', ['cjs', 'esm'])
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-s, --sourcemap', 'Emit a source map', process.env.NODE_ENV === 'production')
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
@@ -52,8 +52,6 @@ program.command('pack [entryPaths...]')
     .option('--no-bundle', 'OFF: Inline any imported dependencies into the file itself', true)
     .option('--no-minify', 'OFF: Minify the generated code')
     .option('--no-clean', 'OFF: Clean up the previous output directory before the build starts')
-    .option('--no-author', 'OFF: Clean up the previous output directory before the build starts')
-    .option('--no-soft-bundle', 'OFF: Bundle only IIFE and node_modules instead of ESM and CJS source files')
     .action(async function (entries: string[], options, args) {
         if (options.clean && fs.existsSync(options.outdir)) {
             fs.rmSync(options.outdir, { force: true, recursive: true })
@@ -62,27 +60,24 @@ program.command('pack [entryPaths...]')
         }
         const buildTasks: BuildTask[] = []
         const getFileSrcGlobPattern = (filePath: string, targetExt: string) => {
-            let subFilePath /* esm/components/a.ts */ = path.relative(options.outdir, filePath)
-            const targetFormat = options.formatOutdirs.find((eachFormat) => subFilePath.startsWith(eachFormat + '/'))
-            if (targetFormat) {
-                subFilePath = /* components/a.ts */ path.relative(targetFormat, subFilePath)
-            }
+            const subFilePath /* components/a.ts */ = path.relative(options.outdir, filePath)
             const srcFilePath /* src/components/a.ts */ = path.join(options.srcdir, subFilePath)
             return path.changeExt(srcFilePath, targetExt)
         }
-        const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, ext?: string, platform?: string, outFile?: string }) => {
+        const addBuildTask = async (eachEntries: string[], eachOptions: { format: string, softBundle?: boolean, ext?: string, platform?: string, outdir?: string, outFile?: string }) => {
             const isCSSTask = eachOptions.format === 'css'
             const eachOutext = eachOptions.ext || eachOptions.outFile && path.extname(eachOptions.outFile) || undefined
             const external = [
                 ...options.external,
                 ...options.extraExternal
             ]
-            if (options.bundle, options.softBundle, eachOptions.format === 'esm' || eachOptions.format === 'cjs') {
+            const eachOutdir = eachOptions.outdir || options.outdir
+            if (options.bundle, eachOptions.softBundle) {
                 external.push('.*')
             }
             const plugins = []
-            if (eachOptions.format === 'esm') {
-                plugins.push(createFillModuleExtPlugin(eachOutext))
+            if (options.softBundle, eachOptions.format === 'esm') {
+                plugins.push(createFillModuleExtPlugin(options.esmExt))
             }
             const buildOptions: BuildOptions = {
                 ...options,
@@ -95,9 +90,7 @@ program.command('pack [entryPaths...]')
                     },
                 external,
                 logLevel: 'info',
-                outdir: options.formatOutdirs.includes(eachOptions.format)
-                    ? path.join(options.outdir, eachOptions.format)
-                    : options.outdir,
+                outdir: eachOutdir,
                 outbase: options.srcdir,
                 platform: eachOptions.platform || options.platform,
                 metafile: true,
@@ -129,6 +122,7 @@ program.command('pack [entryPaths...]')
                             (eachBuildTask.options.entryPoints as []).includes(eachEntry)
                             && eachBuildTask.options.format === buildOptions.format
                             && isEqual(eachBuildTask.options.outExtension, buildOptions.outExtension)
+                            && eachBuildTask.options.outdir === buildOptions.outdir
                         )
                     )
 
@@ -178,27 +172,12 @@ program.command('pack [entryPaths...]')
             buildTasks.push(eachBuildTask)
         }
 
-        if (pkg.style) {
-            addBuildTask([getFileSrcGlobPattern(pkg.main, '.css')], { format: 'css' })
-        }
-        if (pkg.main && !pkg.main.endsWith('.css')) {
-            addBuildTask([getFileSrcGlobPattern(pkg.main, '.{js,ts,jsx,tsx}')], { format: 'cjs', outFile: pkg.main })
-        }
-        if (pkg.module) {
-            addBuildTask([getFileSrcGlobPattern(pkg.module, '.{js,ts,jsx,tsx}')], { format: 'esm', outFile: pkg.module })
-        }
-        if (pkg.browser) {
-            addBuildTask([getFileSrcGlobPattern(pkg.browser, '.{js,ts,jsx,tsx}')], { format: 'iife', platform: 'browser', outFile: pkg.browser })
-        }
-        if (pkg.bin) {
-            if (typeof pkg.bin === 'string') {
-                addBuildTask([getFileSrcGlobPattern(pkg.bin, '.{js,ts,jsx,tsx}')], { format: 'cjs', platform: 'node', outFile: pkg.bin })
-            } else {
-                for (const eachCommandName in pkg.bin) {
-                    const eachCommandFile = pkg.bin[eachCommandName]
-                    addBuildTask([getFileSrcGlobPattern(eachCommandFile, '.{js,ts,jsx,tsx}')], { format: 'cjs', platform: 'node', outFile: eachCommandFile })
-                }
-            }
+        if (options.shakeableFormat.length) {
+            options.shakeableFormat.forEach((eachFormat: string) =>
+                addBuildTask(
+                    [path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}')],
+                    { format: eachFormat, platform: 'node', outdir: path.join(options.outdir, eachFormat), softBundle: true }
+                ))
         }
         if (pkg.exports) {
             (function handleExports(eachExports: any, eachParentKey: string, eachOptions?: { format?: string, outFile?: string, platform?: string }) {
@@ -253,6 +232,28 @@ program.command('pack [entryPaths...]')
                 }
             })(pkg.exports, '')
         }
+        if (pkg.style) {
+            addBuildTask([getFileSrcGlobPattern(pkg.main, '.css')], { format: 'css' })
+        }
+        if (pkg.main && !pkg.main.endsWith('.css')) {
+            addBuildTask([getFileSrcGlobPattern(pkg.main, '.{js,ts,jsx,tsx}')], { format: 'cjs', outFile: pkg.main })
+        }
+        if (pkg.module) {
+            addBuildTask([getFileSrcGlobPattern(pkg.module, '.{js,ts,jsx,tsx}')], { format: 'esm', outFile: pkg.module })
+        }
+        if (pkg.browser) {
+            addBuildTask([getFileSrcGlobPattern(pkg.browser, '.{js,ts,jsx,tsx}')], { format: 'iife', platform: 'browser', outFile: pkg.browser })
+        }
+        if (pkg.bin) {
+            if (typeof pkg.bin === 'string') {
+                addBuildTask([getFileSrcGlobPattern(pkg.bin, '.{js,ts,jsx,tsx}')], { format: 'cjs', platform: 'node', outFile: pkg.bin })
+            } else {
+                for (const eachCommandName in pkg.bin) {
+                    const eachCommandFile = pkg.bin[eachCommandName]
+                    addBuildTask([getFileSrcGlobPattern(eachCommandFile, '.{js,ts,jsx,tsx}')], { format: 'cjs', platform: 'node', outFile: eachCommandFile })
+                }
+            }
+        }
         if (entries.length) {
             const isCSSEntry = entries.find((eachEntry) => eachEntry.includes('.css'))
             if (isCSSEntry) {
@@ -260,9 +261,6 @@ program.command('pack [entryPaths...]')
             } else {
                 options.format.map((eachFormat: string) => addBuildTask(entries, { format: eachFormat }))
             }
-        }
-        if (options.bundle, options.softBundle) {
-            options.format.map((eachFormat: string) => addBuildTask([path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}')], { format: eachFormat, platform: 'node' }))
         }
         if (!buildTasks.length) {
             options.format.map((eachFormat: string) => addBuildTask([path.join(options.srcdir, 'index.ts')], { format: eachFormat }))

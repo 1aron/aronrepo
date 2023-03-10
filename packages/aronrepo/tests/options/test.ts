@@ -4,13 +4,13 @@ import { expectFileIncludes } from '../../../../utils/expect-file-includes'
 
 it('mangle private', () => {
     execSync('../../dist/bin/index pack --no-minify', { cwd: __dirname, stdio: 'pipe' })
-    // expectFileExcludes('dist/esm/index.js', [
-    //     '_fullAAAMembership'
-    // ], { cwd: __dirname })
+    expectFileExcludes('dist/esm/index.js', [
+        '_fullAAAMembership'
+    ], { cwd: __dirname })
 })
 
 it('tree shake and only bundle BBB', () => {
-    execSync('../../dist/bin/index pack src/tree-shaking.ts --no-minify --no-clean --no-soft-bundle', { cwd: __dirname, stdio: 'pipe' })
+    execSync('../../dist/bin/index pack src/tree-shaking.ts --no-minify --no-clean', { cwd: __dirname, stdio: 'pipe' })
     expectFileExcludes('dist/esm/tree-shaking.js', [
         'AAA'
     ], { cwd: __dirname })

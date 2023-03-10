@@ -2,7 +2,6 @@ import { Plugin } from 'esbuild'
 import fs from 'fs'
 import fg from 'fast-glob'
 import path from 'upath'
-import log from '@techor/log'
 
 export function createFillModuleExtPlugin(outext = '.js', outdir = 'src'): Plugin {
     const resolvedOutdir = path.resolve(outdir)
@@ -24,7 +23,6 @@ export function createFillModuleExtPlugin(outext = '.js', outdir = 'src'): Plugi
                         contents: content
                             .replace(/((?:(?:import|export)(?:.*from | ))|(?:(?:import))\()'((\.(?:\.)?\/.*)|\.)'/gmi,
                                 (...matches) => {
-                                    const currentPath = args.path
                                     const modulePath: string = matches[2]
                                     const parsedModulePath = path.parse(modulePath)
                                     if (parsedModulePath.ext) {
