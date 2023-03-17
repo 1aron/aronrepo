@@ -1,7 +1,0 @@
-{
-    "name": "test-suffix-module-ext",
-    "sideEffects": false,
-    "files": [
-        "dist"
-    ]
-}

@@ -45,7 +45,7 @@ program.command('pack [entryPaths...]')
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--cjs-ext', 'Specify CommonJS default file extension', '.js')
     .option('--iife-ext', 'Specify CommonJS default file extension', '.js')
-    .option('--esm-ext', 'Specify CommonJS default file extension', '.js')
+    .option('--esm-ext', 'Specify CommonJS default file extension', '.mjs')
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
@@ -76,9 +76,9 @@ program.command('pack [entryPaths...]')
                 external.push('.*')
             }
             const plugins = []
-            if (options.softBundle, eachOptions.format === 'esm') {
-                plugins.push(createFillModuleExtPlugin(options.esmExt))
-            }
+            // if (options.softBundle, eachOptions.format === 'esm') {
+            //     plugins.push(createFillModuleExtPlugin(options.esmExt))
+            // }
             const buildOptions: BuildOptions = {
                 ...options,
                 outExtension: isCSSTask
