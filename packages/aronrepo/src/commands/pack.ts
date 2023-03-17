@@ -42,6 +42,7 @@ program.command('pack [entryPaths...]')
     .option('-o, --serve', 'Serve mode starts a web server that serves your code to your browser on your device', false)
     .option('-e, --external <packages...>', 'External packages to exclude from the build', externalDependencies)
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
+    .option('-re, --resolve-extensions [extensions...]', 'The resolution algorithm used by node supports implicit file extensions', ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.css', '.json'])
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--cjs-ext', 'Specify CommonJS default file extension', '.js')
     .option('--iife-ext', 'Specify CommonJS default file extension', '.js')
@@ -96,6 +97,7 @@ program.command('pack [entryPaths...]')
                 metafile: true,
                 format: isCSSTask ? undefined : eachOptions.format,
                 keepNames: options.keepNames,
+                resolveExtensions: options.resolveExtensions,
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
                 target: options.target,
                 sourcemap: options.sourcemap,
