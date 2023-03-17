@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process'
 import { expectExist } from '../../../../utils/expect-exist'
 
 it('exports multiple outputs', () => {
-    execSync('../../dist/bin/index pack', { cwd: __dirname, stdio: 'pipe' })
+    execSync('../../dist/bin/index pack --shakable', { cwd: __dirname, stdio: 'pipe' })
     expectExist([
         'dist/cjs/index.js',
         'dist/esm/index.mjs',

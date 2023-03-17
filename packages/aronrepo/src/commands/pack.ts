@@ -33,7 +33,8 @@ peerDependencies && externalDependencies.push(...Object.keys(peerDependencies))
 
 program.command('pack [entryPaths...]')
     .option('-f, --format [formats...]', 'The output format for the generated JavaScript files `iife`, `cjs`, `esm`', ['cjs', 'esm'])
-    .option('-t, --shakeable-format [formats...]', 'Output tree-shakeable modules by formats', ['cjs', 'esm'])
+    .option('-t, --shakable-format [formats...]', 'Tree-shakable module\'s formats', ['cjs', 'esm'])
+    .option('--shakable', 'Enable outputting tree-shakable modules', false)
     .option('-w, --watch', 'Rebuild whenever a file changes', false)
     .option('-s, --sourcemap', 'Emit a source map', process.env.NODE_ENV === 'production')
     .option('-p, --platform <node,browser,neutral>', 'Platform target', 'browser')
@@ -174,7 +175,7 @@ program.command('pack [entryPaths...]')
             buildTasks.push(eachBuildTask)
         }
 
-        if (options.shakeableFormat.length) {
+        if (options.shakable && options.shakeableFormat.length) {
             options.shakeableFormat.forEach((eachFormat: string) =>
                 addBuildTask(
                     [path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}')],
