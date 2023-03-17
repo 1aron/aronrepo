@@ -175,8 +175,8 @@ program.command('pack [entryPaths...]')
             buildTasks.push(eachBuildTask)
         }
 
-        if (options.shakable && options.shakeableFormat.length) {
-            options.shakeableFormat.forEach((eachFormat: string) =>
+        if (options.shakable && options.shakableFormat.length) {
+            options.shakableFormat.forEach((eachFormat: string) =>
                 addBuildTask(
                     [path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}')],
                     { format: eachFormat, platform: 'node', outdir: path.join(options.outdir, eachFormat), softBundle: true }
