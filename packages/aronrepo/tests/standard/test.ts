@@ -20,8 +20,8 @@ it('standard package outputs', () => {
         'module.exports = __toCommonJS(src_exports);'
     ], { cwd: __dirname })
 
-    expectFileIncludes('dist/esm/index.mjs', [
-        'export * from "./options";'
+    expectFileIncludes('dist/esm/index.js', [
+        'export * from "./options/index.js";'
     ], { cwd: __dirname })
 
 
