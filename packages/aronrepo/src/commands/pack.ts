@@ -47,7 +47,7 @@ program.command('pack [entryPaths...]')
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
     .option('--cjs-ext', 'Specify CommonJS default file extension', '.js')
     .option('--iife-ext', 'Specify CommonJS default file extension', '.js')
-    .option('--esm-ext', 'Specify CommonJS default file extension', '.js')
+    .option('--esm-ext', 'Specify CommonJS default file extension', '.mjs')
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
@@ -78,7 +78,7 @@ program.command('pack [entryPaths...]')
                 external.push('.*')
             }
             const plugins = []
-            if (options.softBundle, eachOptions.format === 'esm') {
+            if (eachOptions.softBundle && eachOptions.format === 'esm') {
                 plugins.push(createFillModuleExtPlugin(options.esmExt))
             }
             const buildOptions: BuildOptions = {
@@ -178,7 +178,7 @@ program.command('pack [entryPaths...]')
         if (options.shakable && options.shakableFormat.length) {
             options.shakableFormat.forEach((eachFormat: string) =>
                 addBuildTask(
-                    [path.join(options.srcdir, '**/*.{js,ts,jsx,tsx}')],
+                    [path.join(options.srcdir, '**/*.{js,ts,jsx,tsx,mjs,mts}')],
                     { format: eachFormat, platform: 'node', outdir: path.join(options.outdir, eachFormat), softBundle: true }
                 ))
         }
@@ -186,7 +186,7 @@ program.command('pack [entryPaths...]')
             (function handleExports(eachExports: any, eachParentKey: string, eachOptions?: { format?: string, outFile?: string, platform?: string }) {
                 if (typeof eachExports === 'string') {
                     const exportsExt = path.extname(eachExports)
-                    addBuildTask([getFileSrcGlobPattern(eachExports, '.{js,ts,jsx,tsx}')], {
+                    addBuildTask([getFileSrcGlobPattern(eachExports, '.{js,ts,jsx,tsx,mjs,mts}')], {
                         format: eachOptions.format || ext2format[exportsExt],
                         outFile: eachOptions.outFile || eachExports,
                         platform: eachOptions.platform
@@ -239,21 +239,21 @@ program.command('pack [entryPaths...]')
             addBuildTask([getFileSrcGlobPattern(pkg.main, '.css')], { format: 'css' })
         }
         if (pkg.main && !pkg.main.endsWith('.css')) {
-            addBuildTask([getFileSrcGlobPattern(pkg.main, '.{js,ts,jsx,tsx}')], { format: 'cjs', outFile: pkg.main })
+            addBuildTask([getFileSrcGlobPattern(pkg.main, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', outFile: pkg.main })
         }
         if (pkg.module) {
-            addBuildTask([getFileSrcGlobPattern(pkg.module, '.{js,ts,jsx,tsx}')], { format: 'esm', outFile: pkg.module })
+            addBuildTask([getFileSrcGlobPattern(pkg.module, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'esm', outFile: pkg.module })
         }
         if (pkg.browser) {
-            addBuildTask([getFileSrcGlobPattern(pkg.browser, '.{js,ts,jsx,tsx}')], { format: 'iife', platform: 'browser', outFile: pkg.browser })
+            addBuildTask([getFileSrcGlobPattern(pkg.browser, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'iife', platform: 'browser', outFile: pkg.browser })
         }
         if (pkg.bin) {
             if (typeof pkg.bin === 'string') {
-                addBuildTask([getFileSrcGlobPattern(pkg.bin, '.{js,ts,jsx,tsx}')], { format: 'cjs', platform: 'node', outFile: pkg.bin })
+                addBuildTask([getFileSrcGlobPattern(pkg.bin, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', platform: 'node', outFile: pkg.bin })
             } else {
                 for (const eachCommandName in pkg.bin) {
                     const eachCommandFile = pkg.bin[eachCommandName]
-                    addBuildTask([getFileSrcGlobPattern(eachCommandFile, '.{js,ts,jsx,tsx}')], { format: 'cjs', platform: 'node', outFile: eachCommandFile })
+                    addBuildTask([getFileSrcGlobPattern(eachCommandFile, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', platform: 'node', outFile: eachCommandFile })
                 }
             }
         }
