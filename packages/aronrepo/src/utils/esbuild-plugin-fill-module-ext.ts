@@ -15,7 +15,7 @@ export function createFillModuleExtPlugin(outext = '.js', outdir = 'src'): Plugi
             build.onStart(() => {
                 started.resolve(true)
             })
-            build.onLoad({ filter: /\.(?:m)?ts$/ }, async (args) => {
+            build.onLoad({ filter: /\.(?:ts|tsx|js|jsx|mjs|mts)$/ }, async (args) => {
                 if (await started.promise === true) {
                     const content = await fs.promises.readFile(args.path, { encoding: 'utf8' })
                     const currentDirPath = path.dirname(args.path)
@@ -47,7 +47,7 @@ export function createFillModuleExtPlugin(outext = '.js', outdir = 'src'): Plugi
                                     }
                                     return `${matches[1]}'${targetModulePath}'`
                                 }),
-                        loader: 'ts',
+                        loader: 'tsx',
                     }
                 }
             })
