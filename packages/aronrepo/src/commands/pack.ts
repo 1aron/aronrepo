@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import fg from 'fast-glob'
 import { execaCommand } from 'execa'
-import { build, BuildOptions, context, Metafile } from 'esbuild'
+import { type BuildOptions, context, Metafile } from 'esbuild'
 import pAll from 'p-all'
 import log, { chalk } from '@techor/log'
 import path from 'upath'
@@ -14,6 +14,19 @@ import fs from 'fs'
 import isEqual from 'lodash.isequal'
 import { esbuildOptionNames } from '../utils/esbuild-option-names'
 import { createFillModuleExtPlugin } from '../utils/esbuild-plugin-fill-module-ext'
+import Techor from 'techor'
+import type { Options as TechorOptions } from 'techor'
+import extend from 'to-extend'
+
+type Options = TechorOptions<Config>
+
+interface Config {
+    pack: BuildOptions
+}
+
+const techor = new Techor<Options, Config>({
+    config: 'aron.{js,ts,cjs,mjs}',
+})
 
 const ext2format = {
     'js': 'cjs',
@@ -60,6 +73,7 @@ program.command('pack [entryPaths...]')
             console.log('')
             log.d`Cleaned up the **${options.outdir}** output directory`
         }
+        const useConfig = techor.readConfig(null)
         const buildTasks: BuildTask[] = []
         const getFileSrcGlobPattern = (filePath: string, targetExt: string) => {
             const subFilePath /* components/a.ts */ = path.relative(options.outdir, filePath)
@@ -77,12 +91,7 @@ program.command('pack [entryPaths...]')
             if (options.bundle, eachOptions.softBundle) {
                 external.push('.*')
             }
-            const plugins = []
-            if (eachOptions.softBundle && eachOptions.format === 'esm') {
-                plugins.push(createFillModuleExtPlugin(options.esmExt))
-            }
-            const buildOptions: BuildOptions = {
-                ...options,
+            const buildOptions: BuildOptions = extend(options, {
                 outExtension: isCSSTask
                     ? { '.css': '.css' }
                     : {
@@ -102,7 +111,11 @@ program.command('pack [entryPaths...]')
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
                 target: options.target,
                 sourcemap: options.sourcemap,
-                plugins
+                plugins: []
+            }, useConfig?.pack)
+
+            if (eachOptions.softBundle && eachOptions.format === 'esm') {
+                buildOptions.plugins.push(createFillModuleExtPlugin(options.esmExt))
             }
 
             // Fix ERROR: Invalid option in build() call
