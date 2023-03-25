@@ -58,9 +58,9 @@ program.command('pack [entryPaths...]')
     .option('-ee, --extra-external <packages...>', 'Extra external packages to exclude from the build', [])
     .option('-re, --resolve-extensions [extensions...]', 'The resolution algorithm used by node supports implicit file extensions', ['.tsx', '.ts', '.jsx', '.js', '.css', '.json'])
     .option('-kn, --keep-names', 'Keep JavaScript function/class names', false)
-    .option('--cjs-ext', 'Specify CommonJS default file extension', '.js')
-    .option('--iife-ext', 'Specify CommonJS default file extension', '.js')
-    .option('--esm-ext', 'Specify CommonJS default file extension', '.mjs')
+    .option('--cjs-ext <ext>', 'Specify CommonJS default file extension', '.js')
+    .option('--iife-ext <ext>', 'Specify CommonJS default file extension', '.js')
+    .option('--esm-ext <ext>', 'Specify CommonJS default file extension', '.mjs')
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
@@ -88,9 +88,10 @@ program.command('pack [entryPaths...]')
                 ...options.extraExternal
             ]
             const eachOutdir = eachOptions.outdir || options.outdir
-            if (options.bundle, eachOptions.softBundle) {
+            if (options.bundle && eachOptions.softBundle) {
                 external.push('.*')
             }
+
             const buildOptions: BuildOptions = extend(options, {
                 outExtension: isCSSTask
                     ? { '.css': '.css' }
@@ -99,7 +100,6 @@ program.command('pack [entryPaths...]')
                             ? eachOutext
                             : { cjs: options.cjsExt, esm: options.esmExt, iife: options.iifeExt }[eachOptions.format]
                     },
-                external,
                 logLevel: 'info',
                 outdir: eachOutdir,
                 outbase: options.srcdir,
@@ -111,8 +111,13 @@ program.command('pack [entryPaths...]')
                 mangleProps: options.mangleProps ? new RegExp(options.mangleProps) : undefined,
                 target: options.target,
                 sourcemap: options.sourcemap,
-                plugins: []
+                external,
+                plugins: [],
             }, useConfig?.pack)
+
+            if (!options.bundle) {
+                delete buildOptions.external
+            }
 
             if (eachOptions.softBundle && eachOptions.format === 'esm') {
                 buildOptions.plugins.push(createFillModuleExtPlugin(options.esmExt))
@@ -195,87 +200,91 @@ program.command('pack [entryPaths...]')
                     { format: eachFormat, platform: 'node', outdir: path.join(options.outdir, eachFormat), softBundle: true }
                 ))
         }
-        if (pkg.exports) {
-            (function handleExports(eachExports: any, eachParentKey: string, eachOptions?: { format?: string, outFile?: string, platform?: string }) {
-                if (typeof eachExports === 'string') {
-                    const exportsExt = path.extname(eachExports)
-                    addBuildTask([getFileSrcGlobPattern(eachExports, '.{js,ts,jsx,tsx,mjs,mts}')], {
-                        format: eachOptions.format || ext2format[exportsExt],
-                        outFile: eachOptions.outFile || eachExports,
-                        platform: eachOptions.platform
-                    })
-                } else {
-                    for (const eachExportKey in eachExports) {
-                        const eachUnknowExports = eachExports[eachExportKey]
-                        let eachFormat: string
-                        let eachPlatform: string
-                        switch (eachParentKey) {
-                            case 'node':
-                                eachPlatform = 'node'
-                                break
-                            case 'browser':
-                                eachPlatform = 'browser'
-                                break
-                            case 'require':
-                                eachFormat = 'cjs'
-                                break
-                            case 'import':
-                                eachFormat = 'esm'
-                                break
-                        }
-                        if (eachExportKey.startsWith('.')) {
-                            handleExports(eachUnknowExports, eachExportKey)
-                        } else {
-                            switch (eachExportKey) {
+
+        if (entries.length) {
+            const cssEntries = entries.filter((eachEntry) => eachEntry.includes('.css'))
+            const jsEntries = entries.filter((eachEntry) => !eachEntry.includes('.css'))
+            if (cssEntries.length) {
+                addBuildTask(cssEntries, { format: 'css' })
+            }
+            if (jsEntries.length) {
+                options.format.forEach((eachFormat: string) => addBuildTask(jsEntries, { format: eachFormat }))
+            }
+        } else {
+            if (pkg.exports) {
+                (function handleExports(eachExports: any, eachParentKey: string, eachOptions?: { format?: string, outFile?: string, platform?: string }) {
+                    if (typeof eachExports === 'string') {
+                        const exportsExt = path.extname(eachExports)
+                        addBuildTask([getFileSrcGlobPattern(eachExports, '.{js,ts,jsx,tsx,mjs,mts}')], {
+                            format: eachOptions.format || ext2format[exportsExt],
+                            outFile: eachOptions.outFile || eachExports,
+                            platform: eachOptions.platform
+                        })
+                    } else {
+                        for (const eachExportKey in eachExports) {
+                            const eachUnknowExports = eachExports[eachExportKey]
+                            let eachFormat: string
+                            let eachPlatform: string
+                            switch (eachParentKey) {
                                 case 'node':
-                                    handleExports(eachUnknowExports, eachExportKey, { platform: 'node', format: eachFormat })
+                                    eachPlatform = 'node'
                                     break
                                 case 'browser':
-                                    handleExports(eachUnknowExports, eachExportKey, { platform: 'browser', format: eachFormat })
-                                    break
-                                case 'default':
-                                    handleExports(eachUnknowExports, eachExportKey, { platform: eachPlatform, format: eachFormat })
+                                    eachPlatform = 'browser'
                                     break
                                 case 'require':
-                                    handleExports(eachUnknowExports, eachExportKey, { platform: eachPlatform, format: 'cjs' })
+                                    eachFormat = 'cjs'
                                     break
                                 case 'import':
-                                    handleExports(eachUnknowExports, eachExportKey, { platform: eachPlatform, format: 'esm' })
+                                    eachFormat = 'esm'
                                     break
+                            }
+                            if (eachExportKey.startsWith('.')) {
+                                handleExports(eachUnknowExports, eachExportKey)
+                            } else {
+                                switch (eachExportKey) {
+                                    case 'node':
+                                        handleExports(eachUnknowExports, eachExportKey, { platform: 'node', format: eachFormat })
+                                        break
+                                    case 'browser':
+                                        handleExports(eachUnknowExports, eachExportKey, { platform: 'browser', format: eachFormat })
+                                        break
+                                    case 'default':
+                                        handleExports(eachUnknowExports, eachExportKey, { platform: eachPlatform, format: eachFormat })
+                                        break
+                                    case 'require':
+                                        handleExports(eachUnknowExports, eachExportKey, { platform: eachPlatform, format: 'cjs' })
+                                        break
+                                    case 'import':
+                                        handleExports(eachUnknowExports, eachExportKey, { platform: eachPlatform, format: 'esm' })
+                                        break
+                                }
                             }
                         }
                     }
-                }
-            })(pkg.exports, '')
-        }
-        if (pkg.style) {
-            addBuildTask([getFileSrcGlobPattern(pkg.main, '.css')], { format: 'css' })
-        }
-        if (pkg.main && !pkg.main.endsWith('.css')) {
-            addBuildTask([getFileSrcGlobPattern(pkg.main, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', outFile: pkg.main })
-        }
-        if (pkg.module) {
-            addBuildTask([getFileSrcGlobPattern(pkg.module, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'esm', outFile: pkg.module })
-        }
-        if (pkg.browser) {
-            addBuildTask([getFileSrcGlobPattern(pkg.browser, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'iife', platform: 'browser', outFile: pkg.browser })
-        }
-        if (pkg.bin) {
-            if (typeof pkg.bin === 'string') {
-                addBuildTask([getFileSrcGlobPattern(pkg.bin, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', platform: 'node', outFile: pkg.bin })
-            } else {
-                for (const eachCommandName in pkg.bin) {
-                    const eachCommandFile = pkg.bin[eachCommandName]
-                    addBuildTask([getFileSrcGlobPattern(eachCommandFile, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', platform: 'node', outFile: eachCommandFile })
-                }
+                })(pkg.exports, '')
             }
-        }
-        if (entries.length) {
-            const isCSSEntry = entries.find((eachEntry) => eachEntry.includes('.css'))
-            if (isCSSEntry) {
-                addBuildTask(entries, { format: 'css' })
-            } else {
-                options.format.map((eachFormat: string) => addBuildTask(entries, { format: eachFormat }))
+            if (pkg.style) {
+                addBuildTask([getFileSrcGlobPattern(pkg.main, '.css')], { format: 'css' })
+            }
+            if (pkg.main && !pkg.main.endsWith('.css')) {
+                addBuildTask([getFileSrcGlobPattern(pkg.main, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', outFile: pkg.main })
+            }
+            if (pkg.module) {
+                addBuildTask([getFileSrcGlobPattern(pkg.module, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'esm', outFile: pkg.module })
+            }
+            if (pkg.browser) {
+                addBuildTask([getFileSrcGlobPattern(pkg.browser, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'iife', platform: 'browser', outFile: pkg.browser })
+            }
+            if (pkg.bin) {
+                if (typeof pkg.bin === 'string') {
+                    addBuildTask([getFileSrcGlobPattern(pkg.bin, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', platform: 'node', outFile: pkg.bin })
+                } else {
+                    for (const eachCommandName in pkg.bin) {
+                        const eachCommandFile = pkg.bin[eachCommandName]
+                        addBuildTask([getFileSrcGlobPattern(eachCommandFile, '.{js,ts,jsx,tsx,mjs,mts}')], { format: 'cjs', platform: 'node', outFile: eachCommandFile })
+                    }
+                }
             }
         }
         if (!buildTasks.length) {
