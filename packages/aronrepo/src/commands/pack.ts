@@ -13,7 +13,8 @@ import normalizePath from 'normalize-path'
 import fs from 'fs'
 import isEqual from 'lodash.isequal'
 import { esbuildOptionNames } from '../utils/esbuild-option-names'
-import { createFillModuleExtPlugin } from '../utils/esbuild-plugin-fill-module-ext'
+import { createFillModuleExtPlugin } from '../plugins/esbuild-plugin-fill-module-ext'
+import { removeImportSvelteModuleExtensionPlugin } from '../plugins/esbuild-remove-import-svelte-module-extension'
 import Techor from 'techor'
 import type { Options as TechorOptions } from 'techor'
 import extend from 'to-extend'
@@ -61,6 +62,7 @@ program.command('pack [entryPaths...]')
     .option('--cjs-ext <ext>', 'Specify CommonJS default file extension', '.js')
     .option('--iife-ext <ext>', 'Specify CommonJS default file extension', '.js')
     .option('--esm-ext <ext>', 'Specify CommonJS default file extension', '.mjs')
+    .option('--framework <name>', 'Specify a framework like `svelte` to resolve related issues automatically')
     .option('--srcdir <dir>', 'The source directory', 'src')
     .option('--target', 'This sets the target environment for the generated JavaScript and/or CSS code.', 'esnext')
     .option('--mangle-props', 'Pass a regular expression to esbuild to tell esbuild to automatically rename all properties that match this regular expression', '^_')
@@ -119,6 +121,12 @@ program.command('pack [entryPaths...]')
                 delete buildOptions.external
             }
 
+            switch (options.framework) {
+                case 'svelte':
+                    buildOptions.plugins.push(removeImportSvelteModuleExtensionPlugin)
+                    break
+            }
+
             if (eachOptions.softBundle && eachOptions.format === 'esm') {
                 buildOptions.plugins.push(createFillModuleExtPlugin(options.esmExt))
             }
@@ -126,6 +134,7 @@ program.command('pack [entryPaths...]')
             // Fix ERROR: Invalid option in build() call
             delete buildOptions['watch']
             delete buildOptions['serve']
+            delete buildOptions['framework']
 
             // 安全地同步選項給 esbuild
             for (const eachBuildOptionName in buildOptions) {

@@ -7,7 +7,7 @@ export default {
         plugins: [
             esbuildSvelte({
                 preprocess: sveltePreprocess(),
-            }),
+            })
         ],
     }
 }
