@@ -1,0 +1,57 @@
+{
+    "name": "@aronrepo/semantic-release-config",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "description": "Semantic-release config for publishing Aronrepo workspace packages.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/semantic-release-config"
+    },
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        },
+        "./configure": {
+            "types": "./dist/configure.d.ts",
+            "import": "./dist/configure.js",
+            "default": "./dist/configure.js"
+        },
+        "./rules": {
+            "types": "./dist/rules.d.ts",
+            "import": "./dist/rules.js",
+            "default": "./dist/rules.js"
+        }
+    },
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "test": "vitest",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint"
+    },
+    "dependencies": {
+        "@aronrepo/conventional-changelog-config": "workspace:^",
+        "@aronrepo/conventional-commits": "workspace:^",
+        "@aronrepo/npm": "workspace:^",
+        "consola": "^3.4.2",
+        "defu": "^6.1.7",
+        "fs-extra": "^11.3.5"
+    },
+    "peerDependencies": {
+        "@semantic-release/exec": "*",
+        "semantic-release": "*"
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "name": "@aronrepo/conventional-changelog-config",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "description": "Conventional changelog preset for Aronrepo conventional commits.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/conventional-changelog-config"
+    },
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "test": "vitest",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint"
+    },
+    "dependencies": {
+        "@aronrepo/conventional-commits": "workspace:^"
+    }
+}

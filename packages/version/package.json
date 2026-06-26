@@ -1,0 +1,41 @@
+{
+    "name": "@aronrepo/version",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "description": "Bump workspace package versions and internal dependency ranges.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/version"
+    },
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "test": "vitest",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint"
+    },
+    "dependencies": {
+        "@aronrepo/npm": "workspace:^",
+        "consola": "^3.4.2",
+        "fs-extra": "^11.3.5",
+        "yargs-parser": "^22.0.0"
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "name": "@aronrepo/conventional-commits",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "description": "Aronrepo conventional commit types, release rules, and changelog groups.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/1aron/aronrepo.git",
+        "directory": "packages/conventional-commits"
+    },
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "test": "vitest",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint"
+    }
+}

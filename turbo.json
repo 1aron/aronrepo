@@ -1,0 +1,43 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": [
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "tsconfig.json"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputLogs": "new-only",
+            "outputs": [
+                "dist/**"
+            ]
+        },
+        "test": {
+            "dependsOn": [
+                "build",
+                "^build"
+            ],
+            "outputLogs": "new-only",
+            "outputs": []
+        },
+        "lint": {
+            "dependsOn": [
+                "build",
+                "^build"
+            ],
+            "outputLogs": "new-only",
+            "outputs": []
+        },
+        "type-check": {
+            "dependsOn": [
+                "build",
+                "^build"
+            ],
+            "outputLogs": "new-only",
+            "outputs": []
+        }
+    }
+}
