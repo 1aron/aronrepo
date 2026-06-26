@@ -1,6 +1,6 @@
 import { commits, findCommitRule } from '@aronrepo/conventional-commits'
 
-interface ChangelogCommit {
+export interface ChangelogCommit {
     type?: string
     scope?: string
     header?: string

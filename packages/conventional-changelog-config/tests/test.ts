@@ -3,9 +3,22 @@ import type { Context, Options } from 'conventional-changelog-writer'
 import { transformCommit, writeChangelogString } from 'conventional-changelog-writer'
 import createPreset, { parserOpts, recommendedBumpOpts, writerOpts } from '../src'
 
-type ParsedCommit = ReturnType<CommitParser['parse']> & {
+interface ParsedCommit {
+    body?: string | null
+    footer?: string | null
     hash: string
+    header?: string
+    mentions?: string[]
+    merge?: string | null
+    notes: Array<{ title: string, text: string }>
+    references: unknown[]
+    revert?: Record<string, string | null> | null
+    scope?: string
+    subject?: string
+    type?: string
 }
+
+const writerOptions = writerOpts as unknown as Options<ParsedCommit>
 
 const context = {
     version: '1.2.3',
@@ -14,7 +27,7 @@ const context = {
 } satisfies Context<ParsedCommit>
 
 const groupedWriterOpts = {
-    ...(writerOpts as Options<ParsedCommit>),
+    ...writerOptions,
     mainTemplate: [
         '{{#each commitGroups}}',
         '### {{title}}',
@@ -27,9 +40,21 @@ const groupedWriterOpts = {
 } satisfies Options<ParsedCommit>
 
 function parseCommit(message: string, hash = '0000000000000000000000000000000000000000') {
+    const parsed = new CommitParser(parserOpts).parse(message)
+
     return {
-        ...new CommitParser(parserOpts).parse(message),
-        hash
+        body: parsed.body,
+        footer: parsed.footer,
+        hash,
+        header: parsed.header ?? undefined,
+        mentions: parsed.mentions,
+        merge: parsed.merge,
+        notes: parsed.notes,
+        references: parsed.references,
+        revert: parsed.revert,
+        scope: parsed.scope ?? undefined,
+        subject: parsed.subject ?? undefined,
+        type: parsed.type ?? undefined
     }
 }
 
@@ -95,9 +120,8 @@ test.each([
 
 test('returns writer transform patches without mutating immutable commits', async () => {
     const commit = parseCommit('Update(Core): Move old -> new <- legacy', 'abcdef1234567890abcdef1234567890abcdef12')
-    const transform = (writerOpts as Options<ParsedCommit>).transform
-
-    if (!transform) throw new Error('Expected writer transform to be configured.')
+    const transform = (commitToTransform: ParsedCommit) =>
+        writerOpts.transform(commitToTransform) as Partial<ParsedCommit> | null
 
     await expect(transformCommit(commit, transform)).resolves.toMatchObject({
         header: 'Update(Core): Move old → new ← legacy',
