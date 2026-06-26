@@ -8,7 +8,7 @@ Aronrepo is a pnpm workspace with published TypeScript packages in `packages/*`.
 - `pnpm-workspace.yaml`: workspace package patterns and pnpm build allowances.
 - `turbo.json`: task graph for build, test, lint, and type-check.
 - `tsconfig.json`: shared strict TypeScript defaults.
-- `eslint.config.mjs`: root ESLint config that imports the local `@aronrepo/eslint-config` build output.
+- `eslint.config.mjs`: root ESLint config for repository linting.
 - `release.config.mjs`: semantic-release entrypoint using `@aronrepo/semantic-release-config`.
 - `shared/`: shared Vitest config and CI timeout helpers.
 - `scripts/`: repository helper scripts, including commit range checking.
@@ -18,7 +18,6 @@ Aronrepo is a pnpm workspace with published TypeScript packages in `packages/*`.
 ## Package Responsibilities
 
 - `aronrepo`: facade package for the Aronrepo monorepo toolchain.
-- `@aronrepo/eslint-config`: ESLint flat config used by this repo and Aron projects.
 - `@aronrepo/commitlint-config`: commitlint config built on Aronrepo conventional commits.
 - `@aronrepo/conventional-commits`: source of commit types, release levels, changelog groups, and hidden commit behavior.
 - `@aronrepo/conventional-changelog-config`: conventional changelog preset, parser options, writer options, and recommended bump logic.

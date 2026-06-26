@@ -5,7 +5,6 @@ ESM-only monorepo utilities for Aron projects.
 ## Packages
 
 - `aronrepo`
-- `@aronrepo/eslint-config`
 - `@aronrepo/commitlint-config`
 - `@aronrepo/conventional-commits`
 - `@aronrepo/conventional-changelog-config`

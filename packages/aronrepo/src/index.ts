@@ -1,5 +1,4 @@
 export const packages = [
-    '@aronrepo/eslint-config',
     '@aronrepo/commitlint-config',
     '@aronrepo/conventional-commits',
     '@aronrepo/conventional-changelog-config',
