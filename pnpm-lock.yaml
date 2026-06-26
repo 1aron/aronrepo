@@ -96,9 +96,6 @@ importers:
       '@aronrepo/eslint-config':
         specifier: workspace:^
         version: link:packages/eslint-config
-      '@aronrepo/repo':
-        specifier: workspace:^
-        version: link:packages/repo
       '@aronrepo/semantic-release-config':
         specifier: workspace:^
         version: link:packages/semantic-release-config
@@ -108,6 +105,15 @@ importers:
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
+      aronrepo:
+        specifier: workspace:^
+        version: link:packages/aronrepo
+
+  packages/aronrepo:
+    dependencies:
+      typescript:
+        specifier: '*'
+        version: 5.9.3
 
   packages/commitlint-config:
     dependencies:
@@ -143,12 +149,6 @@ importers:
       typescript-eslint:
         specifier: ^8.50.0
         version: 8.62.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-
-  packages/repo:
-    dependencies:
-      typescript:
-        specifier: '*'
-        version: 5.9.3
 
   packages/semantic-release-config:
     dependencies:

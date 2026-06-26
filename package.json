@@ -54,11 +54,11 @@
         "vitest": "^4.0.15"
     },
     "devDependencies": {
+        "aronrepo": "workspace:^",
         "@aronrepo/commitlint-config": "workspace:^",
         "@aronrepo/conventional-changelog-config": "workspace:^",
         "@aronrepo/conventional-commits": "workspace:^",
         "@aronrepo/eslint-config": "workspace:^",
-        "@aronrepo/repo": "workspace:^",
         "@aronrepo/semantic-release-config": "workspace:^",
         "@aronrepo/semantic-release-pnpm": "workspace:^",
         "@types/js-yaml": "^4.0.9"
