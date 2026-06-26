@@ -34,5 +34,9 @@
     },
     "dependencies": {
         "@aronrepo/conventional-commits": "workspace:^"
+    },
+    "devDependencies": {
+        "conventional-changelog-writer": "^8.4.0",
+        "conventional-commits-parser": "^6.4.0"
     }
 }

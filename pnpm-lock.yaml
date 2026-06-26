@@ -120,6 +120,13 @@ importers:
       '@aronrepo/conventional-commits':
         specifier: workspace:^
         version: link:../conventional-commits
+    devDependencies:
+      conventional-changelog-writer:
+        specifier: ^8.4.0
+        version: 8.4.0
+      conventional-commits-parser:
+        specifier: ^6.4.0
+        version: 6.4.0
 
   packages/conventional-commits: {}
 

@@ -1,6 +1,18 @@
-# Aronrepo Conventional Commits
+![Aronrepo cover](https://raw.githubusercontent.com/1aron/aronrepo/main/docs/assets/aronrepo-cover.png)
 
-Aronrepo conventional commits are sentence-case commit types with explicit release rules and changelog groups. The taxonomy is based on the Techor conventional-commits package, with stricter Aronrepo behavior for ESM-only packages, commitlint, PR titles, and semantic-release.
+# @aronrepo/conventional-commits
+
+Aronrepo conventional commits are PascalCase commit types with explicit release rules, changelog groups, and AI coding agent guidance.
+
+The taxonomy is based on the Techor conventional-commits package, with stricter Aronrepo behavior for ESM-only packages, commitlint, PR titles, semantic-release, and published package README updates.
+
+## Install
+
+```sh
+pnpm add -D @aronrepo/conventional-commits
+```
+
+This package is ESM-only.
 
 ## Header Format
 
@@ -96,3 +108,5 @@ import {
 ```
 
 `findCommitRule(type, scope)` resolves scoped rules before unscoped fallbacks. For example, `findCommitRule('Docs', 'README')` resolves to a patch release, while `findCommitRule('Docs', 'Agent')` falls back to plain `Docs` with no release.
+
+`agentCommitPolicy` exposes the same AI guidance as structured data, so tools can read the default internal commit type, release-impact rule, release-worthy change list, non-release defaults, and examples.
