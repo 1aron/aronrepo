@@ -49,7 +49,7 @@ Release runs through semantic-release only for pushes to:
 - `rc`
 - `canary`
 
-The root `release.config.mjs` calls `configure()` from `@aronrepo/semantic-release-config`. That config discovers workspace packages from the workspace patterns and adds `@aronrepo/semantic-release-pnpm` for packages with `publishConfig.access` set to `public`.
+The root `release.config.js` calls `configure()` from `@aronrepo/semantic-release-config`. That config discovers workspace packages from the workspace patterns and adds `@aronrepo/semantic-release-pnpm` for packages with `publishConfig.access` set to `public`.
 
 The pnpm release plugin writes the semantic-release version into the target package before publishing, maps prerelease channels to npm dist-tags, and uses package-level `publishConfig.provenance` when present.
 

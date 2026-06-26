@@ -43,21 +43,21 @@ pnpm add -D @aronrepo/conventional-changelog-config
 pnpm add -D @aronrepo/semantic-release-config @aronrepo/semantic-release-pnpm semantic-release
 ```
 
-All packages are ESM-only. Use `.mjs`, `"type": "module"`, or another ESM-compatible config format when importing them.
+All packages are ESM-only. In repositories with `"type": "module"`, `.js` config files can import them directly; otherwise use `.mjs` or another ESM-compatible config format.
 
 ## Basic Setup
 
 Commitlint:
 
 ```js
-// commitlint.config.mjs
+// commitlint.config.js
 export { default } from '@aronrepo/commitlint-config'
 ```
 
 Semantic release:
 
 ```js
-// release.config.mjs
+// release.config.js
 import { configure } from '@aronrepo/semantic-release-config'
 
 export default configure()
@@ -141,7 +141,7 @@ pnpm --filter aronrepo run build
 
 ## Release Model
 
-The root `release.config.mjs` exports `configure()` from `@aronrepo/semantic-release-config`. Releases run on `main`, maintenance branches, `next`, `next-major`, and prerelease branches such as `alpha`, `beta`, `rc`, and `canary`.
+The root `release.config.js` exports `configure()` from `@aronrepo/semantic-release-config`. Releases run on `main`, maintenance branches, `next`, `next-major`, and prerelease branches such as `alpha`, `beta`, `rc`, and `canary`.
 
 Public workspace packages are published by `@aronrepo/semantic-release-pnpm`. The plugin writes the semantic-release version into the target package, maps release channels to npm dist-tags, honors package-level registry settings, supports npm token and OIDC auth, and passes provenance when `publishConfig.provenance` is enabled.
 

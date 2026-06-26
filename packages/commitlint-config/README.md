@@ -17,9 +17,11 @@ This package is ESM-only.
 ## Usage
 
 ```js
-// commitlint.config.mjs
+// commitlint.config.js
 export { default } from '@aronrepo/commitlint-config'
 ```
+
+Use `.mjs` instead when the consuming repository does not declare `"type": "module"`.
 
 Run commitlint against a commit range:
 

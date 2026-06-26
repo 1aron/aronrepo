@@ -17,11 +17,13 @@ This package is ESM-only.
 ## Usage
 
 ```js
-// release.config.mjs
+// release.config.js
 import { configure } from '@aronrepo/semantic-release-config'
 
 export default configure()
 ```
+
+Use `.mjs` instead when the consuming repository does not declare `"type": "module"`.
 
 The package also exports the configured release rules:
 
