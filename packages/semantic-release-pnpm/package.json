@@ -1,13 +1,13 @@
 {
-    "name": "@aronrepo/version",
+    "name": "@aronrepo/semantic-release-pnpm",
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
-    "description": "Bump workspace package versions and internal dependency ranges.",
+    "description": "Semantic-release plugin for publishing pnpm workspace packages.",
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
-        "directory": "packages/version"
+        "directory": "packages/semantic-release-pnpm"
     },
     "sideEffects": false,
     "exports": {
@@ -33,9 +33,14 @@
         "lint": "eslint"
     },
     "dependencies": {
-        "@aronrepo/npm": "workspace:^",
-        "consola": "^3.4.2",
+        "@actions/core": "^1.11.1",
+        "@semantic-release/error": "^4.0.0",
+        "execa": "^9.6.1",
         "fs-extra": "^11.3.5",
-        "yargs-parser": "^22.0.0"
+        "normalize-url": "^8.0.1",
+        "semver": "^7.7.3"
+    },
+    "peerDependencies": {
+        "semantic-release": "*"
     }
 }

@@ -15,12 +15,17 @@ test('creates default semantic-release config', () => {
     })
     process.chdir(cwd)
     try {
-        expect(configure()).toMatchObject({
+        const releaseConfig = configure()
+        const pluginNames = releaseConfig.plugins.map((plugin) => Array.isArray(plugin) ? plugin[0] : plugin)
+
+        expect(releaseConfig).toMatchObject({
             plugins: expect.arrayContaining([
                 ['@semantic-release/commit-analyzer', expect.objectContaining({ releaseRules })],
-                ['@semantic-release/npm', { pkgRoot: 'packages/public' }]
+                ['@aronrepo/semantic-release-pnpm', { pkgRoot: 'packages/public' }]
             ])
         })
+        expect(pluginNames).not.toContain('@semantic-release/npm')
+        expect(pluginNames).not.toContain('@semantic-release/exec')
     } finally {
         process.chdir(previous)
     }

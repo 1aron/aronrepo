@@ -4,15 +4,13 @@ ESM-only monorepo utilities for Aron projects.
 
 ## Packages
 
-- `@aronrepo/cli`
-- `@aronrepo/version`
-- `@aronrepo/npm`
 - `@aronrepo/repo`
 - `@aronrepo/eslint-config`
 - `@aronrepo/commitlint-config`
 - `@aronrepo/conventional-commits`
 - `@aronrepo/conventional-changelog-config`
 - `@aronrepo/semantic-release-config`
+- `@aronrepo/semantic-release-pnpm`
 
 All published packages are ESM-only. JavaScript output is `dist/**/*.js`, types are `dist/**/*.d.ts`, and package exports do not include CommonJS fallbacks.
 

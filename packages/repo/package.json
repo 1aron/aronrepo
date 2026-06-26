@@ -32,12 +32,6 @@
         "type-check": "tsc --noEmit",
         "lint": "eslint"
     },
-    "dependencies": {
-        "@aronrepo/cli": "workspace:^",
-        "@aronrepo/commitlint-config": "workspace:^",
-        "@aronrepo/eslint-config": "workspace:^",
-        "@aronrepo/version": "workspace:^"
-    },
     "peerDependencies": {
         "typescript": "*"
     }

@@ -45,13 +45,17 @@
     "dependencies": {
         "@aronrepo/conventional-changelog-config": "workspace:^",
         "@aronrepo/conventional-commits": "workspace:^",
-        "@aronrepo/npm": "workspace:^",
         "consola": "^3.4.2",
         "defu": "^6.1.7",
-        "fs-extra": "^11.3.5"
+        "fast-glob": "^3.3.3",
+        "fs-extra": "^11.3.5",
+        "js-yaml": "^4.1.0"
     },
     "peerDependencies": {
-        "@semantic-release/exec": "*",
+        "@aronrepo/semantic-release-pnpm": "*",
         "semantic-release": "*"
+    },
+    "devDependencies": {
+        "@aronrepo/semantic-release-pnpm": "workspace:^"
     }
 }

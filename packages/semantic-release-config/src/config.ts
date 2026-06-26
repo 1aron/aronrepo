@@ -15,9 +15,6 @@ const config = {
     plugins: {
         '@semantic-release/commit-analyzer': { parserOpts, releaseRules },
         '@semantic-release/release-notes-generator': { parserOpts, writerOpts },
-        '@semantic-release/exec': {
-            verifyReleaseCmd: 'pnpm exec aronrepo version ${nextRelease.version}'
-        },
         '@semantic-release/github': true
     }
 }
