@@ -7,12 +7,63 @@ on:
             - edited
             - synchronize
 
+permissions:
+    contents: read
+    statuses: write
+
 jobs:
     check:
         runs-on: ubuntu-latest
         steps:
-            - uses: 1aron/aronrepo@main
+            - uses: actions/checkout@v6
               with:
-                  action: check-pull-request-title
+                  ref: ${{ github.event.pull_request.base.sha }}
+                  persist-credentials: false
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.9.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter @aronrepo/commitlint-config... run build
+            - id: check-title
+              continue-on-error: true
+              run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint --verbose
               env:
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+            - if: always()
+              run: |
+                  node --input-type=module <<'NODE'
+                  const response = await fetch(
+                      `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/statuses/${process.env.PR_HEAD_SHA}`,
+                      {
+                          method: 'POST',
+                          headers: {
+                              authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                              accept: 'application/vnd.github+json',
+                              'content-type': 'application/json',
+                              'x-github-api-version': '2022-11-28'
+                          },
+                          body: JSON.stringify({
+                              state: process.env.STATUS_STATE,
+                              description: process.env.STATUS_DESCRIPTION,
+                              target_url: process.env.STATUS_TARGET_URL,
+                              context: 'Title of pull request'
+                          })
+                      }
+                  )
+
+                  if (!response.ok) {
+                      throw new Error(`GitHub status request failed: ${response.status} ${await response.text()}`)
+                  }
+                  NODE
+              env:
+                  PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+                  STATUS_STATE: ${{ steps.check-title.outcome == 'success' && 'success' || 'failure' }}
+                  STATUS_DESCRIPTION: ${{ steps.check-title.outcome == 'success' && 'follows Aronrepo conventional commits' || 'does not follow Aronrepo conventional commits' }}
+                  STATUS_TARGET_URL: https://github.com/1aron/aronrepo/tree/main/packages/conventional-commits
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - if: ${{ always() && steps.check-title.outcome != 'success' }}
+              run: exit 1

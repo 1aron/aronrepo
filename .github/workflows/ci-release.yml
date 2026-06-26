@@ -22,14 +22,42 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: ./.github/actions/setup-pnpm
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.9.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - uses: actions/cache@v6
+              with:
+                  path: .turbo/cache
+                  key: ${{ runner.os }}-turbo-${{ github.ref_name }}-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-${{ github.ref_name }}-
+                      ${{ runner.os }}-turbo-
+            - run: pnpm install --frozen-lockfile
             - run: pnpm run lint
 
     type-check:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: ./.github/actions/setup-pnpm
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.9.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - uses: actions/cache@v6
+              with:
+                  path: .turbo/cache
+                  key: ${{ runner.os }}-turbo-${{ github.ref_name }}-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-${{ github.ref_name }}-
+                      ${{ runner.os }}-turbo-
+            - run: pnpm install --frozen-lockfile
             - run: pnpm run type-check
 
     test:
@@ -39,14 +67,42 @@ jobs:
                 os: [ubuntu-latest, windows-latest, macos-latest]
         steps:
             - uses: actions/checkout@v6
-            - uses: ./.github/actions/setup-pnpm
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.9.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - uses: actions/cache@v6
+              with:
+                  path: .turbo/cache
+                  key: ${{ runner.os }}-turbo-${{ github.ref_name }}-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-${{ github.ref_name }}-
+                      ${{ runner.os }}-turbo-
+            - run: pnpm install --frozen-lockfile
             - run: pnpm run test
 
     build:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: ./.github/actions/setup-pnpm
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.9.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - uses: actions/cache@v6
+              with:
+                  path: .turbo/cache
+                  key: ${{ runner.os }}-turbo-${{ github.ref_name }}-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-${{ github.ref_name }}-
+                      ${{ runner.os }}-turbo-
+            - run: pnpm install --frozen-lockfile
             - run: pnpm run build
 
     release:
@@ -64,7 +120,21 @@ jobs:
             id-token: write
         steps:
             - uses: actions/checkout@v6
-            - uses: ./.github/actions/setup-pnpm
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.9.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - uses: actions/cache@v6
+              with:
+                  path: .turbo/cache
+                  key: ${{ runner.os }}-turbo-${{ github.ref_name }}-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-${{ github.ref_name }}-
+                      ${{ runner.os }}-turbo-
+            - run: pnpm install --frozen-lockfile
             - run: pnpm exec semantic-release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
