@@ -71,6 +71,18 @@ function createContext(cwd: string, version = '1.2.3') {
     } as unknown as PrepareContext
 }
 
+function runPnpm(args: string[], cwd: string) {
+    return spawnSync('pnpm', args, {
+        cwd,
+        encoding: 'utf8',
+        shell: process.platform === 'win32'
+    })
+}
+
+function getProcessOutput(result: ReturnType<typeof runPnpm>) {
+    return result.error?.message || result.stderr || result.stdout
+}
+
 test('maps semantic-release channels to npm dist-tags', () => {
     expect(getChannel()).toBe('latest')
     expect(getChannel('beta')).toBe('beta')
@@ -184,17 +196,11 @@ test('pnpm pack rewrites workspace protocol dependencies after prepare', async (
     await prepare({ pkgRoot: 'packages/a' }, createContext(cwd))
     await prepare({ pkgRoot: 'packages/b' }, createContext(cwd))
 
-    const install = spawnSync('pnpm', ['install', '--offline'], {
-        cwd,
-        encoding: 'utf8'
-    })
-    expect(install.status, install.stderr || install.stdout).toBe(0)
+    const install = runPnpm(['install', '--offline'], cwd)
+    expect(install.status, getProcessOutput(install)).toBe(0)
 
-    const pack = spawnSync('pnpm', ['pack', '--pack-destination', cwd], {
-        cwd: path.join(cwd, 'packages/a'),
-        encoding: 'utf8'
-    })
-    expect(pack.status, pack.stderr || pack.stdout).toBe(0)
+    const pack = runPnpm(['pack', '--pack-destination', cwd], path.join(cwd, 'packages/a'))
+    expect(pack.status, getProcessOutput(pack)).toBe(0)
 
     const tarball = pack.stdout.trim().split('\n').at(-1)
     expect(path.basename(tarball ?? '')).toBe('fixture-a-1.2.3.tgz')
