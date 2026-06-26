@@ -34,5 +34,13 @@
     },
     "peerDependencies": {
         "typescript": "*"
+    },
+    "dependencies": {
+        "@aronrepo/commitlint-config": "workspace:^",
+        "@aronrepo/conventional-changelog-config": "workspace:^",
+        "@aronrepo/conventional-commits": "workspace:^",
+        "@aronrepo/eslint-config": "workspace:^",
+        "@aronrepo/prettier-config": "workspace:^",
+        "@aronrepo/semantic-release-config": "workspace:^"
     }
 }
