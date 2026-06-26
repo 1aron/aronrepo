@@ -4,3 +4,4 @@ packages/*/dist
 .turbo
 .DS_Store
 *.log
+.env

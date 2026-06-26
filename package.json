@@ -12,11 +12,9 @@
     "scripts": {
         "postinstall": "husky install",
         "build": "turbo run build --filter=\"./packages/*\"",
-        "check": "pnpm run commit-check && turbo run test lint type-check --filter=\"./packages/*\"",
         "test": "turbo run test --filter=\"./packages/*\"",
         "lint": "turbo run lint --filter=\"./packages/*\"",
         "type-check": "turbo run type-check --filter=\"./packages/*\"",
-        "commit-check": "node scripts/commit-check.mjs",
         "release": "semantic-release"
     },
     "engines": {
