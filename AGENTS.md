@@ -63,7 +63,7 @@ pnpm --filter aronrepo run build
 
 ## Commit and PR Titles
 
-Commit messages and PR titles should follow Aronrepo conventional commit types, which are defined in `packages/conventional-commits/src/index.ts` and enforced through `@aronrepo/commitlint-config`.
+Commit messages and PR titles should follow Aronrepo conventional commit types, which are defined in `packages/conventional-commits/src/index.ts`, documented in `packages/conventional-commits/README.md`, and enforced through `@aronrepo/commitlint-config`.
 
 Examples:
 
@@ -71,10 +71,11 @@ Examples:
 Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify build output
+Chore(Agent): Update repository guidance for coding agents
 Chore: Update package metadata
 ```
 
-Types are PascalCase, and scopes are optional.
+Types are PascalCase, and scopes are optional. Before using `Feat`, `Fix`, or any other release-impacting type, confirm the change affects published package behavior, public API, release behavior, or published README content. Use `Chore(Agent)` for internal AI instructions, prompts, repository context, and agent workflow policy.
 
 ## Agent Workflow
 

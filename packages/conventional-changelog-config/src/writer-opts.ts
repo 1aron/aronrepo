@@ -1,4 +1,4 @@
-import { commits } from '@aronrepo/conventional-commits'
+import { commits, findCommitRule } from '@aronrepo/conventional-commits'
 
 const groupOrder = commits
     .map(({ group }) => group)
@@ -13,7 +13,7 @@ const writerOpts = {
                 .replace(/<-/g, '←')
         }
 
-        const rule = commits.find(({ type }) => type === commit.type)
+        const rule = findCommitRule(commit.type, commit.scope)
         if (commit.type === 'Revert' || commit.revert) {
             commit.type = commits.find(({ type }) => type === 'Revert')?.group
         } else if (rule?.group && !rule.hidden) {

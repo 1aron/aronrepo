@@ -8,6 +8,23 @@ export interface ConventionalCommitType {
     hidden?: boolean
 }
 
+export interface AgentCommitPolicyExample {
+    commit: string
+    use: string
+    release: ReleaseType
+    avoid?: string
+}
+
+export interface AgentCommitPolicy {
+    defaultInternalCommit: string
+    defaultInternalType: string
+    defaultInternalScope: string
+    releaseImpactRule: string
+    releaseWorthyChanges: string[]
+    nonReleaseDefaults: string[]
+    examples: AgentCommitPolicyExample[]
+}
+
 export const commits = [
     { type: 'Bump', scope: 'Major', release: 'major' },
     { type: 'Bump', scope: 'Minor', release: 'minor' },
@@ -33,5 +50,71 @@ export const commits = [
 ] satisfies ConventionalCommitType[]
 
 export const types = [...new Set(commits.map(({ type }) => type))]
+
+export const releaseCommits = commits.filter(({ release }) => release !== false)
+
+export const nonReleaseCommits = commits.filter(({ release }) => release === false)
+
+export const releaseTypes = [...new Set(releaseCommits.map(({ type }) => type))]
+
+export const nonReleaseTypes = [...new Set(nonReleaseCommits.map(({ type }) => type))]
+
+export function findCommitRule(type: string | undefined, scope?: string) {
+    if (!type) return undefined
+
+    return commits.find((commit) => commit.type === type && commit.scope === scope)
+        ?? commits.find((commit) => commit.type === type && commit.scope === undefined)
+}
+
+export function getReleaseType(type: string | undefined, scope?: string) {
+    return findCommitRule(type, scope)?.release
+}
+
+export const agentCommitPolicy = {
+    defaultInternalCommit: 'Chore(Agent): Clarify commit selection policy',
+    defaultInternalType: 'Chore',
+    defaultInternalScope: 'Agent',
+    releaseImpactRule: 'Use release-impacting types only when the change affects published package behavior, public API, release behavior, or published README content.',
+    releaseWorthyChanges: [
+        'Published package runtime behavior',
+        'Public API, exports, or types',
+        'Release, changelog, or versioning behavior',
+        'Published README content that requires a package patch release'
+    ],
+    nonReleaseDefaults: [
+        'Agent instructions, prompts, and repository context',
+        'Tests that only cover existing behavior',
+        'Examples, internal documentation, and routine metadata',
+        'Refactors that do not change published behavior'
+    ],
+    examples: [
+        {
+            commit: 'Chore(Agent): Update repository guidance for coding agents',
+            use: 'Agent instructions, prompts, or repo context',
+            release: false,
+            avoid: 'Feat(Agent): Add agent guide'
+        },
+        {
+            commit: 'Test(Release): Cover scoped README bump rules',
+            use: 'Tests that validate existing release behavior',
+            release: false
+        },
+        {
+            commit: 'Docs: Add commit type examples',
+            use: 'Documentation that is not published as package README content',
+            release: false
+        },
+        {
+            commit: 'Docs(README): Clarify package installation',
+            use: 'Published README content that should trigger a patch release',
+            release: 'patch'
+        },
+        {
+            commit: 'Fix(Release): Preserve workspace dependency ranges',
+            use: 'A release behavior bug that affects published package behavior',
+            release: 'patch'
+        }
+    ]
+} satisfies AgentCommitPolicy
 
 export default commits

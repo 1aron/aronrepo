@@ -10,6 +10,19 @@ test('recommends release bumps', () => {
     expect(recommendedBumpOpts.whatBump([{ type: 'Fix' }]).level).toBe(2)
 })
 
+test('recommends release bumps with scoped rules', () => {
+    expect(recommendedBumpOpts.whatBump([{ type: 'Docs', scope: 'README' }]).level).toBe(2)
+    expect(recommendedBumpOpts.whatBump([{ type: 'Docs' }]).level).toBe(null)
+})
+
+test('uses scoped rules when transforming changelog commits', () => {
+    expect(writerOpts.transform({
+        type: 'Docs',
+        scope: 'README',
+        subject: 'Clarify package installation'
+    })).toBeUndefined()
+})
+
 test('creates conventional changelog preset', async () => {
     await expect(createPreset()).resolves.toMatchObject({
         parserOpts,

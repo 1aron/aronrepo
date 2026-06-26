@@ -13,6 +13,24 @@ test('accepts Aronrepo commit title', async () => {
     expect(result.valid).toBe(true)
 })
 
+test('accepts agent chore commit title', async () => {
+    const result = await lint(
+        'Chore(Agent): Update repository guidance for coding agents',
+        rules,
+        parserOpts
+    )
+    expect(result.valid).toBe(true)
+})
+
+test('accepts scoped README docs commit title', async () => {
+    const result = await lint(
+        'Docs(README): Clarify package installation',
+        rules,
+        parserOpts
+    )
+    expect(result.valid).toBe(true)
+})
+
 test('rejects lowercase commit type', async () => {
     const result = await lint(
         'feat(core): add esm builder',

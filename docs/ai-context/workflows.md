@@ -37,7 +37,7 @@ CI jobs are intentionally separate:
 - `test`: runs `pnpm run test` on Ubuntu, Windows, and macOS.
 - `build`: runs `pnpm run build`.
 
-The PR title workflow checks pull request titles with `commitlint` after building `@aronrepo/commitlint-config` and its dependencies.
+The PR title workflow checks pull request titles with `commitlint` after building `@aronrepo/commitlint-config` and its dependencies. PR titles use the same release-impact policy as commit messages: release-impacting types should describe published behavior, public API, release behavior, or published README changes. Agent-only guidance and repository context should use `Chore(Agent)`.
 
 ## Release
 

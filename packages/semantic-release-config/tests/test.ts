@@ -4,6 +4,28 @@ import fs from 'fs-extra'
 import configure from '../src/configure'
 import releaseRules from '../src/rules'
 
+test('exports commit analyzer release rules without conventional commit metadata', () => {
+    const docsReadmeRule = releaseRules.find((rule) =>
+        'type' in rule
+        && rule.type === 'Docs'
+        && 'scope' in rule
+        && rule.scope === 'README'
+    )
+
+    expect(docsReadmeRule).toEqual({
+        type: 'Docs',
+        scope: 'README',
+        release: 'patch'
+    })
+
+    for (const rule of releaseRules) {
+        expect(rule).not.toHaveProperty('group')
+        expect(rule).not.toHaveProperty('hidden')
+        expect(rule).not.toHaveProperty('defaultInternalCommit')
+        expect(rule).not.toHaveProperty('examples')
+    }
+})
+
 test('creates default semantic-release config', () => {
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-release-'))
     const previous = process.cwd()

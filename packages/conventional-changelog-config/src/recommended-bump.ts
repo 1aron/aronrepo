@@ -1,16 +1,16 @@
-import { commits } from '@aronrepo/conventional-commits'
+import { findCommitRule } from '@aronrepo/conventional-commits'
 import parserOpts from './parser-opts'
 
 const recommendedBumpOpts = {
     parserOpts,
-    whatBump(parsedCommits: Array<{ type?: string }>) {
+    whatBump(parsedCommits: Array<{ type?: string, scope?: string }>) {
         let level: 0 | 1 | 2 | null = null
         let major = 0
         let minor = 0
         let patch = 0
 
         for (const parsedCommit of parsedCommits) {
-            const rule = commits.find(({ type }) => type === parsedCommit.type)
+            const rule = findCommitRule(parsedCommit.type, parsedCommit.scope)
             if (!rule) continue
             switch (rule.release) {
                 case 'major':
