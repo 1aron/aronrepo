@@ -137,6 +137,7 @@ jobs:
                       ${{ runner.os }}-turbo-${{ github.ref_name }}-
                       ${{ runner.os }}-turbo-
             - run: pnpm install --frozen-lockfile
+            - run: pnpm run build
             - run: pnpm exec semantic-release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
