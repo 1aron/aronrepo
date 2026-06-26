@@ -8,7 +8,7 @@ Use this guide when integrating Aronrepo into another JavaScript or TypeScript r
 
 A complete Aronrepo adoption should leave the target repository with:
 
-- Aronrepo packages and required peer tools installed as development dependencies.
+- The `aronrepo` facade package and required peer tools installed as development dependencies.
 - ESM-compatible commitlint configuration using `@aronrepo/commitlint-config`.
 - Semantic-release configuration using `@aronrepo/semantic-release-config`.
 - pnpm workspace publishing through `@aronrepo/semantic-release-pnpm` for public packages.
@@ -27,7 +27,7 @@ First inspect the repo before editing: package manager, Node version, module typ
 
 Then adopt Aronrepo conservatively:
 1. Use ESM-compatible configuration only.
-2. Install the relevant Aronrepo packages for conventional commits, commitlint, changelog generation, semantic-release configuration, and pnpm workspace publishing.
+2. Install the Aronrepo facade and peer tools with `pnpm add -D aronrepo @commitlint/cli semantic-release`.
 3. Configure commitlint to extend or export @aronrepo/commitlint-config.
 4. Configure semantic-release to use @aronrepo/semantic-release-config and @aronrepo/semantic-release-pnpm for public pnpm workspace packages.
 5. Add or update README guidance that explains the commit format, release-impacting types, validation commands, and publishing behavior.
@@ -35,12 +35,13 @@ Then adopt Aronrepo conservatively:
 7. Preserve the target repo’s existing architecture and avoid unrelated refactors.
 8. Run the narrowest meaningful validation commands, then broaden only if shared release or workspace behavior changed.
 
-When finished, summarize the changed files, the exact Aronrepo packages introduced, any behavior intentionally left unchanged, and the validation results.
+When finished, summarize the changed files, confirm that `aronrepo` and the required peer tools were introduced, note any behavior intentionally left unchanged, and report the validation results.
 ```
 
 ## Agent Rules
 
 - Inspect before editing. The target repository's package manager, Node engine, workspace layout, CI workflows, and release setup decide the exact integration shape.
+- Prefer facade installation with `aronrepo`. Install individual `@aronrepo/*` packages only when intentionally doing partial adoption.
 - Keep ESM compatibility. Aronrepo packages do not provide CommonJS fallbacks.
 - Configure release behavior from the shared Aronrepo source of truth instead of copying release rules by hand.
 - Choose the lowest accurate release-impacting commit type. Published README changes use `Docs(README)`, while internal AI instructions use `Chore(Agent)`.

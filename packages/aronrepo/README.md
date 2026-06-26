@@ -2,11 +2,21 @@
 
 # aronrepo
 
-Facade package for the Aronrepo monorepo toolchain.
+Facade install target for the Aronrepo monorepo toolchain.
 
-Use this package when you want a small programmatic entrypoint that names the Aronrepo packages available in the toolchain. The package has no runtime side effects and does not configure commitlint, changelog generation, or semantic-release by itself.
+Use this package when you want one dependency that brings the published Aronrepo toolchain packages for conventional commits, commitlint configuration, changelog generation, semantic-release configuration, and pnpm workspace publishing. The package also provides a small programmatic entrypoint that names those packages.
+
+The package has no runtime side effects and does not configure commitlint, changelog generation, or semantic-release by itself.
 
 ## Install
+
+For complete adoption, install the facade package plus the external peer tools used by your repository commands:
+
+```sh
+pnpm add -D aronrepo @commitlint/cli semantic-release
+```
+
+For programmatic package-list usage only:
 
 ```sh
 pnpm add -D aronrepo
@@ -48,4 +58,4 @@ For a complete adoption prompt that an AI coding agent can use in another reposi
 
 - [AI Coding Integration](https://github.com/1aron/aronrepo/blob/main/docs/ai-coding.md)
 
-The prompt tells the agent to inspect the target repository first, install the relevant Aronrepo packages, configure commitlint and semantic-release, document release behavior, and add agent guidance without unrelated refactors.
+The prompt tells the agent to inspect the target repository first, install the `aronrepo` facade and required peer tools, configure commitlint and semantic-release, document release behavior, and add agent guidance without unrelated refactors.

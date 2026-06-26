@@ -27,18 +27,20 @@ The project is designed for repositories that want predictable releases without 
 
 ## Install
 
-Install the packages that match the role you need:
+For a repository that wants the whole Aronrepo toolchain, install the facade package plus the external peer tools:
+
+```sh
+pnpm add -D aronrepo @commitlint/cli semantic-release
+```
+
+`aronrepo` brings the published `@aronrepo/*` toolchain packages. `@commitlint/cli` and `semantic-release` stay explicit because they are peer tools used by the target repository's commitlint and release commands.
+
+For partial adoption, install only the packages that match the role you need:
 
 ```sh
 pnpm add -D @aronrepo/conventional-commits @aronrepo/commitlint-config @commitlint/cli
 pnpm add -D @aronrepo/conventional-changelog-config
 pnpm add -D @aronrepo/semantic-release-config @aronrepo/semantic-release-pnpm semantic-release
-```
-
-For a repository that wants the whole toolchain, install all published Aronrepo packages as dev dependencies:
-
-```sh
-pnpm add -D aronrepo @aronrepo/conventional-commits @aronrepo/commitlint-config @aronrepo/conventional-changelog-config @aronrepo/semantic-release-config @aronrepo/semantic-release-pnpm @commitlint/cli semantic-release
 ```
 
 All packages are ESM-only. Use `.mjs`, `"type": "module"`, or another ESM-compatible config format when importing them.
@@ -103,7 +105,7 @@ First inspect the repo before editing: package manager, Node version, module typ
 
 Then adopt Aronrepo conservatively:
 1. Use ESM-compatible configuration only.
-2. Install the relevant Aronrepo packages for conventional commits, commitlint, changelog generation, semantic-release configuration, and pnpm workspace publishing.
+2. Install the Aronrepo facade and peer tools with `pnpm add -D aronrepo @commitlint/cli semantic-release`.
 3. Configure commitlint to extend or export @aronrepo/commitlint-config.
 4. Configure semantic-release to use @aronrepo/semantic-release-config and @aronrepo/semantic-release-pnpm for public pnpm workspace packages.
 5. Add or update README guidance that explains the commit format, release-impacting types, validation commands, and publishing behavior.
@@ -111,7 +113,7 @@ Then adopt Aronrepo conservatively:
 7. Preserve the target repo’s existing architecture and avoid unrelated refactors.
 8. Run the narrowest meaningful validation commands, then broaden only if shared release or workspace behavior changed.
 
-When finished, summarize the changed files, the exact Aronrepo packages introduced, any behavior intentionally left unchanged, and the validation results.
+When finished, summarize the changed files, confirm that `aronrepo` and the required peer tools were introduced, note any behavior intentionally left unchanged, and report the validation results.
 ```
 
 ## Local Development
