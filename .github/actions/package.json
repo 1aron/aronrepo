@@ -6,8 +6,8 @@
     "description": "GitHub Actions for the Aronrepo ecosystem",
     "main": "src/index.js",
     "dependencies": {
-        "@actions/core": "^1.11.1",
-        "@actions/github": "^6.0.1",
-        "conventional-commits-parser": "^6.2.1"
+        "@actions/core": "^3.0.1",
+        "@actions/github": "^9.1.1",
+        "conventional-commits-parser": "^6.4.0"
     }
 }

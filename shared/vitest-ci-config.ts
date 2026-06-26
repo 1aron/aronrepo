@@ -1,8 +1,8 @@
 import type { ViteUserConfig } from 'vitest/config'
 
-export const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true'
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true'
 export const defaultVitestTestTimeout = 60_000
-export const ciVitestTestTimeout = 180_000
+const ciVitestTestTimeout = 180_000
 
 function maxCITimeout(timeout: unknown) {
     return typeof timeout === 'number'

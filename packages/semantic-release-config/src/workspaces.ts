@@ -1,9 +1,9 @@
 import path from 'node:path'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
-import yaml from 'js-yaml'
+import { load as loadYaml } from 'js-yaml'
 
-export interface PackageJson {
+interface PackageJson {
     name?: string
     version?: string
     private?: boolean
@@ -24,7 +24,7 @@ function readPNPMWorkspaces(cwd: string) {
     const workspacePath = path.join(cwd, 'pnpm-workspace.yaml')
     if (!fs.pathExistsSync(workspacePath)) return undefined
 
-    const workspace = yaml.load(fs.readFileSync(workspacePath, 'utf8')) as { packages?: string[] } | undefined
+    const workspace = loadYaml(fs.readFileSync(workspacePath, 'utf8')) as { packages?: string[] } | undefined
     return workspace?.packages
 }
 

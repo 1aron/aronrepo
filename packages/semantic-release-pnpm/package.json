@@ -33,11 +33,11 @@
         "lint": "eslint"
     },
     "dependencies": {
-        "@actions/core": "^1.11.1",
+        "@actions/core": "^3.0.1",
         "@semantic-release/error": "^4.0.0",
         "execa": "^9.6.1",
         "fs-extra": "^11.3.5",
-        "normalize-url": "^8.0.1",
+        "normalize-url": "^9.0.1",
         "semver": "^7.7.3"
     },
     "peerDependencies": {
