@@ -50,6 +50,9 @@ Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
 Benchmark(Runtime): Add parser throughput baseline
+CI(GitHub): Update PR title check permissions
+Build(Tooling): Update Vitest config
+Style(Lint): Format TypeScript files
 Chore(Agent): Update repository guidance for coding agents
 ```
 
@@ -59,7 +62,7 @@ The config:
 
 - Uses Aronrepo parser options for `Type(Scope): Summary` headers.
 - Restricts commit types to the exported Aronrepo type list.
-- Requires sentence-case type, scope, and subject values.
+- Requires sentence-case type, scope, and subject values, with exact exported uppercase acronyms such as `CI` allowed by the type list.
 - Rejects subject exclamation marks.
 - Rejects subjects ending in a period.
 - Warns when body and footer sections do not start after a blank line.
@@ -87,3 +90,13 @@ Benchmark(Runtime): Add parser throughput baseline
 ```
 
 Use `Perf` only for changes that affect published runtime performance behavior.
+
+Non-release maintenance work should use:
+
+```text
+CI(GitHub): Update PR title check permissions
+Build(Tooling): Update Vitest config
+Style(Lint): Format TypeScript files
+```
+
+Use release-impacting types only when the change affects published package behavior, public API, release behavior, or published README content.

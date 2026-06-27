@@ -34,6 +34,9 @@ Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
 Benchmark(Runtime): Add parser throughput baseline
+CI(GitHub): Update PR title check permissions
+Build(Tooling): Update Vitest config
+Style(Lint): Format TypeScript files
 Chore(Agent): Update repository guidance for coding agents
 ```
 
@@ -46,11 +49,13 @@ Use release-impacting types only when the change should affect a published packa
 | Major | `Bump(Major)` |
 | Minor | `Feat`, `New`, `Bump(Minor)` |
 | Patch | `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, `Docs(README)` |
-| None | `Docs`, `Example`, `Test`, `Benchmark`, `Refactor`, `Chore`, `Misc` |
+| None | `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, `Misc` |
 
 `Docs(README)` is a patch release because published package README content can only reach npm consumers through a new package version. Plain `Docs` is not a release.
 
 `Benchmark` is for benchmark harnesses, baseline data, reports, and measurement-only changes. Use `Perf` only when the change improves or changes published runtime performance behavior.
+
+`CI`, `Build`, and `Style` are non-release maintenance types. Use `CI` for workflow and status-check changes, `Build` for build tooling and dev-only configuration, and `Style` for formatting-only changes. If the change affects published package behavior, public output, runtime dependencies, or release behavior, choose the matching release-impacting type instead.
 
 Manual bumps are allowed for release-management cases:
 
@@ -73,6 +78,7 @@ Before using `Feat`, `New`, `Fix`, or any other release-impacting type, confirm 
 
 Use `Chore(Agent)` by default for internal AI instructions, prompts, repository context, or agent workflow policy.
 Use `Benchmark` for benchmark-only work that should not publish a new package version. Do not use `Perf` for measurement-only changes.
+Use `CI`, `Build`, and `Style` for non-release maintenance work instead of forcing `Fix`, `Update`, `Improve`, or `Upgrade` onto changes that do not affect published consumers.
 
 Good examples:
 
@@ -80,6 +86,11 @@ Good examples:
 Chore(Agent): Update repository guidance for coding agents
 Test(Release): Cover scoped README bump rules
 Benchmark(Runtime): Add parser throughput baseline
+CI(GitHub): Update PR title check permissions
+Build(Tooling): Update Vitest config
+Style(Lint): Format TypeScript files
+Chore(Deps): Update Vitest dev dependency
+Example(Release): Add semantic-release config sample
 Docs: Add commit type examples
 Docs(README): Clarify package installation
 Fix(Release): Preserve workspace dependency ranges
@@ -91,9 +102,14 @@ Avoid:
 Feat(Agent): Add agent guide
 Fix(Agent): Rewrite coding instructions
 Perf(Runtime): Add parser throughput benchmark
+Fix(CI): Update PR title check permissions
+Update(Build): Update Vitest config
+Improve(Core): Format TypeScript files
+Upgrade(Deps): Update Vitest dev dependency
+Feat(Example): Add semantic-release config sample
 ```
 
-Those examples create releases for internal policy-only or measurement-only changes. Use `Chore(Agent)` unless published behavior changes. For benchmark-only changes, use `Benchmark` instead of `Perf`.
+Those examples create releases for internal policy-only, measurement-only, or maintenance-only changes. Use `Chore(Agent)` unless published behavior changes. For benchmark-only changes, use `Benchmark` instead of `Perf`. For CI, build tooling, formatting, dev dependency, or example-only work, use the corresponding non-release type.
 
 ## Public API
 

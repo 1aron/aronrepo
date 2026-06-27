@@ -40,9 +40,29 @@ test('accepts benchmark-only commit title as non-release work', async () => {
     expect(result.valid).toBe(true)
 })
 
+test.each([
+    'Build(Tooling): Update Vitest config',
+    'CI(GitHub): Update PR title check permissions',
+    'Style(Lint): Format TypeScript files',
+    'Chore(Deps): Update Vitest dev dependency',
+    'Example(Release): Add semantic-release config sample'
+])('accepts non-release maintenance commit title %s', async (message) => {
+    const result = await lint(message, rules, parserOpts)
+    expect(result.valid).toBe(true)
+})
+
 test('rejects lowercase commit type', async () => {
     const result = await lint(
         'feat(core): add esm builder',
+        rules,
+        parserOpts
+    )
+    expect(result.valid).toBe(false)
+})
+
+test('rejects arbitrary uppercase commit type', async () => {
+    const result = await lint(
+        'FIX(Core): Repair cache',
         rules,
         parserOpts
     )

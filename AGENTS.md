@@ -72,12 +72,16 @@ Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify build output
 Benchmark(Runtime): Add parser throughput baseline
+CI(GitHub): Update PR title check permissions
+Build(Tooling): Update Vitest config
+Style(Lint): Format TypeScript files
 Chore(Agent): Update repository guidance for coding agents
 Chore: Update package metadata
 ```
 
 Types are PascalCase, and scopes are optional. Before using `Feat`, `Fix`, or any other release-impacting type, confirm the change affects published package behavior, public API, release behavior, or published README content. Use `Chore(Agent)` for internal AI instructions, prompts, repository context, and agent workflow policy.
 Use `Benchmark` for benchmark harnesses, reports, fixtures, and baseline data that do not change published runtime behavior. Reserve `Perf` for changes that affect published runtime performance.
+Use `CI` for CI workflows, `Build` for build tooling or dev-only configuration, and `Style` for formatting-only changes. Runtime dependency or published behavior changes should still use release-impacting types such as `Upgrade`, `Fix`, or `Update`.
 
 ## Agent Workflow
 

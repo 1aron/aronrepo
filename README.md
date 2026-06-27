@@ -9,7 +9,7 @@ The project is designed for repositories that want predictable releases without 
 ## Why Aronrepo
 
 - One commit taxonomy drives commitlint, changelog grouping, semantic-release rules, and AI coding agent guidance.
-- Release impact is explicit: `Feat` and `New` are minor releases, fixes and published README updates are patch releases, benchmark-only work stays non-release with `Benchmark`, and internal agent guidance stays non-release with `Chore(Agent)`.
+- Release impact is explicit: `Feat` and `New` are minor releases, fixes and published README updates are patch releases, while benchmark-only, CI, build tooling, style-only, and internal agent work stay non-release.
 - pnpm workspace packages are discovered and published through semantic-release without replacing package-level ownership.
 - ESM is the only runtime target. Published packages export `dist/**/*.js` and `dist/**/*.d.ts` without CommonJS fallbacks.
 - AI coding agents get clear instructions for commit selection, README changes, release behavior, and conservative adoption in external repositories.
@@ -88,11 +88,13 @@ Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
 Benchmark(Runtime): Add parser throughput baseline
+CI(GitHub): Update PR title check permissions
 Chore(Agent): Update repository guidance for coding agents
 ```
 
 `Docs(README)` is a patch release because package README content is published to npm. Plain `Docs` is not a release. Agent-only instructions, prompts, and repository context should usually use `Chore(Agent)`.
 Benchmark-only harnesses, reports, fixtures, and baseline data should use `Benchmark`; reserve `Perf` for published runtime performance changes.
+CI workflows use `CI`, build tooling and dev-only configuration use `Build`, and formatting-only changes use `Style`. Runtime dependency or published behavior changes should still use release-impacting types such as `Upgrade`, `Fix`, or `Update`.
 
 ## AI Coding Integration
 
@@ -111,7 +113,7 @@ Then adopt Aronrepo conservatively:
 3. Configure commitlint to extend or export @aronrepo/commitlint-config.
 4. Configure semantic-release to use @aronrepo/semantic-release-config and @aronrepo/semantic-release-pnpm for public pnpm workspace packages.
 5. Add or update README guidance that explains the commit format, release-impacting types, validation commands, and publishing behavior.
-6. Add or update AI agent guidance so coding agents use Aronrepo commit types, choose the lowest accurate release impact, use Benchmark for benchmark-only work, and use Chore(Agent) for internal agent instructions.
+6. Add or update AI agent guidance so coding agents use Aronrepo commit types, choose the lowest accurate release impact, use Benchmark for benchmark-only work, use CI/Build/Style for non-release maintenance work, and use Chore(Agent) for internal agent instructions.
 7. Preserve the target repo’s existing architecture and avoid unrelated refactors.
 8. Run the narrowest meaningful validation commands, then broaden only if shared release or workspace behavior changed.
 

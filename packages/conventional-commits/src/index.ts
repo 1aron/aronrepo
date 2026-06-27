@@ -45,6 +45,9 @@ export const commits = [
     { type: 'Example', release: false, group: 'Examples' },
     { type: 'Test', release: false, group: 'Tests' },
     { type: 'Benchmark', release: false, group: 'Benchmarks' },
+    { type: 'Build', release: false, hidden: false },
+    { type: 'CI', release: false, hidden: false },
+    { type: 'Style', release: false, hidden: false },
     { type: 'Refactor', release: false, hidden: false },
     { type: 'Chore', release: false, hidden: false },
     { type: 'Misc', release: false, hidden: false }
@@ -86,6 +89,8 @@ export const agentCommitPolicy = {
         'Agent instructions, prompts, and repository context',
         'Tests that only cover existing behavior',
         'Benchmark harnesses, fixtures, reports, and measurement-only changes',
+        'Build tooling, CI workflows, formatting, and lint-only style changes',
+        'Development dependency, lockfile, audit report, and policy-only changes',
         'Examples, internal documentation, and routine metadata',
         'Refactors that do not change published behavior'
     ],
@@ -106,6 +111,36 @@ export const agentCommitPolicy = {
             use: 'Benchmark harnesses, baseline data, or measurement-only changes that do not change published runtime behavior',
             release: false,
             avoid: 'Perf(Runtime): Add parser throughput benchmark'
+        },
+        {
+            commit: 'CI(GitHub): Update PR title check permissions',
+            use: 'CI workflow, status check, and automation changes that do not change release behavior',
+            release: false,
+            avoid: 'Fix(CI): Update PR title check permissions'
+        },
+        {
+            commit: 'Build(Tooling): Update Vitest config',
+            use: 'Build system, bundler, local tooling, and dev-only configuration changes',
+            release: false,
+            avoid: 'Update(Build): Update Vitest config'
+        },
+        {
+            commit: 'Style(Lint): Format TypeScript files',
+            use: 'Formatting, lint-only, whitespace, or readability changes with no behavior change',
+            release: false,
+            avoid: 'Improve(Core): Format TypeScript files'
+        },
+        {
+            commit: 'Chore(Deps): Update Vitest dev dependency',
+            use: 'Development dependency, lockfile, audit report, and routine metadata changes',
+            release: false,
+            avoid: 'Upgrade(Deps): Update Vitest dev dependency'
+        },
+        {
+            commit: 'Example(Release): Add semantic-release config sample',
+            use: 'Example-only additions or updates that do not change published package behavior',
+            release: false,
+            avoid: 'Feat(Example): Add semantic-release config sample'
         },
         {
             commit: 'Docs: Add commit type examples',

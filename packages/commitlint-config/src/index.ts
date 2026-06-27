@@ -13,7 +13,7 @@ const config = {
         'subject-case': [2, 'always', ['sentence-case']],
         'subject-exclamation-mark': [2, 'never'],
         'subject-full-stop': [2, 'never', '.'],
-        'type-case': [2, 'always', 'sentence-case'],
+        'type-case': [2, 'always', ['sentence-case', 'upper-case']],
         'type-enum': [2, 'always', types]
     }
 }

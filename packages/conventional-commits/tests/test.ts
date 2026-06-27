@@ -12,12 +12,13 @@ test('exports commit types', () => {
     expect(types).toContain('Feat')
     expect(types).toContain('Fix')
     expect(types).toContain('Benchmark')
+    expect(types).toEqual(expect.arrayContaining(['Build', 'CI', 'Style']))
     expect(commits.find(({ type }) => type === 'Feat')?.release).toBe('minor')
 })
 
 test('exports release and non-release type groups', () => {
     expect(releaseTypes).toEqual(expect.arrayContaining(['Bump', 'Feat', 'Fix']))
-    expect(nonReleaseTypes).toEqual(expect.arrayContaining(['Benchmark', 'Chore', 'Docs', 'Test']))
+    expect(nonReleaseTypes).toEqual(expect.arrayContaining(['Benchmark', 'Build', 'Chore', 'CI', 'Docs', 'Style', 'Test']))
 })
 
 test('finds scoped commit rules before unscoped rules', () => {
@@ -25,6 +26,9 @@ test('finds scoped commit rules before unscoped rules', () => {
     expect(getReleaseType('Docs')).toBe(false)
     expect(getReleaseType('Docs', 'Agent')).toBe(false)
     expect(getReleaseType('Benchmark', 'Runtime')).toBe(false)
+    expect(getReleaseType('Build', 'Tooling')).toBe(false)
+    expect(getReleaseType('CI', 'GitHub')).toBe(false)
+    expect(getReleaseType('Style', 'Lint')).toBe(false)
 })
 
 test('exports agent commit policy', () => {
@@ -37,6 +41,21 @@ test('exports agent commit policy', () => {
         expect.objectContaining({
             commit: 'Benchmark(Runtime): Add parser throughput baseline',
             avoid: 'Perf(Runtime): Add parser throughput benchmark',
+            release: false
+        }),
+        expect.objectContaining({
+            commit: 'CI(GitHub): Update PR title check permissions',
+            avoid: 'Fix(CI): Update PR title check permissions',
+            release: false
+        }),
+        expect.objectContaining({
+            commit: 'Build(Tooling): Update Vitest config',
+            avoid: 'Update(Build): Update Vitest config',
+            release: false
+        }),
+        expect.objectContaining({
+            commit: 'Style(Lint): Format TypeScript files',
+            avoid: 'Improve(Core): Format TypeScript files',
             release: false
         })
     ]))

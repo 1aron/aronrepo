@@ -49,6 +49,7 @@ Examples:
 ```text
 Feat(Core): Add parser
 Docs(README): Clarify package installation
+CI(GitHub): Update PR title check permissions
 Chore(Agent): Update repository guidance for coding agents
 ```
 
@@ -61,7 +62,7 @@ It also recognizes standard revert headers so reverts can be released and groupe
 - `Bump(Major)` and breaking changes are major release inputs.
 - `Feat`, `New`, and `Bump(Minor)` are minor release inputs.
 - `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, and `Docs(README)` are patch release inputs.
-- Plain `Docs`, `Example`, `Test`, `Benchmark`, `Refactor`, `Chore`, and `Misc` do not request a release.
+- Plain `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, and `Misc` do not request a release.
 
 ## Writer Options
 

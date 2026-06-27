@@ -15,16 +15,22 @@ test('exports commit analyzer release rules without conventional commit metadata
         'type' in rule
         && rule.type === 'Benchmark'
     )
+    const nonReleaseMaintenanceRules = ['Benchmark', 'Build', 'CI', 'Style'].map((type) =>
+        releaseRules.find((rule) => 'type' in rule && rule.type === type)
+    )
 
     expect(docsReadmeRule).toEqual({
         type: 'Docs',
         scope: 'README',
         release: 'patch'
     })
-    expect(benchmarkRule).toEqual({
-        type: 'Benchmark',
-        release: false
-    })
+    expect(benchmarkRule).toEqual({ type: 'Benchmark', release: false })
+    expect(nonReleaseMaintenanceRules).toEqual([
+        { type: 'Benchmark', release: false },
+        { type: 'Build', release: false },
+        { type: 'CI', release: false },
+        { type: 'Style', release: false }
+    ])
 
     for (const rule of releaseRules) {
         expect(rule).not.toHaveProperty('group')

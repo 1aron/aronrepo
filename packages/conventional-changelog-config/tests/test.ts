@@ -73,6 +73,9 @@ test.each([
     ['Feat(Core): Add parser', { type: 'Feat', scope: 'Core', subject: 'Add parser' }],
     ['Docs(README): Clarify package installation', { type: 'Docs', scope: 'README', subject: 'Clarify package installation' }],
     ['Benchmark(Runtime): Add parser throughput baseline', { type: 'Benchmark', scope: 'Runtime', subject: 'Add parser throughput baseline' }],
+    ['Build(Tooling): Update Vitest config', { type: 'Build', scope: 'Tooling', subject: 'Update Vitest config' }],
+    ['CI(GitHub): Update PR title check permissions', { type: 'CI', scope: 'GitHub', subject: 'Update PR title check permissions' }],
+    ['Style(Lint): Format TypeScript files', { type: 'Style', scope: 'Lint', subject: 'Format TypeScript files' }],
     ['Bump(Major): Drop deprecated runtime', { type: 'Bump', scope: 'Major', subject: 'Drop deprecated runtime' }]
 ])('parses Aronrepo commit header %s', (message, expected) => {
     expect(new CommitParser(parserOpts).parse(message)).toMatchObject({
@@ -109,6 +112,15 @@ test.each([
     },
     {
         messages: ['Benchmark(Runtime): Add parser throughput baseline'],
+        level: null,
+        reason: 'Major: 0, Minor: 0, Patch: 0'
+    },
+    {
+        messages: [
+            'Build(Tooling): Update Vitest config',
+            'CI(GitHub): Update PR title check permissions',
+            'Style(Lint): Format TypeScript files'
+        ],
         level: null,
         reason: 'Major: 0, Minor: 0, Patch: 0'
     },
