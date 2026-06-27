@@ -13,7 +13,7 @@ A complete Aronrepo adoption should leave the target repository with:
 - Semantic-release configuration using `@aronrepo/semantic-release-config`.
 - pnpm workspace publishing through `@aronrepo/semantic-release-pnpm` for public packages.
 - README guidance for commit format, release-impacting types, validation commands, and publishing behavior.
-- AI agent guidance that tells coding agents to use Aronrepo commit types and `Chore(Agent)` for internal agent instructions.
+- AI agent guidance that tells coding agents to use Aronrepo commit types, `Benchmark` for benchmark-only work, and `Chore(Agent)` for internal agent instructions.
 - CI or PR title checks updated only when the target repository already has the relevant workflow surface or clearly needs one.
 
 ## Copy-Paste Prompt
@@ -31,7 +31,7 @@ Then adopt Aronrepo conservatively:
 3. Configure commitlint to extend or export @aronrepo/commitlint-config.
 4. Configure semantic-release to use @aronrepo/semantic-release-config and @aronrepo/semantic-release-pnpm for public pnpm workspace packages.
 5. Add or update README guidance that explains the commit format, release-impacting types, validation commands, and publishing behavior.
-6. Add or update AI agent guidance so coding agents use Aronrepo commit types, choose the lowest accurate release impact, and use Chore(Agent) for internal agent instructions.
+6. Add or update AI agent guidance so coding agents use Aronrepo commit types, choose the lowest accurate release impact, use Benchmark for benchmark-only work, and use Chore(Agent) for internal agent instructions.
 7. Preserve the target repo’s existing architecture and avoid unrelated refactors.
 8. Run the narrowest meaningful validation commands, then broaden only if shared release or workspace behavior changed.
 
@@ -44,5 +44,5 @@ When finished, summarize the changed files, confirm that `aronrepo` and the requ
 - Prefer facade installation with `aronrepo`. Install individual `@aronrepo/*` packages only when intentionally doing partial adoption.
 - Keep ESM compatibility. Aronrepo packages do not provide CommonJS fallbacks.
 - Configure release behavior from the shared Aronrepo source of truth instead of copying release rules by hand.
-- Choose the lowest accurate release-impacting commit type. Published README changes use `Docs(README)`, while internal AI instructions use `Chore(Agent)`.
+- Choose the lowest accurate release-impacting commit type. Published README changes use `Docs(README)`, benchmark-only harnesses, reports, fixtures, and baseline data use `Benchmark`, and internal AI instructions use `Chore(Agent)`.
 - Validate narrowly first. For docs and config work, check the exact files and commands affected before broadening to full repository validation.

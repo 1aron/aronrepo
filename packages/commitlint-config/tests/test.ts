@@ -31,6 +31,15 @@ test('accepts scoped README docs commit title', async () => {
     expect(result.valid).toBe(true)
 })
 
+test('accepts benchmark-only commit title as non-release work', async () => {
+    const result = await lint(
+        'Benchmark(Runtime): Add parser throughput baseline',
+        rules,
+        parserOpts
+    )
+    expect(result.valid).toBe(true)
+})
+
 test('rejects lowercase commit type', async () => {
     const result = await lint(
         'feat(core): add esm builder',

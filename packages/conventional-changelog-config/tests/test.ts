@@ -72,6 +72,7 @@ function parseBumpCommits(messages: string[]) {
 test.each([
     ['Feat(Core): Add parser', { type: 'Feat', scope: 'Core', subject: 'Add parser' }],
     ['Docs(README): Clarify package installation', { type: 'Docs', scope: 'README', subject: 'Clarify package installation' }],
+    ['Benchmark(Runtime): Add parser throughput baseline', { type: 'Benchmark', scope: 'Runtime', subject: 'Add parser throughput baseline' }],
     ['Bump(Major): Drop deprecated runtime', { type: 'Bump', scope: 'Major', subject: 'Drop deprecated runtime' }]
 ])('parses Aronrepo commit header %s', (message, expected) => {
     expect(new CommitParser(parserOpts).parse(message)).toMatchObject({
@@ -103,6 +104,11 @@ test.each([
     },
     {
         messages: ['Docs: Update internal guide', 'Chore(Agent): Update repository guidance'],
+        level: null,
+        reason: 'Major: 0, Minor: 0, Patch: 0'
+    },
+    {
+        messages: ['Benchmark(Runtime): Add parser throughput baseline'],
         level: null,
         reason: 'Major: 0, Minor: 0, Patch: 0'
     },
@@ -147,6 +153,7 @@ test('writes changelog markdown through conventional-changelog-writer', async ()
         parseCommit('Update(Core): Move old -> new <- legacy', 'aaaaaaa0000000000000000000000000000000000'),
         parseCommit('Feat(Core): Add parser', '11111110000000000000000000000000000000000'),
         parseCommit('Docs: Update internal guide', '33333330000000000000000000000000000000000'),
+        parseCommit('Benchmark(Runtime): Add parser throughput baseline', '66666660000000000000000000000000000000000'),
         parseCommit('Docs(README): Clarify package installation', '44444440000000000000000000000000000000000'),
         parseCommit('Chore(Agent): Update repository guidance', '55555550000000000000000000000000000000000')
     ], context, groupedWriterOpts)
@@ -155,6 +162,7 @@ test('writes changelog markdown through conventional-changelog-writer', async ()
     expect(changelog).toContain('### Updates')
     expect(changelog).toContain('### Bug Fixes')
     expect(changelog).toContain('### Documentation')
+    expect(changelog).toContain('### Benchmarks')
     expect(changelog.indexOf('### New Features')).toBeLessThan(changelog.indexOf('### Updates'))
     expect(changelog.indexOf('### Updates')).toBeLessThan(changelog.indexOf('### Bug Fixes'))
     expect(changelog.indexOf('### Bug Fixes')).toBeLessThan(changelog.indexOf('### Documentation'))
@@ -162,6 +170,7 @@ test('writes changelog markdown through conventional-changelog-writer', async ()
     expect(changelog).toContain('Update(Core): Move old → new ← legacy aaaaaaa')
     expect(changelog).toContain('Feat(Core): Add parser 1111111')
     expect(changelog).toContain('Docs: Update internal guide 3333333')
+    expect(changelog).toContain('Benchmark(Runtime): Add parser throughput baseline 6666666')
     expect(changelog).not.toContain('Clarify package installation')
     expect(changelog).not.toContain('Update repository guidance')
 })

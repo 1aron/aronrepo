@@ -11,11 +11,19 @@ test('exports commit analyzer release rules without conventional commit metadata
         && 'scope' in rule
         && rule.scope === 'README'
     )
+    const benchmarkRule = releaseRules.find((rule) =>
+        'type' in rule
+        && rule.type === 'Benchmark'
+    )
 
     expect(docsReadmeRule).toEqual({
         type: 'Docs',
         scope: 'README',
         release: 'patch'
+    })
+    expect(benchmarkRule).toEqual({
+        type: 'Benchmark',
+        release: false
     })
 
     for (const rule of releaseRules) {

@@ -61,11 +61,11 @@ It also recognizes standard revert headers so reverts can be released and groupe
 - `Bump(Major)` and breaking changes are major release inputs.
 - `Feat`, `New`, and `Bump(Minor)` are minor release inputs.
 - `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, and `Docs(README)` are patch release inputs.
-- Plain `Docs`, `Example`, `Test`, `Refactor`, `Chore`, and `Misc` do not request a release.
+- Plain `Docs`, `Example`, `Test`, `Benchmark`, `Refactor`, `Chore`, and `Misc` do not request a release.
 
 ## Writer Options
 
-`writerOpts` groups release notes by Aronrepo changelog groups such as New Features, Bug Fixes, Additions, Updates, Improvements, Upgrades, and Deprecations.
+`writerOpts` groups release notes by Aronrepo changelog groups such as New Features, Bug Fixes, Additions, Updates, Improvements, Upgrades, Benchmarks, and Deprecations.
 
 Scoped rules can affect release analysis without forcing a changelog entry. For example, `Docs(README)` requests a patch release because npm package README content changed, while ordinary internal documentation can remain non-release.
 

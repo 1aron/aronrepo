@@ -44,6 +44,7 @@ export const commits = [
     { type: 'Revert', release: 'patch', group: 'Reversions' },
     { type: 'Example', release: false, group: 'Examples' },
     { type: 'Test', release: false, group: 'Tests' },
+    { type: 'Benchmark', release: false, group: 'Benchmarks' },
     { type: 'Refactor', release: false, hidden: false },
     { type: 'Chore', release: false, hidden: false },
     { type: 'Misc', release: false, hidden: false }
@@ -84,6 +85,7 @@ export const agentCommitPolicy = {
     nonReleaseDefaults: [
         'Agent instructions, prompts, and repository context',
         'Tests that only cover existing behavior',
+        'Benchmark harnesses, fixtures, reports, and measurement-only changes',
         'Examples, internal documentation, and routine metadata',
         'Refactors that do not change published behavior'
     ],
@@ -98,6 +100,12 @@ export const agentCommitPolicy = {
             commit: 'Test(Release): Cover scoped README bump rules',
             use: 'Tests that validate existing release behavior',
             release: false
+        },
+        {
+            commit: 'Benchmark(Runtime): Add parser throughput baseline',
+            use: 'Benchmark harnesses, baseline data, or measurement-only changes that do not change published runtime behavior',
+            release: false,
+            avoid: 'Perf(Runtime): Add parser throughput benchmark'
         },
         {
             commit: 'Docs: Add commit type examples',

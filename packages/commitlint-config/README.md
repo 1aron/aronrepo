@@ -49,6 +49,7 @@ Examples:
 Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
+Benchmark(Runtime): Add parser throughput baseline
 Chore(Agent): Update repository guidance for coding agents
 ```
 
@@ -78,3 +79,11 @@ Docs(README): Clarify package installation
 ```
 
 `Docs(README)` is release-impacting because package README content is published to npm.
+
+Benchmark-only work should use:
+
+```text
+Benchmark(Runtime): Add parser throughput baseline
+```
+
+Use `Perf` only for changes that affect published runtime performance behavior.
