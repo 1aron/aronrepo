@@ -31,12 +31,11 @@ test('accepts scoped README docs commit title', async () => {
     expect(result.valid).toBe(true)
 })
 
-test('accepts benchmark-only commit title as non-release work', async () => {
-    const result = await lint(
-        'Benchmark(Runtime): Add parser throughput baseline',
-        rules,
-        parserOpts
-    )
+test.each([
+    'Benchmark(Benchmarks): Refresh benchmark report',
+    'Benchmark: Refresh benchmark report'
+])('accepts benchmark-only commit title as non-release work %s', async (message) => {
+    const result = await lint(message, rules, parserOpts)
     expect(result.valid).toBe(true)
 })
 

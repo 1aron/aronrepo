@@ -88,7 +88,7 @@ export const agentCommitPolicy = {
     nonReleaseDefaults: [
         'Agent instructions, prompts, and repository context',
         'Tests that only cover existing behavior',
-        'Benchmark harnesses, fixtures, reports, and measurement-only changes',
+        'Benchmark harnesses, fixtures, reports, and measurement-only changes; use a scope only when the benchmark target is clear',
         'Build tooling, CI workflows, formatting, and lint-only style changes',
         'Development dependency, lockfile, audit report, and policy-only changes',
         'Examples, internal documentation, and routine metadata',
@@ -107,10 +107,15 @@ export const agentCommitPolicy = {
             release: false
         },
         {
-            commit: 'Benchmark(Runtime): Add parser throughput baseline',
-            use: 'Benchmark harnesses, baseline data, or measurement-only changes that do not change published runtime behavior',
+            commit: 'Benchmark(Benchmarks): Refresh benchmark report',
+            use: 'Benchmark-only changes when the benchmark area is the useful scope',
             release: false,
-            avoid: 'Perf(Runtime): Add parser throughput benchmark'
+            avoid: 'Perf(Benchmarks): Refresh benchmark report'
+        },
+        {
+            commit: 'Benchmark: Refresh benchmark report',
+            use: 'Benchmark-only changes when no clear scope exists',
+            release: false
         },
         {
             commit: 'CI(GitHub): Update PR title check permissions',

@@ -16,14 +16,15 @@ This package is ESM-only.
 
 ## Header Format
 
-Commit headers use:
+Commit headers use one of:
 
 ```text
 Type(Scope): Summary
+Type: Summary
 ```
 
 - `Type` is required and must be one of the exported Aronrepo commit types.
-- `Scope` is optional, but recommended for monorepo package, workflow, role, or policy changes.
+- `Scope` is optional. Use it when it clarifies the monorepo package, workflow, role, policy, or benchmark area; leave it out when it would be vague or artificial.
 - `Summary` uses sentence case and does not end with a period.
 - No-prefix trivial commits are not allowed in Aronrepo because commit messages and PR titles are both validated by commitlint.
 
@@ -33,7 +34,8 @@ Examples:
 Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
-Benchmark(Runtime): Add parser throughput baseline
+Benchmark(Benchmarks): Refresh benchmark report
+Benchmark: Refresh benchmark report
 CI(GitHub): Update PR title check permissions
 Build(Tooling): Update Vitest config
 Style(Lint): Format TypeScript files
@@ -53,7 +55,7 @@ Use release-impacting types only when the change should affect a published packa
 
 `Docs(README)` is a patch release because published package README content can only reach npm consumers through a new package version. Plain `Docs` is not a release.
 
-`Benchmark` is for benchmark harnesses, baseline data, reports, and measurement-only changes. Use `Perf` only when the change improves or changes published runtime performance behavior.
+`Benchmark` is for benchmark harnesses, baseline data, reports, and measurement-only changes. A scoped form such as `Benchmark(Benchmarks): ...` is useful when the benchmark area is the object of the change; unscoped `Benchmark: ...` is valid when no clear target exists. Use `Perf` only when the change improves or changes published runtime performance behavior.
 
 `CI`, `Build`, and `Style` are non-release maintenance types. Use `CI` for workflow and status-check changes, `Build` for build tooling and dev-only configuration, and `Style` for formatting-only changes. If the change affects published package behavior, public output, runtime dependencies, or release behavior, choose the matching release-impacting type instead.
 
@@ -77,7 +79,7 @@ Before using `Feat`, `New`, `Fix`, or any other release-impacting type, confirm 
 - Published README content that requires a patch release.
 
 Use `Chore(Agent)` by default for internal AI instructions, prompts, repository context, or agent workflow policy.
-Use `Benchmark` for benchmark-only work that should not publish a new package version. Do not use `Perf` for measurement-only changes.
+Use `Benchmark` for benchmark-only work that should not publish a new package version. Scope it only when the scope clarifies the benchmark target; use unscoped `Benchmark: ...` when a scope would be artificial. Do not use `Perf` for measurement-only changes.
 Use `CI`, `Build`, and `Style` for non-release maintenance work instead of forcing `Fix`, `Update`, `Improve`, or `Upgrade` onto changes that do not affect published consumers.
 
 Good examples:
@@ -85,7 +87,8 @@ Good examples:
 ```text
 Chore(Agent): Update repository guidance for coding agents
 Test(Release): Cover scoped README bump rules
-Benchmark(Runtime): Add parser throughput baseline
+Benchmark(Benchmarks): Refresh benchmark report
+Benchmark: Refresh benchmark report
 CI(GitHub): Update PR title check permissions
 Build(Tooling): Update Vitest config
 Style(Lint): Format TypeScript files

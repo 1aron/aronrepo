@@ -37,10 +37,11 @@ printf '%s\n' "$PR_TITLE" | pnpm exec commitlint --verbose
 
 ## Header Format
 
-Aronrepo commit headers use:
+Aronrepo commit headers use one of:
 
 ```text
 Type(Scope): Summary
+Type: Summary
 ```
 
 Examples:
@@ -49,7 +50,8 @@ Examples:
 Feat(Core): Add ESM builder
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
-Benchmark(Runtime): Add parser throughput baseline
+Benchmark(Benchmarks): Refresh benchmark report
+Benchmark: Refresh benchmark report
 CI(GitHub): Update PR title check permissions
 Build(Tooling): Update Vitest config
 Style(Lint): Format TypeScript files
@@ -60,7 +62,7 @@ Chore(Agent): Update repository guidance for coding agents
 
 The config:
 
-- Uses Aronrepo parser options for `Type(Scope): Summary` headers.
+- Uses Aronrepo parser options for `Type(Scope): Summary` and `Type: Summary` headers.
 - Restricts commit types to the exported Aronrepo type list.
 - Requires sentence-case type, scope, and subject values, with exact exported uppercase acronyms such as `CI` allowed by the type list.
 - Rejects subject exclamation marks.
@@ -86,9 +88,11 @@ Docs(README): Clarify package installation
 Benchmark-only work should use:
 
 ```text
-Benchmark(Runtime): Add parser throughput baseline
+Benchmark(Benchmarks): Refresh benchmark report
+Benchmark: Refresh benchmark report
 ```
 
+Use a meaningful scope when it clarifies the benchmark target; leave the scope off when no clear object exists.
 Use `Perf` only for changes that affect published runtime performance behavior.
 
 Non-release maintenance work should use:

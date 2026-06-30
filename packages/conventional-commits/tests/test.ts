@@ -25,6 +25,8 @@ test('finds scoped commit rules before unscoped rules', () => {
     expect(findCommitRule('Docs', 'README')?.release).toBe('patch')
     expect(getReleaseType('Docs')).toBe(false)
     expect(getReleaseType('Docs', 'Agent')).toBe(false)
+    expect(getReleaseType('Benchmark')).toBe(false)
+    expect(getReleaseType('Benchmark', 'Benchmarks')).toBe(false)
     expect(getReleaseType('Benchmark', 'Runtime')).toBe(false)
     expect(getReleaseType('Build', 'Tooling')).toBe(false)
     expect(getReleaseType('CI', 'GitHub')).toBe(false)
@@ -39,8 +41,12 @@ test('exports agent commit policy', () => {
             release: false
         }),
         expect.objectContaining({
-            commit: 'Benchmark(Runtime): Add parser throughput baseline',
-            avoid: 'Perf(Runtime): Add parser throughput benchmark',
+            commit: 'Benchmark(Benchmarks): Refresh benchmark report',
+            avoid: 'Perf(Benchmarks): Refresh benchmark report',
+            release: false
+        }),
+        expect.objectContaining({
+            commit: 'Benchmark: Refresh benchmark report',
             release: false
         }),
         expect.objectContaining({

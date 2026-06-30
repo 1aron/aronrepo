@@ -42,6 +42,7 @@ The parser accepts Aronrepo headers:
 
 ```text
 Type(Scope): Summary
+Type: Summary
 ```
 
 Examples:
@@ -49,6 +50,8 @@ Examples:
 ```text
 Feat(Core): Add parser
 Docs(README): Clarify package installation
+Benchmark(Benchmarks): Refresh benchmark report
+Benchmark: Refresh benchmark report
 CI(GitHub): Update PR title check permissions
 Chore(Agent): Update repository guidance for coding agents
 ```
@@ -64,11 +67,14 @@ It also recognizes standard revert headers so reverts can be released and groupe
 - `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, and `Docs(README)` are patch release inputs.
 - Plain `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, and `Misc` do not request a release.
 
+Scoped and unscoped `Benchmark` commits are both non-release. Use a scope only when it clarifies the benchmark target.
+
 ## Writer Options
 
 `writerOpts` groups release notes by Aronrepo changelog groups such as New Features, Bug Fixes, Additions, Updates, Improvements, Upgrades, Benchmarks, and Deprecations.
 
 Scoped rules can affect release analysis without forcing a changelog entry. For example, `Docs(README)` requests a patch release because npm package README content changed, while ordinary internal documentation can remain non-release.
+Scopes remain optional; omit them when they would be vague or artificial.
 
 ## With Semantic Release
 

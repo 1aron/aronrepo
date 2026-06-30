@@ -72,7 +72,8 @@ function parseBumpCommits(messages: string[]) {
 test.each([
     ['Feat(Core): Add parser', { type: 'Feat', scope: 'Core', subject: 'Add parser' }],
     ['Docs(README): Clarify package installation', { type: 'Docs', scope: 'README', subject: 'Clarify package installation' }],
-    ['Benchmark(Runtime): Add parser throughput baseline', { type: 'Benchmark', scope: 'Runtime', subject: 'Add parser throughput baseline' }],
+    ['Benchmark(Benchmarks): Refresh benchmark report', { type: 'Benchmark', scope: 'Benchmarks', subject: 'Refresh benchmark report' }],
+    ['Benchmark: Refresh benchmark report', { type: 'Benchmark', subject: 'Refresh benchmark report' }],
     ['Build(Tooling): Update Vitest config', { type: 'Build', scope: 'Tooling', subject: 'Update Vitest config' }],
     ['CI(GitHub): Update PR title check permissions', { type: 'CI', scope: 'GitHub', subject: 'Update PR title check permissions' }],
     ['Style(Lint): Format TypeScript files', { type: 'Style', scope: 'Lint', subject: 'Format TypeScript files' }],
@@ -111,7 +112,7 @@ test.each([
         reason: 'Major: 0, Minor: 0, Patch: 0'
     },
     {
-        messages: ['Benchmark(Runtime): Add parser throughput baseline'],
+        messages: ['Benchmark(Benchmarks): Refresh benchmark report', 'Benchmark: Refresh benchmark report'],
         level: null,
         reason: 'Major: 0, Minor: 0, Patch: 0'
     },
@@ -165,7 +166,7 @@ test('writes changelog markdown through conventional-changelog-writer', async ()
         parseCommit('Update(Core): Move old -> new <- legacy', 'aaaaaaa0000000000000000000000000000000000'),
         parseCommit('Feat(Core): Add parser', '11111110000000000000000000000000000000000'),
         parseCommit('Docs: Update internal guide', '33333330000000000000000000000000000000000'),
-        parseCommit('Benchmark(Runtime): Add parser throughput baseline', '66666660000000000000000000000000000000000'),
+        parseCommit('Benchmark(Benchmarks): Refresh benchmark report', '66666660000000000000000000000000000000000'),
         parseCommit('Docs(README): Clarify package installation', '44444440000000000000000000000000000000000'),
         parseCommit('Chore(Agent): Update repository guidance', '55555550000000000000000000000000000000000')
     ], context, groupedWriterOpts)
@@ -182,7 +183,7 @@ test('writes changelog markdown through conventional-changelog-writer', async ()
     expect(changelog).toContain('Update(Core): Move old → new ← legacy aaaaaaa')
     expect(changelog).toContain('Feat(Core): Add parser 1111111')
     expect(changelog).toContain('Docs: Update internal guide 3333333')
-    expect(changelog).toContain('Benchmark(Runtime): Add parser throughput baseline 6666666')
+    expect(changelog).toContain('Benchmark(Benchmarks): Refresh benchmark report 6666666')
     expect(changelog).not.toContain('Clarify package installation')
     expect(changelog).not.toContain('Update repository guidance')
 })
