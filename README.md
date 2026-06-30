@@ -27,12 +27,6 @@ The project is designed for repositories that want predictable releases without 
 
 ## Install
 
-For a repository that wants the whole Aronrepo toolchain, install the facade package plus the external peer tools:
-
-```sh
-pnpm add -D aronrepo @commitlint/cli semantic-release
-```
-
 `aronrepo` brings the published `@aronrepo/*` toolchain packages. `@commitlint/cli` and `semantic-release` stay explicit because they are peer tools used by the target repository's commitlint and release commands.
 
 For partial adoption, install only the packages that match the role you need:
