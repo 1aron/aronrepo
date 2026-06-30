@@ -37,7 +37,7 @@ CI jobs are intentionally separate:
 - `test`: runs `pnpm run test` on Ubuntu, Windows, and macOS.
 - `build`: runs `pnpm run build`.
 
-The PR title workflow checks pull request titles with `commitlint` after building `@aronrepo/commitlint-config` and its dependencies. PR titles use the same release-impact policy as commit messages: release-impacting types should describe published behavior, public API, release behavior, or published README changes. Benchmark-only work should use `Benchmark`; CI workflow changes use `CI`; build tooling and dev-only config use `Build`; formatting-only changes use `Style`; agent-only guidance and repository context should use `Chore(Agent)`.
+The PR title workflow checks pull request titles with `commitlint` after building `@aronrepo/commitlint-config` and its dependencies. PR titles use the same release-impact policy as commit messages: release-impacting types should describe published behavior, public API, release behavior, or published README changes. Benchmark-only work should use `Benchmark`, with a meaningful scope only when it clarifies the benchmark target; `Benchmark: ...` is valid when no clear object exists. CI workflow changes use `CI`; build tooling and dev-only config use `Build`; formatting-only changes use `Style`; agent-only guidance and repository context should use `Chore(Agent)`.
 
 ## Release
 
@@ -51,7 +51,7 @@ Release runs through semantic-release only for pushes to:
 
 The root `release.config.js` calls `configure()` from `@aronrepo/semantic-release-config`. That config discovers workspace packages from the workspace patterns and adds `@aronrepo/semantic-release-pnpm` for packages with `publishConfig.access` set to `public`.
 
-The pnpm release plugin writes the semantic-release version into the target package before publishing, maps prerelease channels to npm dist-tags, and uses package-level `publishConfig.provenance` when present.
+The pnpm release plugin writes the semantic-release version into the target package before publishing, maps prerelease channels to npm dist-tags, and uses package-level `publishConfig.provenance` when present. For npm Trusted Publishing on the official registry, it exchanges the GitHub OIDC identity token for a package-scoped publish token and skips `pnpm whoami` during verification because that token is meant for publish operations rather than account introspection.
 
 ## Validation Guidance
 

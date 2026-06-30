@@ -50,7 +50,7 @@ export default configure()
 
 ## Lifecycle Behavior
 
-- `verifyConditions` reads the target package and validates npm auth when the package will publish.
+- `verifyConditions` reads the target package and validates npm auth when the package will publish. For npm Trusted Publishing, it verifies the OIDC exchange and skips `pnpm whoami` because the exchanged publish token is package-scoped.
 - `prepare` writes `nextRelease.version` to the target `package.json`, updates `npm-shrinkwrap.json` when present, and optionally creates a tarball.
 - `publish` ensures prepare ran, skips private packages and `npmPublish: false`, then runs `pnpm publish` with the resolved registry and dist-tag.
 - `addChannel` adds the released version to the npm dist-tag for the semantic-release channel.
@@ -70,7 +70,7 @@ Registry resolution order:
 Authentication can come from:
 
 - Existing auth in `.npmrc` or `NPM_CONFIG_USERCONFIG`.
-- OIDC token exchange for the official npm registry through `NPM_ID_TOKEN` or GitHub Actions identity tokens.
+- OIDC token exchange for the official npm registry through `NPM_ID_TOKEN` or GitHub Actions identity tokens. When this succeeds, the plugin uses the exchanged publish token directly instead of validating it with `pnpm whoami`.
 - `NPM_TOKEN`, written into a temporary npmrc as `${NPM_TOKEN}` so the token value is not copied into the file.
 
 ## Dist-Tags And Provenance

@@ -45,6 +45,11 @@ interface RegistryContext {
     env: Record<string, string | undefined>
 }
 
+interface ResolvedAuth {
+    npmrc: string
+    verifyWithWhoami: boolean
+}
+
 interface PublishArgsOptions {
     basePath: string
     distTag: string
@@ -215,23 +220,32 @@ export async function exchangeOidcToken(pkg: PackageJson, context: ReleaseContex
     return body.token
 }
 
-export async function createAuthNpmrc(pkg: PackageJson, context: ReleaseContext, registry: string) {
+async function resolveAuth(pkg: PackageJson, context: ReleaseContext, registry: string): Promise<ResolvedAuth> {
     const cwd = getContextCwd(context)
     const sourceNpmrc = findNpmrc(cwd, context.env)
     const sourceConfig = readNpmrc(sourceNpmrc)
     const sourceContent = readNpmrcContent(sourceNpmrc)
 
     if (hasAuth(sourceConfig, registry)) {
-        return writeNpmrc(sourceContent)
+        return {
+            npmrc: writeNpmrc(sourceContent),
+            verifyWithWhoami: true
+        }
     }
 
     const oidcToken = await exchangeOidcToken(pkg, context, registry)
     if (oidcToken) {
-        return writeNpmrc(`${sourceContent}\n${nerfDart(registry)}:_authToken=${oidcToken}`)
+        return {
+            npmrc: writeNpmrc(`${sourceContent}\n${nerfDart(registry)}:_authToken=${oidcToken}`),
+            verifyWithWhoami: false
+        }
     }
 
     if (context.env.NPM_TOKEN) {
-        return writeNpmrc(`${sourceContent}\n${nerfDart(registry)}:_authToken=\${NPM_TOKEN}`)
+        return {
+            npmrc: writeNpmrc(`${sourceContent}\n${nerfDart(registry)}:_authToken=\${NPM_TOKEN}`),
+            verifyWithWhoami: true
+        }
     }
 
     throw createError(
@@ -239,6 +253,10 @@ export async function createAuthNpmrc(pkg: PackageJson, context: ReleaseContext,
         'No npm token specified.',
         `Set NPM_TOKEN, NPM_ID_TOKEN, or npm auth in .npmrc to publish to ${registry}.`
     )
+}
+
+export async function createAuthNpmrc(pkg: PackageJson, context: ReleaseContext, registry: string) {
+    return (await resolveAuth(pkg, context, registry)).npmrc
 }
 
 function shouldPublish(pluginConfig: SemanticReleasePnpmConfig, pkg: PackageJson) {
@@ -249,16 +267,8 @@ function getAuthKey(pkg: PackageJson, registry: string) {
     return `${pkg.name ?? ''}:${registry}`
 }
 
-async function ensureAuth(pluginConfig: SemanticReleasePnpmConfig, pkg: PackageJson, context: ReleaseContext) {
-    if (!shouldPublish(pluginConfig, pkg)) return undefined
-
+function verifyNpmAuthWithWhoami(npmrc: string, registry: string, context: ReleaseContext) {
     const cwd = getContextCwd(context)
-    const registry = resolveRegistry(pkg, { cwd, env: context.env })
-    const authKey = getAuthKey(pkg, registry)
-    const cached = verifiedAuth.get(authKey)
-    if (cached) return cached
-
-    const npmrc = await createAuthNpmrc(pkg, context, registry)
     const result = execa('pnpm', ['whoami', '--registry', registry], {
         cwd,
         env: {
@@ -271,8 +281,26 @@ async function ensureAuth(pluginConfig: SemanticReleasePnpmConfig, pkg: PackageJ
     result.stdout?.pipe(context.stdout, { end: false })
     result.stderr?.pipe(context.stderr, { end: false })
 
+    return result
+}
+
+async function ensureAuth(pluginConfig: SemanticReleasePnpmConfig, pkg: PackageJson, context: ReleaseContext) {
+    if (!shouldPublish(pluginConfig, pkg)) return undefined
+
+    const cwd = getContextCwd(context)
+    const registry = resolveRegistry(pkg, { cwd, env: context.env })
+    const authKey = getAuthKey(pkg, registry)
+    const cached = verifiedAuth.get(authKey)
+    if (cached) return cached
+
+    const auth = await resolveAuth(pkg, context, registry)
+
     try {
-        await result
+        if (auth.verifyWithWhoami) {
+            await verifyNpmAuthWithWhoami(auth.npmrc, registry, context)
+        } else {
+            context.logger.log(`Skip pnpm whoami verification for ${pkg.name ?? registry} because npm Trusted Publishing exchanged a publish token.`)
+        }
     } catch (error) {
         throw createError(
             'EINVALIDNPMAUTH',
@@ -281,8 +309,8 @@ async function ensureAuth(pluginConfig: SemanticReleasePnpmConfig, pkg: PackageJ
         )
     }
 
-    verifiedAuth.set(authKey, npmrc)
-    return npmrc
+    verifiedAuth.set(authKey, auth.npmrc)
+    return auth.npmrc
 }
 
 export async function writeReleaseVersion(cwd: string, pkgRoot: string | undefined, version: string) {

@@ -3,6 +3,35 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import type { PrepareContext } from 'semantic-release'
+
+const execaState = vi.hoisted(() => ({
+    calls: [] as Array<{
+        command: string
+        args: string[]
+        options?: Record<string, unknown>
+    }>,
+    rejectWhoami: false
+}))
+
+vi.mock('execa', () => ({
+    execa(command: string, args: string[], options?: Record<string, unknown>) {
+        execaState.calls.push({ command, args, options })
+
+        const shouldReject = execaState.rejectWhoami
+            && command === 'pnpm'
+            && args[0] === 'whoami'
+
+        const result = shouldReject
+            ? Promise.reject(new Error('401 Unauthorized'))
+            : Promise.resolve({ exitCode: 0 })
+
+        return Object.assign(result, {
+            stdout: undefined,
+            stderr: undefined
+        })
+    }
+}))
+
 import {
     buildPublishArgs,
     createAuthNpmrc,
@@ -11,6 +40,7 @@ import {
     OFFICIAL_NPM_REGISTRY,
     prepare,
     resolveRegistry,
+    verifyConditions,
     writeReleaseVersion,
     type PackageJson
 } from '../src'
@@ -37,6 +67,18 @@ function createFixture() {
     }, null, 4))
     fs.writeFileSync(path.join(cwd, 'packages/b/package.json'), JSON.stringify({
         name: '@fixture/b',
+        version: '0.0.0',
+        publishConfig: {
+            access: 'public'
+        }
+    }, null, 4))
+    return cwd
+}
+
+function createPackageFixture(name = '@fixture/package') {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-semantic-release-pnpm-package-'))
+    fs.writeFileSync(path.join(cwd, 'package.json'), JSON.stringify({
+        name,
         version: '0.0.0',
         publishConfig: {
             access: 'public'
@@ -82,6 +124,12 @@ function runPnpm(args: string[], cwd: string) {
 function getProcessOutput(result: ReturnType<typeof runPnpm>) {
     return result.error?.message || result.stderr || result.stdout
 }
+
+beforeEach(() => {
+    execaState.calls.length = 0
+    execaState.rejectWhoami = false
+    vi.unstubAllGlobals()
+})
 
 test('maps semantic-release channels to npm dist-tags', () => {
     expect(getChannel()).toBe('latest')
@@ -154,6 +202,45 @@ test('exchanges explicit OIDC token for an npm token', async () => {
         })
     )
     vi.unstubAllGlobals()
+})
+
+test('verifyConditions skips pnpm whoami after OIDC token exchange', async () => {
+    const cwd = createPackageFixture('@fixture/oidc')
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ token: 'npm-oidc-token' }), {
+        status: 200,
+        headers: {
+            'content-type': 'application/json'
+        }
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    execaState.rejectWhoami = true
+
+    await expect(verifyConditions({}, {
+        ...createContext(cwd),
+        env: {
+            NPM_ID_TOKEN: 'identity-token'
+        }
+    } as PrepareContext)).resolves.toBeUndefined()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(execaState.calls).toEqual([])
+})
+
+test('verifyConditions still validates NPM_TOKEN auth with pnpm whoami', async () => {
+    const cwd = createPackageFixture('@fixture/token')
+
+    await expect(verifyConditions({}, {
+        ...createContext(cwd),
+        env: {
+            NPM_TOKEN: 'secret-token'
+        }
+    } as PrepareContext)).resolves.toBeUndefined()
+
+    expect(execaState.calls).toHaveLength(1)
+    expect(execaState.calls[0]).toEqual(expect.objectContaining({
+        command: 'pnpm',
+        args: ['whoami', '--registry', OFFICIAL_NPM_REGISTRY]
+    }))
 })
 
 test('writes the release version only to the target package', async () => {
