@@ -2,60 +2,75 @@
 
 # aronrepo
 
-Facade install target for the Aronrepo monorepo toolchain.
+Facade package and CLI for the Aronrepo toolchain: release policies that owners control and coding agents can follow.
 
-Use this package when you want one dependency that brings the published Aronrepo toolchain packages for conventional commits, commitlint configuration, changelog generation, semantic-release configuration, and pnpm workspace publishing. The package also provides a small programmatic entrypoint that names those packages.
-
-The package has no runtime side effects and does not configure commitlint, changelog generation, or semantic-release by itself.
+Installing `aronrepo` brings the published Aronrepo packages for conventional commits, commitlint configuration, changelog generation, semantic-release configuration, and pnpm workspace publishing, plus the `aronrepo` command.
 
 ## Install
 
-For complete adoption, install the facade package plus the external peer tools used by your repository commands:
-
 ```sh
-pnpm add -D aronrepo @commitlint/cli semantic-release
-```
-
-For programmatic package-list usage only:
-
-```sh
-pnpm add -D aronrepo
+pnpm add -D aronrepo @commitlint/cli semantic-release husky
 ```
 
 This package is ESM-only.
 
-## Usage
+## Configure
 
-```ts
-import { packages } from 'aronrepo'
-
-console.log(packages)
+```js
+// aronrepo.config.js
+/** @type {import('aronrepo').AronrepoConfig} */
+export default {
+    release: {
+        mode: 'explicit' // or 'auto'
+    }
+}
 ```
 
-`packages` is a readonly list of the Aronrepo toolchain package names:
+- `explicit` (default): only `Bump(Minor)` and `Bump(Major)` commits raise minor and major versions. `Feat` and `New` release a patch, and `BREAKING CHANGE:` footers are rejected.
+- `auto`: `Feat` and `New` release minor versions and `BREAKING CHANGE:` footers release major versions.
+
+Release paths default to the directories of public workspace packages. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing.
+
+## CLI
+
+```sh
+aronrepo check --edit .git/COMMIT_EDITMSG     # commit-msg hook: message + staged files
+aronrepo check --from origin/main --to HEAD    # every commit in a range
+aronrepo check --title "Fix(Core): Repair cache" --base main --head HEAD   # PR title + PR diff
+aronrepo check --message "Fix(Site): Repair the header"                    # a header + staged files
+aronrepo explain                               # next release and the reason for each commit
+aronrepo policy --json                         # the effective policy as data
+aronrepo agents --write                        # write the policy block into AGENTS.md
+aronrepo doctor                                # check the setup and print fixes
+```
+
+Every command accepts `--cwd <dir>`, `--mode <explicit|auto>`, and `--json`. `check`, `agents`, and `doctor` exit with code 1 when something needs fixing.
+
+Example:
+
+```text
+$ aronrepo check --message "Perf(Site): Speed up the homepage"
+Commit message: Perf(Site): Speed up the homepage
+  ✗ `Perf(Site)` releases patch, but the commit changes no release paths. Use a non-release type: Chore, Refactor, Style, Test, Docs, Build, CI, Benchmark, Example.
+    Suggested header: Chore(Site): Speed up the homepage
+```
+
+## Programmatic Usage
 
 ```ts
-[
-    '@aronrepo/commitlint-config',
-    '@aronrepo/conventional-commits',
-    '@aronrepo/conventional-changelog-config',
-    '@aronrepo/semantic-release-config',
-    '@aronrepo/semantic-release-pnpm'
-]
+import { check, defineConfig, explain, packages } from 'aronrepo'
 ```
+
+`packages` lists the toolchain package names. `check`, `explain`, `policy`, `agents`, and `doctor` return `{ code, output }`.
 
 ## Toolchain Packages
 
-- `@aronrepo/conventional-commits`: commit types, release impact rules, changelog groups, and AI agent policy.
+- `@aronrepo/conventional-commits`: commit types, release modes, the release resolver, release paths, and AI agent policy.
 - `@aronrepo/commitlint-config`: commitlint rules for Aronrepo commit and PR title validation.
 - `@aronrepo/conventional-changelog-config`: parser, writer, and recommended bump options for conventional changelog tooling.
-- `@aronrepo/semantic-release-config`: semantic-release defaults and workspace package discovery.
+- `@aronrepo/semantic-release-config`: semantic-release defaults, the Aronrepo commit analyzer, and workspace package discovery.
 - `@aronrepo/semantic-release-pnpm`: semantic-release plugin for publishing pnpm workspace packages.
 
 ## AI Coding Adoption
 
-For a complete adoption prompt that an AI coding agent can use in another repository, see the root guide:
-
-- [AI Coding Integration](https://github.com/1aron/aronrepo/blob/main/docs/ai-coding.md)
-
-The prompt tells the agent to inspect the target repository first, install the `aronrepo` facade and required peer tools, configure commitlint and semantic-release, document release behavior, and add agent guidance without unrelated refactors.
+See [AI Coding Integration](https://github.com/1aron/aronrepo/blob/main/docs/ai-coding.md) for the adoption prompt. It tells the agent to ask the owner for the release mode, configure every tool from `aronrepo.config.js`, generate the AGENTS block, and run `aronrepo doctor` until it passes.
