@@ -18,13 +18,38 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    commits:
+        if: ${{ github.event_name == 'pull_request' }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 12.18.0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter aronrepo... run build
+            - run: pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+              env:
+                  BASE_SHA: ${{ github.event.pull_request.base.sha }}
+                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+            - run: pnpm exec aronrepo check --from "$BASE_SHA" --to "$HEAD_SHA"
+              env:
+                  BASE_SHA: ${{ github.event.pull_request.base.sha }}
+                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
     lint:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.9.0
+                  version: 12.18.0
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
@@ -45,7 +70,7 @@ jobs:
             - uses: actions/checkout@v6
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.9.0
+                  version: 12.18.0
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
@@ -69,7 +94,7 @@ jobs:
             - uses: actions/checkout@v6
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.9.0
+                  version: 12.18.0
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
@@ -90,7 +115,7 @@ jobs:
             - uses: actions/checkout@v6
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.9.0
+                  version: 12.18.0
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
@@ -124,7 +149,7 @@ jobs:
                   fetch-depth: 0
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.9.0
+                  version: 12.18.0
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
@@ -138,6 +163,7 @@ jobs:
                       ${{ runner.os }}-turbo-
             - run: pnpm install --frozen-lockfile
             - run: pnpm run build
+            - run: pnpm exec aronrepo explain
             - run: pnpm exec semantic-release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
