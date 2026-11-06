@@ -23,6 +23,14 @@ export { default } from '@aronrepo/commitlint-config'
 
 Use `.mjs` instead when the consuming repository does not declare `"type": "module"`.
 
+commitlint checks the header only. Pair it with `aronrepo check`, which also checks that a release type changes a published file:
+
+```sh
+# .husky/commit-msg
+pnpm exec commitlint --edit "$1"
+pnpm exec aronrepo check --edit "$1"
+```
+
 Run commitlint against a commit range:
 
 ```sh
@@ -47,7 +55,7 @@ Type: Summary
 Examples:
 
 ```text
-Feat(Core): Add ESM builder
+Add(Core): Support ESM config files
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
 Benchmark(Benchmarks): Refresh benchmark report
@@ -65,7 +73,9 @@ The config:
 - Uses Aronrepo parser options for `Type(Scope): Summary` and `Type: Summary` headers.
 - Restricts commit types to the exported Aronrepo type list.
 - Requires sentence-case type, scope, and subject values, with exact exported uppercase acronyms such as `CI` allowed by the type list.
-- Rejects subject exclamation marks.
+- Rejects headers without a type or summary, such as `Update the cache` or `feat: add builder`.
+- Rejects subject exclamation marks and `Type!:` headers.
+- `aronrepo/no-implicit-breaking`: in `explicit` mode (the default, read from `aronrepo.config.js`), rejects `BREAKING CHANGE:` footers outside `Bump(Major)`. Only the owner decides a major release. Pass `[2, 'always', { mode: 'auto' }]` to override the mode.
 - Rejects subjects ending in a period.
 - Warns when body and footer sections do not start after a blank line.
 
@@ -103,4 +113,4 @@ Build(Tooling): Update Vitest config
 Style(Lint): Format TypeScript files
 ```
 
-Use release-impacting types only when the change affects published package behavior, public API, release behavior, or published README content.
+Use release-impacting types only when the change affects published package behavior, public API, release behavior, or published README content, and never write `Bump(Major)`, `Bump(Minor)`, or a breaking marker unless the user asked for that release level.
