@@ -1,10 +1,13 @@
+import { headerPattern } from '@aronrepo/conventional-commits'
+
 const parserOpts = {
-    headerPattern: /^([A-Z]\w*)(?:\(([0-9A-Z`_#~].*)\))?: ([0-9A-Z`_#~].*)$/,
+    headerPattern,
     headerCorrespondence: [
         'type',
         'scope',
         'subject'
     ],
+    noteKeywords: ['BREAKING CHANGE', 'BREAKING-CHANGE'],
     revertPattern: /^(?:Revert|Revert:)\s"?([\s\S]+?)"?\s*This reverts commit (\w*)\./i,
     revertCorrespondence: ['header', 'hash']
 }
