@@ -1,10 +1,11 @@
 import { parserOpts, writerOpts } from '@aronrepo/conventional-changelog-config'
-import releaseRules from './rules'
 
 type SemanticReleasePluginMap = Record<string, boolean | Record<string, unknown>>
 
+export const analyzerPlugin = '@aronrepo/semantic-release-config/analyzer'
+
 const plugins: SemanticReleasePluginMap = {
-    '@semantic-release/commit-analyzer': { parserOpts, releaseRules },
+    [analyzerPlugin]: true,
     '@semantic-release/release-notes-generator': { parserOpts, writerOpts },
     '@semantic-release/github': true
 }
