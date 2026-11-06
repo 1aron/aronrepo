@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
-    "description": "Facade package for the Aronrepo monorepo toolchain.",
+    "description": "Aronrepo toolchain facade and CLI for release policies that coding agents can follow.",
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
@@ -18,6 +18,9 @@
         }
     },
     "types": "./dist/index.d.ts",
+    "bin": {
+        "aronrepo": "./dist/cli.js"
+    },
     "files": [
         "dist"
     ],
