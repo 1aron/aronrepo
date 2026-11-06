@@ -48,8 +48,7 @@ import {
 function createFixture() {
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-semantic-release-pnpm-'))
     fs.writeFileSync(path.join(cwd, 'package.json'), JSON.stringify({
-        private: true,
-        packageManager: 'pnpm@11.9.0'
+        private: true
     }, null, 4))
     fs.writeFileSync(path.join(cwd, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n')
     fs.mkdirSync(path.join(cwd, 'packages/a'), { recursive: true })
