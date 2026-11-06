@@ -1,38 +1,44 @@
-import { findCommitRule } from '@aronrepo/conventional-commits'
+import { defaultReleasePolicy, resolveRelease, type ReleasePolicy } from '@aronrepo/conventional-commits'
 import parserOpts from './parser-opts'
 
-const recommendedBumpOpts = {
-    parserOpts,
-    whatBump(parsedCommits: Array<{ type?: string, scope?: string }>) {
-        let level: 0 | 1 | 2 | null = null
-        let major = 0
-        let minor = 0
-        let patch = 0
+export interface BumpCommit {
+    type?: string | null
+    scope?: string | null
+    subject?: string | null
+    header?: string | null
+    body?: string | null
+    footer?: string | null
+    hash?: string | null
+}
 
-        for (const parsedCommit of parsedCommits) {
-            const rule = findCommitRule(parsedCommit.type, parsedCommit.scope)
-            if (!rule) continue
-            switch (rule.release) {
-                case 'major':
-                    level = 0
-                    major++
-                    break
-                case 'minor':
-                    if (level !== 0) level = 1
-                    minor++
-                    break
-                case 'patch':
-                    if (level === null) level = 2
-                    patch++
-                    break
+function toMessage(commit: BumpCommit) {
+    const header = commit.header
+        ?? (commit.type ? `${commit.type}${commit.scope ? `(${commit.scope})` : ''}: ${commit.subject ?? 'Change'}` : '')
+    return [header, commit.body, commit.footer].filter(Boolean).join('\n\n')
+}
+
+const levels = { major: 0, minor: 1, patch: 2 } as const
+
+/** Recommended bump options that follow an Aronrepo release policy. */
+export function createRecommendedBumpOpts(policy: ReleasePolicy = defaultReleasePolicy) {
+    return {
+        parserOpts,
+        whatBump(parsedCommits: BumpCommit[]) {
+            const decision = resolveRelease(parsedCommits.map((commit) => ({
+                message: toMessage(commit),
+                ...(commit.hash ? { hash: commit.hash } : {})
+            })), policy)
+            const count = (release: 'major' | 'minor' | 'patch') =>
+                decision.commits.filter((commit) => commit.release === release).length
+
+            return {
+                level: decision.release ? levels[decision.release] : null,
+                reason: `Major: ${count('major')}, Minor: ${count('minor')}, Patch: ${count('patch')}`
             }
-        }
-
-        return {
-            level,
-            reason: `Major: ${major}, Minor: ${minor}, Patch: ${patch}`
         }
     }
 }
+
+const recommendedBumpOpts = createRecommendedBumpOpts()
 
 export default recommendedBumpOpts

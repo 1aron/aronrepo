@@ -1,7 +1,7 @@
 import { CommitParser } from 'conventional-commits-parser'
 import type { Context, Options } from 'conventional-changelog-writer'
 import { transformCommit, writeChangelogString } from 'conventional-changelog-writer'
-import createPreset, { parserOpts, recommendedBumpOpts, writerOpts } from '../src'
+import createPreset, { createRecommendedBumpOpts, parserOpts, recommendedBumpOpts, writerOpts } from '../src'
 
 interface ParsedCommit {
     body?: string | null
@@ -60,12 +60,9 @@ function parseCommit(message: string, hash = '0000000000000000000000000000000000
 
 function parseBumpCommits(messages: string[]) {
     return messages.map((message) => {
-        const { scope, type } = new CommitParser(parserOpts).parse(message)
+        const { body, footer, header, scope, type } = new CommitParser(parserOpts).parse(message)
 
-        return {
-            scope: scope ?? undefined,
-            type: type ?? undefined
-        }
+        return { body, footer, header, scope, type }
     })
 }
 
@@ -93,8 +90,18 @@ test.each([
     },
     {
         messages: ['Feat(Core): Add parser', 'Fix(API): Preserve token'],
+        level: 2,
+        reason: 'Major: 0, Minor: 0, Patch: 2'
+    },
+    {
+        messages: ['Bump(Minor): Prepare plugin API', 'Feat(Core): Add parser'],
         level: 1,
         reason: 'Major: 0, Minor: 1, Patch: 1'
+    },
+    {
+        messages: ['Update(Core): Rename mode\n\nBREAKING CHANGE: Rename the mode option.'],
+        level: 2,
+        reason: 'Major: 0, Minor: 0, Patch: 1'
     },
     {
         messages: ['Fix(API): Preserve token'],
@@ -128,10 +135,28 @@ test.each([
     {
         messages: ['Fix(API): Preserve token', 'Bump(Major): Drop deprecated runtime', 'Feat(Core): Add parser'],
         level: 0,
-        reason: 'Major: 1, Minor: 1, Patch: 1'
+        reason: 'Major: 1, Minor: 0, Patch: 2'
     }
 ])('recommends release bump for $messages', ({ messages, level, reason }) => {
     expect(recommendedBumpOpts.whatBump(parseBumpCommits(messages))).toEqual({
+        level,
+        reason
+    })
+})
+
+test.each([
+    {
+        messages: ['Feat(Core): Add parser', 'Fix(API): Preserve token'],
+        level: 1,
+        reason: 'Major: 0, Minor: 1, Patch: 1'
+    },
+    {
+        messages: ['Update(Core): Rename mode\n\nBREAKING CHANGE: Rename the mode option.'],
+        level: 0,
+        reason: 'Major: 1, Minor: 0, Patch: 0'
+    }
+])('recommends auto mode release bump for $messages', ({ messages, level, reason }) => {
+    expect(createRecommendedBumpOpts({ mode: 'auto' }).whatBump(parseBumpCommits(messages))).toEqual({
         level,
         reason
     })

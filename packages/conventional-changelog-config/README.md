@@ -20,6 +20,7 @@ This package is ESM-only.
 import createPreset, {
     parserOpts,
     recommendedBumpOpts,
+    createRecommendedBumpOpts,
     writerOpts
 } from '@aronrepo/conventional-changelog-config'
 
@@ -60,12 +61,13 @@ It also recognizes standard revert headers so reverts can be released and groupe
 
 ## Recommended Bumps
 
-`recommendedBumpOpts.whatBump()` resolves release levels from `@aronrepo/conventional-commits`:
+`recommendedBumpOpts.whatBump()` resolves release levels with `resolveRelease()` from `@aronrepo/conventional-commits` in the default `explicit` mode:
 
-- `Bump(Major)` and breaking changes are major release inputs.
-- `Feat`, `New`, and `Bump(Minor)` are minor release inputs.
-- `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, and `Docs(README)` are patch release inputs.
+- `Bump(Major)` is the only major release input, and `Bump(Minor)` the only minor one. Breaking footers do not change the level.
+- `Feat`, `New`, `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, and `Docs(README)` are patch release inputs.
 - Plain `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, and `Misc` do not request a release.
+
+Use `createRecommendedBumpOpts({ mode: 'auto' })` for Conventional Commits behavior, where `Feat` and `New` are minor inputs and breaking footers are major inputs. Recommended bumps do not see changed files, so they do not apply release paths; use `aronrepo explain` for the full decision.
 
 Scoped and unscoped `Benchmark` commits are both non-release. Use a scope only when it clarifies the benchmark target.
 
