@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
-    "description": "Semantic-release config for publishing Aronrepo workspace packages.",
+    "description": "Semantic-release config for Aronrepo release policies and pnpm workspace packages.",
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
@@ -25,6 +25,11 @@
             "types": "./dist/rules.d.ts",
             "import": "./dist/rules.js",
             "default": "./dist/rules.js"
+        },
+        "./analyzer": {
+            "types": "./dist/analyzer.d.ts",
+            "import": "./dist/analyzer.js",
+            "default": "./dist/analyzer.js"
         }
     },
     "types": "./dist/index.d.ts",
@@ -46,16 +51,14 @@
         "@aronrepo/conventional-changelog-config": "workspace:^",
         "@aronrepo/conventional-commits": "workspace:^",
         "consola": "^3.4.2",
-        "defu": "^6.1.7",
-        "fast-glob": "^3.3.3",
-        "fs-extra": "^11.3.5",
-        "js-yaml": "^5.1.0"
+        "defu": "^6.1.7"
     },
     "peerDependencies": {
         "@aronrepo/semantic-release-pnpm": "*",
         "semantic-release": "*"
     },
     "devDependencies": {
-        "@aronrepo/semantic-release-pnpm": "workspace:^"
+        "@aronrepo/semantic-release-pnpm": "workspace:^",
+        "fs-extra": "^11.4.1"
     }
 }

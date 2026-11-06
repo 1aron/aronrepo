@@ -1,7 +1,9 @@
 import { consola } from 'consola'
 import { defu } from 'defu'
 import defaultConfig from './config'
-import { queryWorkspaceDirs, readWorkspacePackage, readWorkspacePatterns } from './workspaces'
+import { queryPublicWorkspaceDirs } from './workspaces'
+
+const COMMIT_ANALYZER = '@semantic-release/commit-analyzer'
 
 type SemanticReleasePluginMap = Record<string, boolean | Record<string, unknown>>
 
@@ -28,12 +30,18 @@ export default function configure(config: SemanticReleaseConfig = {}) {
         ? merged.plugins
         : normalizePlugins(merged.plugins)
 
-    for (const workspace of queryWorkspaceDirs(readWorkspacePatterns(cwd), cwd)) {
-        const pkg = readWorkspacePackage(cwd, workspace)
-        if (pkg.publishConfig?.access === 'public') {
-            consola.info(`Add pnpm release for ${workspace}`)
-            pluginList.push(['@aronrepo/semantic-release-pnpm', { pkgRoot: workspace }])
-        }
+    const hasCommitAnalyzer = pluginList.some((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === COMMIT_ANALYZER)
+    if (hasCommitAnalyzer) {
+        throw new Error([
+            `Remove ${COMMIT_ANALYZER} from the release config.`,
+            'Aronrepo analyzes commits with @aronrepo/semantic-release-config/analyzer; a second analyzer would release the higher of both levels and bypass the release policy.',
+            'Set the release mode and release paths in aronrepo.config.js, or pass them as the analyzer plugin options.'
+        ].join(' '))
+    }
+
+    for (const workspace of queryPublicWorkspaceDirs(cwd)) {
+        consola.info(`Add pnpm release for ${workspace}`)
+        pluginList.push(['@aronrepo/semantic-release-pnpm', { pkgRoot: workspace }])
     }
 
     return {
