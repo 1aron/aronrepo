@@ -1,48 +1,64 @@
 # AI Coding Integration
 
-Aronrepo packages are designed to be adopted by AI coding agents without guessing how commit rules, changelog generation, release analysis, and pnpm publishing should fit together. The agent should inspect the target repository first, preserve the existing architecture, and add only the Aronrepo pieces that match the repository's package manager, module system, workspace layout, and release workflow.
+Aronrepo is designed so coding agents can adopt it and then follow it without judgment calls about versions. Three properties make that reliable:
 
-Use this guide when integrating Aronrepo into another JavaScript or TypeScript repository.
+- **The policy is data.** `aronrepo policy --json` prints the release mode, the release table, the release paths, and the agent rules for the current repository.
+- **The instructions are generated.** `aronrepo agents --write` writes the policy block into `AGENTS.md`, and `aronrepo agents` (or `aronrepo doctor`) fails when the block is stale. Nobody copies release tables by hand.
+- **Every rule is enforced and explained.** commitlint and `aronrepo check` reject commits that would release by mistake and print a suggested header; the semantic-release analyzer applies the same resolver and logs the reason for every commit; `aronrepo explain` previews the next release.
+
+## Release Modes Are an Owner Decision
+
+| Mode | Who raises minor and major versions |
+| --- | --- |
+| `explicit` (default) | Only the owner, with `Bump(Minor)` and `Bump(Major)` commits. `Feat` and `New` release a patch; `BREAKING CHANGE:` footers are rejected. |
+| `auto` | Commit types: `Feat`/`New` release minor, `BREAKING CHANGE:` footers release major. |
+
+An agent adopting Aronrepo must ask the repository owner which mode to use. An agent working in a repository that already uses Aronrepo must never write `Bump(Major)`, `Bump(Minor)`, or a breaking marker unless the user asked for that release level in the current conversation.
 
 ## Expected Result
 
-A complete Aronrepo adoption should leave the target repository with:
+A complete adoption leaves the target repository with:
 
-- The `aronrepo` facade package and required peer tools installed as development dependencies.
-- ESM-compatible commitlint configuration using `@aronrepo/commitlint-config`.
-- Semantic-release configuration using `@aronrepo/semantic-release-config`.
-- pnpm workspace publishing through `@aronrepo/semantic-release-pnpm` for public packages.
-- README guidance for commit format, release-impacting types, validation commands, and publishing behavior.
-- AI agent guidance that tells coding agents to use Aronrepo commit types, `Benchmark` for benchmark-only work with scopes only when meaningful, `CI`/`Build`/`Style` for non-release maintenance work, and `Chore(Agent)` for internal agent instructions.
-- CI or PR title checks updated only when the target repository already has the relevant workflow surface or clearly needs one.
+- `aronrepo`, `@commitlint/cli`, `semantic-release`, and `husky` as development dependencies.
+- `aronrepo.config.js` with the release mode the owner chose, plus `release.paths` only when the defaults do not match what ships.
+- `commitlint.config.js` exporting `@aronrepo/commitlint-config`.
+- `release.config.js` using `configure()` from `@aronrepo/semantic-release-config`, without `@semantic-release/commit-analyzer`.
+- A commit-msg hook that runs `commitlint --edit "$1"` and `aronrepo check --edit "$1"`.
+- The generated policy block in `AGENTS.md`.
+- CI checks for pull request commits and titles when the repository has CI.
+- `aronrepo doctor` passing.
 
 ## Copy-Paste Prompt
-
-Copy and paste this prompt into an AI coding agent to adopt Aronrepo in an existing repository:
 
 ```text
 You are working in an existing JavaScript or TypeScript repository. Integrate the Aronrepo toolchain end to end.
 
-First inspect the repo before editing: package manager, Node version, module type, workspace layout, release setup, commitlint setup, CI workflows, README, and any agent guidance files.
+First inspect the repo before editing: package manager, Node version, module type, workspace layout, published packages, release setup, commitlint setup, git hooks, CI workflows, README, and agent guidance files.
+
+Before editing, ask me which release mode to use and wait for the answer. Do not choose it yourself:
+- explicit: only I raise minor and major versions with Bump(Minor) and Bump(Major) commits.
+- auto: Feat and New release minor versions, and BREAKING CHANGE footers release major versions.
 
 Then adopt Aronrepo conservatively:
 1. Use ESM-compatible configuration only.
-2. Install the Aronrepo facade and peer tools with `pnpm add -D aronrepo @commitlint/cli semantic-release`.
-3. Configure commitlint to extend or export @aronrepo/commitlint-config.
-4. Configure semantic-release to use @aronrepo/semantic-release-config and @aronrepo/semantic-release-pnpm for public pnpm workspace packages.
-5. Add or update README guidance that explains the commit format, release-impacting types, validation commands, and publishing behavior.
-6. Add or update AI agent guidance so coding agents use Aronrepo commit types, choose the lowest accurate release impact, use Benchmark for benchmark-only work with scopes only when meaningful, use CI/Build/Style for non-release maintenance work, and use Chore(Agent) for internal agent instructions.
-7. Preserve the target repo’s existing architecture and avoid unrelated refactors.
-8. Run the narrowest meaningful validation commands, then broaden only if shared release or workspace behavior changed.
+2. Install with `pnpm add -D aronrepo @commitlint/cli semantic-release husky`.
+3. Create aronrepo.config.js with the release mode I chose. Add release.paths only if the default paths (public workspace packages) do not match what ships.
+4. Configure commitlint to export @aronrepo/commitlint-config and semantic-release to use configure() from @aronrepo/semantic-release-config. Remove @semantic-release/commit-analyzer.
+5. Add a commit-msg hook that runs `commitlint --edit "$1"` and `aronrepo check --edit "$1"`.
+6. Run `pnpm exec aronrepo agents --write` to add the generated commit policy to AGENTS.md. Do not copy the release table by hand.
+7. If CI exists, check pull request commits with `aronrepo check --from <base> --to <head>` and PR titles with `aronrepo check --title`.
+8. Preserve the existing architecture and avoid unrelated refactors.
+9. Run `pnpm exec aronrepo doctor` until it reports no failures, then run `pnpm exec aronrepo explain` and report the next release level.
 
-When finished, summarize the changed files, confirm that `aronrepo` and the required peer tools were introduced, note any behavior intentionally left unchanged, and report the validation results.
+When finished, summarize the changed files, the release mode and release paths, behavior intentionally left unchanged, and the validation results. Use non-release commit types for this setup work (for example Build(Release) or Chore(Agent)).
 ```
 
 ## Agent Rules
 
-- Inspect before editing. The target repository's package manager, Node engine, workspace layout, CI workflows, and release setup decide the exact integration shape.
-- Prefer facade installation with `aronrepo`. Install individual `@aronrepo/*` packages only when intentionally doing partial adoption.
+- Inspect before editing. The package manager, Node engine, workspace layout, CI workflows, and release setup decide the exact integration shape.
+- Ask the owner for the release mode. Do not default to `auto` to make releases happen.
+- Prefer the `aronrepo` facade. Install individual `@aronrepo/*` packages only for intentional partial adoption.
 - Keep ESM compatibility. Aronrepo packages do not provide CommonJS fallbacks.
-- Configure release behavior from the shared Aronrepo source of truth instead of copying release rules by hand.
-- Choose the lowest accurate release-impacting commit type. Published README changes use `Docs(README)`, benchmark-only harnesses, reports, fixtures, and baseline data use `Benchmark`, with a scope only when it clarifies the benchmark target; `Benchmark: ...` is valid when no clear object exists. CI workflows use `CI`, build tooling and dev-only config use `Build`, formatting-only changes use `Style`, and internal AI instructions use `Chore(Agent)`.
-- Validate narrowly first. For docs and config work, check the exact files and commands affected before broadening to full repository validation.
+- Configure release behavior through `aronrepo.config.js` and the shared packages instead of copying release rules or tables.
+- Before committing, run `aronrepo check --message "<header>"` when unsure; it prints the release level and a suggested header. Before pushing to a release branch, run `aronrepo explain`.
+- Validate narrowly first, then run `aronrepo doctor`.
