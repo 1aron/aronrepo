@@ -2,7 +2,7 @@
 
 # @aronrepo/conventional-commits
 
-Aronrepo conventional commits are PascalCase commit types with explicit release rules, changelog groups, and AI coding agent guidance.
+Aronrepo conventional commits are PascalCase commit types with release modes, a deterministic release resolver, release path checks, changelog groups, and AI coding agent guidance.
 
 The taxonomy is based on the Techor conventional-commits package, with stricter Aronrepo behavior for ESM-only packages, commitlint, PR titles, semantic-release, and published package README updates.
 
@@ -31,9 +31,10 @@ Type: Summary
 Examples:
 
 ```text
-Feat(Core): Add ESM builder
+Add(Core): Support ESM config files
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
+Chore(Site): Fix the homepage header transition
 Benchmark(Benchmarks): Refresh benchmark report
 Benchmark: Refresh benchmark report
 CI(GitHub): Update PR title check permissions
@@ -42,96 +43,101 @@ Style(Lint): Format TypeScript files
 Chore(Agent): Update repository guidance for coding agents
 ```
 
-## Release Rules
+## Release Modes
 
-Use release-impacting types only when the change should affect a published package version.
+The release level of a commit depends on the release mode. Set it in `aronrepo.config.js`; the default is `explicit`.
 
-| Release | Commit rules |
-| --- | --- |
-| Major | `Bump(Major)` |
-| Minor | `Feat`, `New`, `Bump(Minor)` |
-| Patch | `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, `Docs(README)` |
-| None | `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, `Misc` |
+| Release | `explicit` (default) | `auto` |
+| --- | --- | --- |
+| Major | `Bump(Major)` | `Bump(Major)`, `BREAKING CHANGE:` footer |
+| Minor | `Bump(Minor)` | `Feat`, `New`, `Bump(Minor)` |
+| Patch | `Feat`, `New`, `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, `Docs(README)` | `Fix`, `Perf`, `Add`, `Update`, `Improve`, `Upgrade`, `Deprecate`, `Drop`, `Revert`, `Bump(Patch)`, `Docs(README)` |
+| None | `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, `Misc` | same |
 
-`Docs(README)` is a patch release because published package README content can only reach npm consumers through a new package version. Plain `Docs` is not a release.
+```js
+// aronrepo.config.js
+/** @type {import('@aronrepo/conventional-commits').AronrepoConfig} */
+export default {
+    release: {
+        mode: 'explicit',
+        // Optional. Defaults to the directories of public workspace packages.
+        paths: { include: ['packages/*/**'], exclude: ['**/tests/**'] }
+    }
+}
+```
 
-`Benchmark` is for benchmark harnesses, baseline data, reports, and measurement-only changes. A scoped form such as `Benchmark(Benchmarks): ...` is useful when the benchmark area is the object of the change; unscoped `Benchmark: ...` is valid when no clear target exists. Use `Perf` only when the change improves or changes published runtime performance behavior.
+`resolveCommitRelease()` decides the level of one commit:
 
-`CI`, `Build`, and `Style` are non-release maintenance types. Use `CI` for workflow and status-check changes, `Build` for build tooling and dev-only configuration, and `Style` for formatting-only changes. If the change affects published package behavior, public output, runtime dependencies, or release behavior, choose the matching release-impacting type instead.
+- In `explicit` mode every type except `Bump` is capped at `patch`, and `BREAKING CHANGE:` footers or `Type!:` headers never change the level (they are reported as `implicit-breaking` violations). `Bump(Major)` may carry breaking notes.
+- In `auto` mode a breaking marker releases `major`.
+- Headers that do not parse, such as merge commits or `feat: ...`, release nothing. There is no fallback to Angular or ESLint rules.
+- `Revert` takes the level of the reverted header; a revert and its target in the same release cancel out.
+- A release type whose changed files are all outside the release paths releases nothing and is reported as a `release-paths` violation with a suggested non-release header. `Bump` commits are exempt so they can be empty commits.
 
-Manual bumps are allowed for release-management cases:
+`Docs(README)` releases a patch because package README content reaches npm only through a new version. A commit that changes only the repository root README is outside the release paths and must use plain `Docs`.
+
+`Benchmark` is for benchmark harnesses, baseline data, reports, and measurement-only changes; use `Perf` only for published runtime performance. `CI`, `Build`, and `Style` are non-release maintenance types. Unpublished sites and apps use non-release types such as `Chore(Site)` even for fixes and performance work.
+
+Manual bumps are owner decisions:
 
 ```text
-Bump(Major): Aronrepo v2.0
+Bump(Major): Aronrepo v3
 Bump(Minor): Prepare next public capability
 Bump(Patch): Refresh published package metadata
 ```
 
 ## AI Agent Policy
 
-AI coding agents should choose the lowest release-impacting type that accurately describes the change.
+`getAgentCommitPolicy(policy)` returns the agent rules as structured data, and `renderAgentsBlock(policy, { releasePaths })` renders them as the `AGENTS.md` block that `aronrepo agents --write` maintains. The rules:
 
-Before using `Feat`, `New`, `Fix`, or any other release-impacting type, confirm that the change affects at least one of:
-
-- Published package runtime behavior.
-- Public API, exports, or generated types.
-- Release, changelog, or versioning behavior.
-- Published README content that requires a patch release.
-
-Use `Chore(Agent)` by default for internal AI instructions, prompts, repository context, or agent workflow policy.
-Use `Benchmark` for benchmark-only work that should not publish a new package version. Scope it only when the scope clarifies the benchmark target; use unscoped `Benchmark: ...` when a scope would be artificial. Do not use `Perf` for measurement-only changes.
-Use `CI`, `Build`, and `Style` for non-release maintenance work instead of forcing `Fix`, `Update`, `Improve`, or `Upgrade` onto changes that do not affect published consumers.
-
-Good examples:
-
-```text
-Chore(Agent): Update repository guidance for coding agents
-Test(Release): Cover scoped README bump rules
-Benchmark(Benchmarks): Refresh benchmark report
-Benchmark: Refresh benchmark report
-CI(GitHub): Update PR title check permissions
-Build(Tooling): Update Vitest config
-Style(Lint): Format TypeScript files
-Chore(Deps): Update Vitest dev dependency
-Example(Release): Add semantic-release config sample
-Docs: Add commit type examples
-Docs(README): Clarify package installation
-Fix(Release): Preserve workspace dependency ranges
-```
+- Never write `Bump(Major)` or `Bump(Minor)` unless the user explicitly asked for that release level in the current conversation.
+- In `explicit` mode, never add a breaking marker; if a change breaks published behavior, stop and ask the user.
+- Use a release type only for changes to release paths that affect published behavior, public API, release behavior, or published README content.
+- Pick the lowest accurate type: `Add` for new capabilities, `Improve` or `Update` for enhancements, `Fix` for bugs.
+- Use `Chore(Agent)` for agent instructions, `Benchmark` for measurement-only work, and `CI`, `Build`, `Style`, `Test`, `Example`, `Docs`, `Refactor`, or `Chore` for other non-release work.
+- Run `aronrepo check` and `aronrepo explain` before handing off commits.
 
 Avoid:
 
 ```text
 Feat(Agent): Add agent guide
-Fix(Agent): Rewrite coding instructions
+Fix(Site): Fix the homepage header transition
 Perf(Runtime): Add parser throughput benchmark
 Fix(CI): Update PR title check permissions
-Update(Build): Update Vitest config
-Improve(Core): Format TypeScript files
 Upgrade(Deps): Update Vitest dev dependency
-Feat(Example): Add semantic-release config sample
+Update(Core): Rename an option + "BREAKING CHANGE:" footer (explicit mode)
 ```
 
-Those examples create releases for internal policy-only, measurement-only, or maintenance-only changes. Use `Chore(Agent)` unless published behavior changes. For benchmark-only changes, use `Benchmark` instead of `Perf`. For CI, build tooling, formatting, dev dependency, or example-only work, use the corresponding non-release type.
-
 ## Public API
-
-This package exports the source commit rules and agent-readable helpers:
 
 ```ts
 import {
     agentCommitPolicy,
     commits,
+    createReleasePathMatcher,
+    defineConfig,
     findCommitRule,
+    getAgentCommitPolicy,
+    getReleasePolicy,
+    getReleaseTable,
     getReleaseType,
-    nonReleaseCommits,
-    nonReleaseTypes,
-    releaseCommits,
-    releaseTypes,
+    parseCommit,
+    renderAgentsBlock,
+    resolveCommitRelease,
+    resolveRelease,
     types
 } from '@aronrepo/conventional-commits'
+
+import {
+    explainRange,
+    loadConfig,
+    loadProjectPolicy,
+    resolveReleasePaths
+} from '@aronrepo/conventional-commits/node'
 ```
 
-`findCommitRule(type, scope)` resolves scoped rules before unscoped fallbacks. For example, `findCommitRule('Docs', 'README')` resolves to a patch release, while `findCommitRule('Docs', 'Agent')` falls back to plain `Docs` with no release.
+`getReleaseType(type, scope, policy?)` resolves scoped rules before unscoped fallbacks and applies the mode cap; it defaults to `explicit`. The `commits` table keeps the `auto` mode levels.
 
-`agentCommitPolicy` exposes the same AI guidance as structured data, so tools can read the default internal commit type, release-impact rule, release-worthy change list, non-release defaults, and examples.
+`resolveCommitRelease(message, policy, { files, isReleasePath })` returns `{ release, reasons, violations }`. `resolveRelease(commits, policy, { isReleasePath })` returns the highest level and every commit decision.
+
+The `./node` subpath reads `aronrepo.config.js`, derives release paths from public workspace packages, and reads commit ranges and changed files from git.
