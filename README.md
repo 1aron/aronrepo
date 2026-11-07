@@ -47,30 +47,7 @@ bun x aronrepo agents --write
 bun x aronrepo doctor
 ```
 
-Release from CI on pushes to a release branch, or when a maintainer approves it (see [Approved Releases](#approved-releases)). The job needs the full history, `contents: write` to push the tag, and `id-token: write` for npm trusted publishing and provenance:
-
-```yaml
-release:
-    if: ${{ github.event_name == 'push' && contains(fromJSON('["main","alpha","beta","rc","canary"]'), github.ref_name) }}
-    runs-on: ubuntu-latest
-    permissions:
-        contents: write
-        id-token: write
-    steps:
-        - uses: actions/checkout@v6
-          with:
-              fetch-depth: 0
-        - uses: oven-sh/setup-bun@v2
-        - uses: actions/setup-node@v6
-          with:
-              node-version: 26
-        - run: bun install --frozen-lockfile
-        - run: bun run build
-        - run: bun x aronrepo release
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # optional with npm trusted publishing
-```
+Then add a release workflow: [Release on Push](#release-on-push) publishes every push to a release branch, and [Approved Releases](#approved-releases) publishes a commit a maintainer approves.
 
 ## Commit Format
 
@@ -145,15 +122,61 @@ Release paths default to the directories of public, non-private workspace packag
 
 Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, from a shallow clone, when `GITHUB_REF_NAME` names a branch other than the one checked out, or when the commit is not on the release branch: `origin/<branch>` when the clone has it, else the local branch. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything.
 
-## Approved Releases
+## Release Workflows
 
-Releasing on every push to `main` is the default, not the only flow. The version is planned from the last tag to the commit that releases, so the commits merged during a week still release as one version when a maintainer releases on Friday. Release branches are not needed: `main` keeps integrating, builds of it deploy to staging as usual, and a release tags one approved commit of `main`.
+Both workflows release the same way; they differ in who decides when. Each is a complete `.github/workflows/release.yml`: copy it, then replace the setup steps with the repository's own package manager and build. Run pull request checks (`aronrepo check`, tests) in a separate workflow; this repository's [release.yml](.github/workflows/release.yml) is a full example with both.
 
-1. On every push to `main`, preview the next release. `aronrepo explain --json` prints the commit (`head`), the version, and the release notes that `aronrepo release` would publish.
-2. When the maintainer decides, run the release job by hand with the commit and the version from the preview, behind a GitHub environment with required reviewers.
-3. `aronrepo release --branch main --expect <version>` releases the checked-out commit only when it is on `main` and still plans the approved version. Otherwise it stops before publishing anything.
+## Release on Push
+
+Every push to `main` releases on `latest`, and every push to `alpha`, `beta`, `rc`, or `canary` releases a prerelease on its own dist-tag. Use it for libraries whose merged commits should reach npm right away.
 
 ```yaml
+name: Release
+on:
+    push:
+        branches: [main, alpha, beta, rc, canary]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    # Never cancel a release halfway through publishing; the next push waits and releases its commits too.
+    cancel-in-progress: false
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write # push the version tag and create the GitHub release
+            id-token: write # npm trusted publishing and provenance
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0 # versions come from tags and the full history
+            - uses: oven-sh/setup-bun@v2
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+            - run: bun install --frozen-lockfile
+            - run: bun run build
+            - run: bun x aronrepo explain
+            - run: bun x aronrepo release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # optional with npm trusted publishing
+```
+
+## Approved Releases
+
+Every push to `main` only previews the next release, and a maintainer releases an approved commit when they decide. Use it for products with a release schedule. The version is planned from the last tag to the commit that releases, so the commits merged during a week still release as one version on Friday. Release branches are not needed: `main` keeps integrating, builds of it deploy to staging as usual, and a release tags one approved commit of `main`.
+
+1. On every push to `main`, the `preview` job writes the commit (`head`), the version, and the release notes from `aronrepo explain --json` to the job summary.
+2. When the maintainer decides, they run the workflow by hand with that commit and version. The `production` environment, with required reviewers set in the repository settings, records the approval.
+3. `aronrepo release --branch main --expect <version>` releases the checked-out commit only when it is on `origin/main` and still plans the approved version. Otherwise it stops before publishing anything.
+
+```yaml
+name: Release
 on:
     push:
         branches: [main]
@@ -166,6 +189,14 @@ on:
                 description: Version from the preview, such as 1.2.4
                 required: true
 
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name }}
+    # A newer push replaces an older preview; a release is never cancelled halfway through publishing.
+    cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
     preview:
         if: ${{ github.event_name == 'push' }}
@@ -173,27 +204,28 @@ jobs:
         steps:
             - uses: actions/checkout@v6
               with:
-                  fetch-depth: 0
+                  fetch-depth: 0 # versions come from tags and the full history
             - uses: oven-sh/setup-bun@v2
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
             - run: bun install --frozen-lockfile
-            - run: bun x aronrepo explain --json > plan.json
-            - run: jq -r '"Next release: \(.version // "none") from `\(.head)`\n\n\(.notes // "")"' plan.json >> "$GITHUB_STEP_SUMMARY"
+            - run: |
+                  bun x aronrepo explain --json > plan.json
+                  jq -r '"Next release: \(.version // "none") from `\(.head)`\n\n\(.notes // "")"' plan.json >> "$GITHUB_STEP_SUMMARY"
 
     release:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         runs-on: ubuntu-latest
         environment: production # required reviewers approve the release
         permissions:
-            contents: write
-            id-token: write
+            contents: write # push the version tag and create the GitHub release
+            id-token: write # npm trusted publishing and provenance
         steps:
             - uses: actions/checkout@v6
               with:
                   ref: ${{ inputs.sha }}
-                  fetch-depth: 0
+                  fetch-depth: 0 # also fetches origin/main, which the release checks the commit against
             - uses: oven-sh/setup-bun@v2
             - uses: actions/setup-node@v6
               with:
@@ -207,7 +239,7 @@ jobs:
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # optional with npm trusted publishing
 ```
 
-`fetch-depth: 0` also fetches `origin/main`, which the release checks the commit against. A later release continues from the tag of the approved commit, so commits merged after it release next time.
+A later release continues from the tag of the approved commit, so commits merged after it release next time. Other triggers change only `on:`: a `schedule` can run the `release` job on the latest commit of `main` without `--expect`, still behind the environment's approval.
 
 ## CLI
 
