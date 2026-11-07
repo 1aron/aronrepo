@@ -805,3 +805,25 @@ test('reads a restricted package with NPM_TOKEN and stops before publishing with
     expect(result.status).toBe('released')
     expect([...reads]).toEqual(['Bearer npm-token'])
 })
+
+test('stops before publishing when origin already has the tag on another commit', async () => {
+    const cwd = createRepo()
+    const origin = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-origin-'))
+    git(origin, 'init', '-q', '--bare')
+    git(cwd, 'remote', 'add', 'origin', origin)
+    git(cwd, 'push', '-q', 'origin', 'main', '--tags')
+    // Another run released another commit as v1.0.1 after this clone fetched.
+    const other = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-other-'))
+    git(other, 'clone', '-q', origin, '.')
+    git(other, 'config', 'user.email', 'fixture@example.com')
+    git(other, 'config', 'user.name', 'Fixture')
+    commit(other, 'Fix(CLI): Repair the flags', { 'packages/cli/index.js': 'export const cli = 2\n' })
+    git(other, 'tag', '-a', '-m', 'v1.0.1', 'v1.0.1')
+    git(other, 'push', '-q', 'origin', 'v1.0.1')
+
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    git(cwd, 'push', '-q', 'origin', 'main')
+    const registry = createRegistry()
+    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(/v1\.0\.1 already exists on origin at [0-9a-f]{9}\. Fetch the tags and release again\./)
+    expect(registry.published).toEqual([])
+})

@@ -768,6 +768,25 @@ function checkExpectedVersion(options: ReleaseOptions, version: string | undefin
         : `Nothing releases, but ${expected} was expected. Review the plan again.`
 }
 
+/**
+ * The commit a tag points at on origin, or `undefined` when origin has no such tag or cannot be
+ * reached; a push would then fail on its own, as it did before this check.
+ */
+async function getRemoteTagCommit(environment: ReleaseEnvironment, tag: string) {
+    let output: string
+    try {
+        output = await git(environment, ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`, `refs/tags/${tag}^{}`])
+    } catch {
+        return undefined
+    }
+    const refs = new Map(lines(output).map((line) => {
+        const [hash, ref] = line.split(/\s+/)
+        return [ref, hash] as const
+    }))
+    // An annotated tag lists its commit as `^{}`.
+    return refs.get(`refs/tags/${tag}^{}`) ?? refs.get(`refs/tags/${tag}`)
+}
+
 /** Pushes a version tag without the repository's pre-push hooks, which would run after npm already published. */
 async function pushTag(environment: ReleaseEnvironment, tag: string) {
     await git(environment, ['push', '--no-verify', 'origin', `refs/tags/${tag}`])
@@ -929,6 +948,11 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         plan.notes = renderPlanNotes(environment, plan, version, options.date)
     }
     const { tag, notes, channel } = { tag: plan.tag, notes: plan.notes, channel: plan.channel }
+    // Another run may have pushed this tag after this clone fetched; stop before npm publishes, not at the tag push.
+    const remoteTag = await getRemoteTagCommit(environment, tag)
+    if (remoteTag && remoteTag !== plan.head) {
+        throw new Error(`${tag} already exists on origin at ${remoteTag.slice(0, 9)}. Fetch the tags and release again.`)
+    }
 
     for (const pkg of plan.packages) {
         const packument = await readPackument(environment, registryOf(pkg), pkg.name, npmrc, isRestricted(pkg))
