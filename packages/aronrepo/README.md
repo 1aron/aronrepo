@@ -2,17 +2,15 @@
 
 # aronrepo
 
-Facade package and CLI for the Aronrepo toolchain: release policies that owners control and coding agents can follow.
-
-Installing `aronrepo` brings the published Aronrepo packages for conventional commits, commitlint configuration, changelog generation, semantic-release configuration, and pnpm workspace publishing, plus the `aronrepo` command.
+One commit standard and one release engine for JavaScript repositories, built so the repository owner and coding agents follow the same rules. It replaces semantic-release, commitlint, and changelog presets.
 
 ## Install
 
 ```sh
-pnpm add -D aronrepo @commitlint/cli semantic-release husky
+bun add -d aronrepo husky
 ```
 
-This package is ESM-only.
+`pnpm add -D aronrepo husky` and `npm install -D aronrepo husky` work too. This package is ESM-only and has no peer tools.
 
 ## Configure
 
@@ -26,51 +24,50 @@ export default {
 }
 ```
 
-- `explicit` (default): only `Bump(Minor)` and `Bump(Major)` commits raise minor and major versions. `Feat` and `New` release a patch, and `BREAKING CHANGE:` footers are rejected.
-- `auto`: `Feat` and `New` release minor versions and `BREAKING CHANGE:` footers release major versions.
-
-Release paths default to the directories of public workspace packages. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing.
-
-## CLI
+```sh
+# .husky/commit-msg
+aronrepo check --edit "$1"
+```
 
 ```sh
-aronrepo check --edit .git/COMMIT_EDITMSG     # commit-msg hook: message + staged files
-aronrepo check --from origin/main --to HEAD    # every commit in a range
-aronrepo check --title "Fix(Core): Repair cache" --base main --head HEAD   # PR title + PR diff
-aronrepo check --message "Fix(Site): Repair the header"                    # a header + staged files
-aronrepo explain                               # next release and the reason for each commit
-aronrepo policy --json                         # the effective policy as data
-aronrepo agents --write                        # write the policy block into AGENTS.md
-aronrepo doctor                                # check the setup and print fixes
+bun x aronrepo agents --write
+bun x aronrepo doctor
 ```
 
-Every command accepts `--cwd <dir>`, `--mode <explicit|auto>`, and `--json`. `check`, `agents`, and `doctor` exit with code 1 when something needs fixing.
+In `explicit` mode (the default) only `Bump(Minor)` and `Bump(Major)` raise minor and major versions. In `auto` mode `Add` releases a minor version and a `BREAKING CHANGE:` footer releases a major version. A release type that changes no published file releases nothing.
 
-Example:
+## Commit Types
 
-```text
-$ aronrepo check --message "Perf(Site): Speed up the homepage"
-Commit message: Perf(Site): Speed up the homepage
-  ✗ `Perf(Site)` releases patch, but the commit changes no release paths. Use a non-release type: Chore, Refactor, Style, Test, Docs, Build, CI, Benchmark, Example.
-    Suggested header: Chore(Site): Speed up the homepage
+`Type(Scope): Summary`, with a summary that starts with an uppercase letter or digit and has no trailing period.
+
+| Release | Types |
+| --- | --- |
+| Owner decides | `Bump(Major)`, `Bump(Minor)`, `Bump(Patch)` |
+| Patch (`Add`: minor in `auto`) | `Add`, `Improve`, `Perf`, `Fix`, `Deprecate`, `Drop`, `Upgrade`, `Revert`, `Docs(README)` |
+| None | `Docs`, `Test`, `Benchmark`, `Example`, `Build`, `CI`, `Style`, `Refactor`, `Chore` |
+
+`aronrepo policy --json` describes when to use each type. `Feat`, `New`, `Update`, and `Misc` are legacy types that `aronrepo check` rejects.
+
+## Commands
+
+| Command | Use |
+| --- | --- |
+| `aronrepo check` | check a commit message, a commit range, or a PR title |
+| `aronrepo explain` | print the next version and the reason for each commit |
+| `aronrepo release [--dry-run]` | publish the packages, push the version tag, and create the GitHub release |
+| `aronrepo policy [--json]` | print the policy |
+| `aronrepo agents [--write]` | check or regenerate the policy block in `AGENTS.md` |
+| `aronrepo doctor` | check the setup |
+
+`aronrepo release` publishes `main` on `latest` and `alpha`, `beta`, `rc`, and `canary` as prereleases on their own dist-tags. It publishes every package on a staging dist-tag first, moves the channel's dist-tag once all of them are on the registry, and resumes an interrupted run.
+
+## API
+
+```js
+import { parseCommit, resolveRelease, renderReleaseNotes } from 'aronrepo'
+import { planRelease, explainRange } from 'aronrepo/node'
 ```
 
-## Programmatic Usage
+`aronrepo` exports the commit standard without Node dependencies; `aronrepo/node` exports the config loader, git and workspace helpers, the release engine, and the CLI commands.
 
-```ts
-import { check, defineConfig, explain, packages } from 'aronrepo'
-```
-
-`packages` lists the toolchain package names. `check`, `explain`, `policy`, `agents`, and `doctor` return `{ code, output }`.
-
-## Toolchain Packages
-
-- `@aronrepo/conventional-commits`: commit types, release modes, the release resolver, release paths, and AI agent policy.
-- `@aronrepo/commitlint-config`: commitlint rules for Aronrepo commit and PR title validation.
-- `@aronrepo/conventional-changelog-config`: parser, writer, and recommended bump options for conventional changelog tooling.
-- `@aronrepo/semantic-release-config`: semantic-release defaults, the Aronrepo commit analyzer, and workspace package discovery.
-- `@aronrepo/semantic-release-pnpm`: semantic-release plugin for publishing pnpm workspace packages.
-
-## AI Coding Adoption
-
-See [AI Coding Integration](https://github.com/1aron/aronrepo/blob/main/docs/ai-coding.md) for the adoption prompt. It tells the agent to ask the owner for the release mode, configure every tool from `aronrepo.config.js`, generate the AGENTS block, and run `aronrepo doctor` until it passes.
+See the [Aronrepo repository](https://github.com/1aron/aronrepo#readme) for release branches, CI setup, AI coding integration, and migrating from Aronrepo 2.
