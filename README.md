@@ -19,7 +19,7 @@ There is no semantic-release, commitlint, or changelog preset to configure. `aro
 bun add -d aronrepo husky
 ```
 
-Any package manager works: `pnpm add -D aronrepo husky` or `npm install -D aronrepo husky`. Aronrepo packs packages with the repository's package manager (from `packageManager` or the lockfile) and publishes them with npm.
+Any package manager works: `pnpm add -D aronrepo husky` or `npm install -D aronrepo husky`. Aronrepo needs Node.js 22.18 or later. Aronrepo packs packages with the repository's package manager (from `packageManager` or the lockfile) and publishes them with npm.
 
 ## Setup
 
