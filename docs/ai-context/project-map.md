@@ -24,7 +24,7 @@ Aronrepo is a Bun workspace with one published TypeScript package, `aronrepo`, i
 - `policy.ts`: release modes, release path matching, the commit parser, and the release resolver (`resolveCommitRelease`, `resolveRelease`) with every violation rule.
 - `agent.ts`: the agent policy and the generated AGENTS.md block.
 - `version.ts`: release branches and channels, version tags, release ranges, and next versions.
-- `notes.ts`: release notes rendering.
+- `notes.ts`: release notes rendering: a GitHub release body by default, or a changelog entry with `heading: true`.
 - `project.ts`: `aronrepo.config.js` loading, package manager detection, workspace discovery, release paths, and git range helpers.
 - `release.ts`: the release engine (`planRelease`, `runRelease`): packing, npm publishing, auth, dist-tags, version tags, and GitHub releases.
 - `commands.ts` and `cli.ts`: the `check`, `explain`, `release`, `policy`, `agents`, and `doctor` commands.

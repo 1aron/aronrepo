@@ -118,7 +118,7 @@ Chore(Agent): Update repository guidance for coding agents
 
 The legacy types `Feat` and `New` (now `Add`), `Update` (now `Improve`), and `Misc` (now `Chore`) still resolve in history with the level of their replacement, so old tags keep their meaning, but `aronrepo check` rejects them in new commits.
 
-Release notes list the commits that release, grouped as Additions, Improvements, Performance, Bug Fixes, Deprecations, Removals, Dependencies, Reverts, and Documentation, with the `BREAKING CHANGE:` footers of a major release first.
+Release notes list the commits that release, grouped as Additions, Improvements, Performance, Bug Fixes, Deprecations, Removals, Dependencies, Reverts, and Documentation, with the `BREAKING CHANGE:` footers of a major release first. The GitHub release shows the tag and date itself, so its body starts with the first section and ends with a **Full Changelog** link to the compare view; `renderReleaseNotes({ heading: true })` adds a `## <version> (<date>)` heading for a changelog file.
 
 ## Release Modes
 

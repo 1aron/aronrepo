@@ -149,7 +149,8 @@ test('plans the next version, the range, and the notes', async () => {
 
     const plan = await planRelease({ branch: 'main', date: '2026-11-07' }, environment(cwd, createRegistry()))
     expect(plan).toMatchObject({ from: 'v1.0.0', release: 'patch', version: '1.0.1', tag: 'v1.0.1', channel: { distTag: 'latest' } })
-    expect(plan.notes).toContain('## [1.0.1](https://github.com/fixture/repo/compare/v1.0.0...v1.0.1) (2026-11-07)')
+    expect(plan.notes).not.toMatch(/^## /m)
+    expect(plan.notes).toContain('**Full Changelog**: https://github.com/fixture/repo/compare/v1.0.0...v1.0.1')
     expect(plan.notes).toContain('- **Core:** Repair the cache')
     expect(plan.notes).not.toContain('Tidy up')
 

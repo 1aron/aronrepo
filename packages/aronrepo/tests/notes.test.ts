@@ -1,4 +1,4 @@
-import { renderReleaseNotes, resolveRelease } from '../src'
+import { getChangelogUrl, renderReleaseNotes, resolveRelease } from '../src'
 
 const decisions = resolveRelease([
     { hash: 'a'.repeat(40), message: 'Bump(Major): Aronrepo v3\n\nBREAKING CHANGE: Releases default to explicit mode.\n\nBREAKING CHANGE: Remove the adapters.' },
@@ -10,7 +10,7 @@ const decisions = resolveRelease([
     { hash: '1'.repeat(40), message: 'Improve(Release): Explain skipped commits\n\nBREAKING CHANGE: Ignored in explicit mode.' }
 ], { mode: 'explicit' }).commits
 
-test('renders grouped release notes with breaking changes first', () => {
+test('renders a GitHub release body without a heading and with a full changelog link', () => {
     expect(renderReleaseNotes({
         version: '3.0.0',
         previousTag: 'v2.2.1',
@@ -18,8 +18,6 @@ test('renders grouped release notes with breaking changes first', () => {
         repositoryUrl: 'https://github.com/1aron/aronrepo',
         commits: decisions
     })).toBe([
-        '## [3.0.0](https://github.com/1aron/aronrepo/compare/v2.2.1...v3.0.0) (2026-11-07)',
-        '',
         '### ⚠ Breaking Changes',
         '',
         '- Releases default to explicit mode.',
@@ -38,11 +36,42 @@ test('renders grouped release notes with breaking changes first', () => {
         '### Bug Fixes',
         '',
         '- **Release:** Keep workspace ranges ([bbbbbbb](https://github.com/1aron/aronrepo/commit/' + 'b'.repeat(40) + '))',
+        '',
+        '**Full Changelog**: https://github.com/1aron/aronrepo/compare/v2.2.1...v3.0.0',
         ''
     ].join('\n'))
 })
 
+test('starts changelog file notes with a linked version heading', () => {
+    const notes = renderReleaseNotes({
+        version: '3.0.0',
+        previousTag: 'v2.2.1',
+        date: '2026-11-07',
+        repositoryUrl: 'https://github.com/1aron/aronrepo',
+        heading: true,
+        commits: decisions
+    })
+    expect(notes.startsWith('## [3.0.0](https://github.com/1aron/aronrepo/compare/v2.2.1...v3.0.0) (2026-11-07)\n\n### ⚠ Breaking Changes\n')).toBe(true)
+    expect(notes).not.toContain('Full Changelog')
+})
+
+test('links the commits of a first release', () => {
+    expect(getChangelogUrl('https://github.com/o/r', '1.0.0')).toBe('https://github.com/o/r/commits/v1.0.0')
+    const notes = renderReleaseNotes({ version: '1.0.0', repositoryUrl: 'https://github.com/o/r', commits: resolveRelease([{ message: 'Fix: Repair' }]).commits })
+    expect(notes).toBe('### Bug Fixes\n\n- Repair\n\n**Full Changelog**: https://github.com/o/r/commits/v1.0.0\n')
+})
+
+test('escapes HTML outside code spans', () => {
+    const notes = renderReleaseNotes({ version: '1.0.1', commits: resolveRelease([{ message: 'Fix: Accept Array<string> and `Map<K, V>`' }]).commits })
+    expect(notes).toContain('- Accept Array&lt;string> and `Map<K, V>`')
+})
+
+test('says when a release only bumps the version', () => {
+    const notes = renderReleaseNotes({ version: '1.1.0', commits: resolveRelease([{ message: 'Bump(Minor): Release 1.1' }]).commits })
+    expect(notes).toBe('Version bump only; no other changes to published packages.\n')
+})
+
 test('leaves out commits that do not release', () => {
     const notes = renderReleaseNotes({ version: '1.0.1', commits: resolveRelease([{ message: 'Docs: Add notes' }]).commits })
-    expect(notes).toBe('## 1.0.1\n\nNo changes to published packages.\n')
+    expect(notes).toBe('No changes to published packages.\n')
 })
