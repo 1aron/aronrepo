@@ -35,7 +35,7 @@ jobs:
             - id: check-title
               continue-on-error: true
               run: |
-                  bun x aronrepo check --title "$PR_TITLE" --base "$BASE_SHA" --head refs/remotes/pull/head
+                  bun run aronrepo check --title "$PR_TITLE" --base "$BASE_SHA" --head refs/remotes/pull/head
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
                   BASE_SHA: ${{ github.event.pull_request.base.sha }}

@@ -33,7 +33,7 @@ jobs:
                   node-version: 26
             - run: bun install --frozen-lockfile
             - run: bun run build
-            - run: bun x aronrepo check --from "$BASE_SHA" --to "$HEAD_SHA"
+            - run: bun run aronrepo check --from "$BASE_SHA" --to "$HEAD_SHA"
               env:
                   BASE_SHA: ${{ github.event.pull_request.base.sha }}
                   HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -151,8 +151,8 @@ jobs:
                       ${{ runner.os }}-turbo-
             - run: bun install --frozen-lockfile
             - run: bun run build
-            - run: bun x aronrepo explain
-            - run: bun x aronrepo release
+            - run: bun run aronrepo explain
+            - run: bun run aronrepo release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
