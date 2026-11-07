@@ -97,3 +97,22 @@ test('detects the package manager and how to run the CLI', () => {
     write(cwd, 'package.json', JSON.stringify({ private: true }))
     expect(getProjectCliCommand(cwd)).toBe('npx aronrepo')
 })
+
+test('lists non-ASCII paths unquoted and both sides of a rename', () => {
+    const cwd = createRepo()
+    git(cwd, 'config', 'core.quotePath', 'true')
+    commit(cwd, 'Docs: Add a note', { 'packages/core/文件.md': '# 文件\n' })
+    git(cwd, 'mv', 'packages/core/文件.md', 'site/文件.md')
+    git(cwd, 'commit', '-q', '-m', 'Chore: Move the note')
+
+    expect(getRangeCommits(cwd, 'v1.0.0').map(({ files }) => files.sort())).toEqual([
+        ['packages/core/文件.md'],
+        ['packages/core/文件.md', 'site/文件.md']
+    ])
+})
+
+test('does not treat private packages as published', () => {
+    const cwd = createRepo()
+    write(cwd, 'packages/internal/package.json', JSON.stringify({ name: '@fixture/internal', private: true, publishConfig: { access: 'public' } }))
+    expect(resolveReleasePaths(cwd)).toMatchObject({ include: ['packages/core/**'] })
+})

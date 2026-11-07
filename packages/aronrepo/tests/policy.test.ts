@@ -242,3 +242,17 @@ test('renders a stable AGENTS.md block', () => {
     expect(renderAgentsBlock(explicit)).toContain('Every path can release a version')
     expect(renderAgentsBlock(explicit)).toBe(renderAgentsBlock(explicit))
 })
+
+test('a scope ends at the first closing parenthesis', () => {
+    expect(parseCommit('Fix(Core): Handle Foo(Bar): Baz')).toMatchObject({ type: 'Fix', scope: 'Core', subject: 'Handle Foo(Bar): Baz' })
+})
+
+test('reverting a revert keeps the original commit', () => {
+    const decision = resolveRelease([
+        { hash: 'aaaaaaa111', message: 'Fix(Core): Repair cache' },
+        { hash: 'bbbbbbb222', message: 'Revert "Fix(Core): Repair cache"\n\nThis reverts commit aaaaaaa111.' },
+        { hash: 'ccccccc333', message: 'Revert "Revert "Fix(Core): Repair cache""\n\nThis reverts commit bbbbbbb222.' }
+    ])
+    expect(decision.commits.map(({ release }) => release)).toEqual(['patch', false, false])
+    expect(decision.release).toBe('patch')
+})

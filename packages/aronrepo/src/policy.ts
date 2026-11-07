@@ -3,9 +3,9 @@ import { commits, findCommitRule, legacyTypes, maxRelease, normalizeType, types,
 
 /**
  * - `explicit`: only `Bump(Major)` and `Bump(Minor)` raise major and minor versions.
- *   `Feat` and `New` release a patch, and breaking markers never change the level.
- * - `auto`: `Feat` and `New` release a minor version and a `BREAKING CHANGE:` footer
- *   releases a major version, following Conventional Commits.
+ *   `Add` releases a patch, and breaking markers never change the level.
+ * - `auto`: `Add` releases a minor version and a `BREAKING CHANGE:` footer or `!`
+ *   header releases a major version, following Conventional Commits.
  */
 export type ReleaseMode = 'explicit' | 'auto'
 
@@ -88,7 +88,8 @@ function capRelease(release: ReleaseType, type: string | undefined, policy: Rele
     return release
 }
 
-export const headerPattern = /^([A-Z]\w*)(?:\(([0-9A-Z`_#~].*)\))?: ([0-9A-Z`_#~].*)$/
+// The scope stops at the first `)`, so a summary such as `Handle Foo(Bar): Baz` stays whole.
+export const headerPattern = /^([A-Z]\w*)(?:\(([0-9A-Z`_#~][^)]*)\))?: ([0-9A-Z`_#~].*)$/
 const breakingHeaderPattern = /^([A-Z]\w*)(?:\(([^)]*)\))?!: (.+)$/
 const breakingNotePattern = /^BREAKING[ -]CHANGE:/m
 const footerLinePattern = /^BREAKING[ -]CHANGE:/
@@ -385,16 +386,20 @@ export function resolveRelease(
         resolveCommitRelease(commit, policy, { ...options, ...(inputs[index].files ? { files: inputs[index].files } : {}) }))
 
     // A revert and the commit it reverts cancel each other when both are unreleased.
-    parsed.forEach((commit, index) => {
-        const revertedHash = commit.revert?.hash
-        if (!revertedHash) return
-        const revertedIndex = parsed.findIndex((candidate) => candidate.hash?.startsWith(revertedHash) || (candidate.hash && revertedHash.startsWith(candidate.hash)))
-        if (revertedIndex === -1 || revertedIndex === index) return
+    // Newest first, so reverting a revert cancels that pair and keeps the original commit.
+    const cancelled = new Set<number>()
+    for (let index = parsed.length - 1; index >= 0; index--) {
+        const revertedHash = parsed[index].revert?.hash
+        if (!revertedHash || cancelled.has(index)) continue
+        const revertedIndex = parsed.findIndex((candidate, candidateIndex) =>
+            candidateIndex < index && candidate.hash?.startsWith(revertedHash))
+        if (revertedIndex === -1 || cancelled.has(revertedIndex)) continue
         for (const [target, other] of [[index, revertedIndex], [revertedIndex, index]]) {
+            cancelled.add(target)
             decisions[target].release = false
             decisions[target].reasons.push(`Cancelled by \`${parsed[other].header}\` in the same release.`)
         }
-    })
+    }
 
     return {
         release: maxRelease(...decisions.map(({ release }) => release)),

@@ -55,12 +55,14 @@ export function isIgnoredMessage(message: string) {
     return ignoredMessagePatterns.some((pattern) => pattern.test(header))
 }
 
-function readEditMessage(file: string) {
+/** A commit message file without git's comments and, with `git commit -v`, without the diff below the scissors line. */
+export function readEditMessage(file: string) {
     return fs.readFileSync(file, 'utf8')
+        .replace(/\r\n/g, '\n')
+        .split(/^# -+ >8 -+$/m)[0]
         .split('\n')
         .filter((line) => !line.startsWith('#'))
         .join('\n')
-        .split(/^-+ >8 -+$/m)[0]
         .trim()
 }
 
@@ -323,7 +325,6 @@ const legacyDependencies = [
     '@commitlint/cli',
     '@aronrepo/commitlint-config',
     '@aronrepo/conventional-changelog-config',
-    '.',
     '@aronrepo/semantic-release-config',
     '@aronrepo/semantic-release-pnpm'
 ]

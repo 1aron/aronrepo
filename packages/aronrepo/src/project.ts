@@ -99,10 +99,13 @@ export function readWorkspacePackage(cwd: string, workspace: string) {
     return readJson<PackageJson>(path.join(cwd, workspace, 'package.json'))
 }
 
-/** Workspace directories whose package is published to npm. */
+/** Workspace directories whose package is published to npm: public and not private. */
 export function queryPublicWorkspaceDirs(cwd = process.cwd()) {
     return queryWorkspaceDirs(readWorkspacePatterns(cwd), cwd)
-        .filter((workspace) => readWorkspacePackage(cwd, workspace).publishConfig?.access === 'public')
+        .filter((workspace) => {
+            const pkg = readWorkspacePackage(cwd, workspace)
+            return pkg.publishConfig?.access === 'public' && !pkg.private
+        })
 }
 
 /**
@@ -204,41 +207,56 @@ function git(cwd: string, args: string[]) {
     return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
 }
 
-function splitLines(output: string) {
-    return output.split('\n').map((line) => line.trim()).filter(Boolean)
+/**
+ * NUL-separated paths. `-z` keeps git from quoting paths with non-ASCII or
+ * special characters, such as `"docs/\\346\\226\\207.md"`, which would never
+ * match a release path.
+ */
+function splitPaths(output: string) {
+    return output.split('\0').map((file) => file.replace(/^\n/, '')).filter(Boolean)
 }
+
+// Rename detection lists only the new path; both paths decide whether a commit ships.
+const nameOnly = ['--name-only', '-z', '--no-renames']
 
 /** Files changed by one commit. Merge commits report no files. */
 export function getCommitFiles(cwd: string, hash: string) {
-    return splitLines(git(cwd, ['diff-tree', '--no-commit-id', '--name-only', '-r', '--root', hash]))
+    return splitPaths(git(cwd, ['diff-tree', '--no-commit-id', ...nameOnly, '-r', '--root', hash]))
 }
 
 export function getStagedFiles(cwd = process.cwd()) {
-    return splitLines(git(cwd, ['diff', '--cached', '--name-only']))
+    return splitPaths(git(cwd, ['diff', '--cached', ...nameOnly]))
 }
 
 /** Files changed between the merge base of `base` and `head`, like a pull request diff. */
 export function getDiffFiles(cwd: string, base: string, head: string) {
-    return splitLines(git(cwd, ['diff', '--name-only', `${base}...${head}`]))
+    return splitPaths(git(cwd, ['diff', ...nameOnly, `${base}...${head}`]))
 }
 
-/** Commits in `from..to`, oldest first, with their changed files. */
+/** Commits in `from..to`, oldest first, with their changed files, from one `git log`. Merge commits report no files. */
 export function getRangeCommits(cwd: string, from: string | undefined, to = 'HEAD'): Required<CommitInput>[] {
     const range = from ? `${from}..${to}` : to
-    const output = git(cwd, ['log', '--reverse', '--format=%H%x1f%B%x1e', range])
+    const output = git(cwd, [
+        '-c', 'log.showSignature=false',
+        'log', '--reverse', '--no-color', ...nameOnly, '--format=%x1e%H%x1f%B%x1f', range, '--'
+    ])
     return output.split('\x1e')
-        .map((entry) => entry.replace(/^\n/, ''))
         .filter((entry) => entry.includes('\x1f'))
         .map((entry) => {
-            const [hash, message] = entry.split('\x1f')
-            return { hash, message: message.trim(), files: getCommitFiles(cwd, hash) }
+            const hashEnd = entry.indexOf('\x1f')
+            const messageEnd = entry.indexOf('\x1f', hashEnd + 1)
+            return {
+                hash: entry.slice(0, hashEnd),
+                message: entry.slice(hashEnd + 1, messageEnd).trim(),
+                files: splitPaths(entry.slice(messageEnd + 1))
+            }
         })
 }
 
-/** Latest tag reachable from `ref`, or `undefined` when there is none. */
+/** Latest `v*` version tag reachable from `ref`, or `undefined` when there is none. */
 export function getLatestTag(cwd: string, ref = 'HEAD') {
     try {
-        return git(cwd, ['describe', '--tags', '--abbrev=0', ref]).trim() || undefined
+        return git(cwd, ['describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*', ref]).trim() || undefined
     } catch {
         return undefined
     }

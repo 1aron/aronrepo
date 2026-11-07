@@ -166,3 +166,32 @@ test('release --dry-run --json prints the plan', async () => {
     })
     expect(git(cwd, 'status', '--porcelain')).toBe('')
 })
+
+test('check stops at the scissors line of git commit -v', async () => {
+    const cwd = createRepo()
+    write(cwd, 'packages/core/index.js', 'export {}')
+    git(cwd, 'add', '-A')
+    write(cwd, '.git/COMMIT_EDITMSG', [
+        'Fix(Core): Repair the cache',
+        '',
+        '# ------------------------ >8 ------------------------',
+        '# Do not modify or remove the line above.',
+        'diff --git a/packages/core/index.js b/packages/core/index.js',
+        '+BREAKING CHANGE: not part of the message',
+        ''
+    ].join('\n'))
+
+    const result = await check({ cwd, edit: '.git/COMMIT_EDITMSG', json: true })
+    expect(result.code).toBe(0)
+    expect(JSON.parse(result.output).results[0].breakingNotes).toBeUndefined()
+})
+
+test('explain --to starts from the latest version tag, not any tag', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
+    git(cwd, 'tag', 'deploy-1')
+
+    const result = await explain({ cwd, to: 'HEAD' })
+    expect(result.output).toContain('Range: v1.0.0..HEAD')
+    expect(result.output).toContain('Next release: patch')
+})

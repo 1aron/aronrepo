@@ -126,7 +126,7 @@ Use `explicit` when the owner decides minor and major versions, for example a fr
 
 ## Release Paths
 
-Release paths default to the directories of public workspace packages (`"publishConfig": { "access": "public" }`), or every path in a published single-package repository, excluding tests, benchmarks, examples, changelogs, `.github`, and `.husky`. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing. Override the paths with `release.paths.include` and `release.paths.exclude`, or set `release.paths: false` to turn the check off.
+Release paths default to the directories of public, non-private workspace packages (`"publishConfig": { "access": "public" }`), or every path in a published single-package repository, excluding tests, benchmarks, examples, changelogs, `.github`, and `.husky`. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing. Override the paths with `release.paths.include` and `release.paths.exclude`, or set `release.paths: false` to turn the check off.
 
 ## Releasing
 
