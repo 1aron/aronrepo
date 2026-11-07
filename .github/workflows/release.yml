@@ -1,13 +1,18 @@
 name: CI & Release
 on:
+    # Feature branches run CI through their pull request, so a push does not run it twice.
     push:
         branches:
-            - "**"
+            - main
+            - alpha
+            - beta
+            - rc
+            - canary
+    # Title edits are checked by pull-request-title-check.yml and change no commit.
     pull_request:
         types:
             - opened
             - reopened
-            - edited
             - synchronize
 
 permissions:
@@ -15,7 +20,8 @@ permissions:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-    cancel-in-progress: true
+    # Never cancel a release halfway through publishing; queue the next push instead.
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
     commits:

@@ -22,7 +22,7 @@ bun run check
 
 ## CI
 
-`.github/workflows/release.yml` runs CI and releases on pushes and pull requests. It installs with `bun install --frozen-lockfile` using Bun 1.4.4 and Node 26.
+`.github/workflows/release.yml` runs CI on pull requests (opened, reopened, synchronize) and runs CI plus the release on pushes to the release branches (`main`, `alpha`, `beta`, `rc`, `canary`). Pull request runs cancel older runs of the same PR; release branch runs queue instead, so a release is never cancelled halfway through publishing. It installs with `bun install --frozen-lockfile` using Bun 1.4.4 and Node 26.
 
 CI jobs are intentionally separate:
 
