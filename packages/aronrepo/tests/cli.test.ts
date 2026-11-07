@@ -115,6 +115,19 @@ test('check accepts an empty revert of an unreleased Bump in a range and in a co
     await expect(explain({ cwd })).resolves.toMatchObject({ output: expect.stringContaining('Next release: none') })
 })
 
+test('explain --to a merge commit starts from tags on every parent', async () => {
+    const cwd = createRepo()
+    git(cwd, 'checkout', '-q', '-b', 'hotfix')
+    commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
+    git(cwd, 'tag', 'v1.0.1')
+    git(cwd, 'checkout', '-q', 'main')
+    commit(cwd, 'Chore: Tidy up', { 'notes.md': 'x' })
+    git(cwd, 'merge', '-q', '--no-ff', '--no-edit', 'hotfix')
+    const result = JSON.parse((await explain({ cwd, to: 'HEAD', json: true })).output)
+    expect(result.from).toBe('v1.0.1')
+    expect(result.release).toBe(false)
+})
+
 test('explain reports the next release from the latest tag', async () => {
     const cwd = createRepo()
     commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })

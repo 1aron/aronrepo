@@ -28,6 +28,7 @@ import {
     getCurrentBranch,
     getDiffFiles,
     getGitConfig,
+    getPriorVersionTags,
     getRangeCommits,
     getRepositoryRoot,
     getStagedFiles,
@@ -250,7 +251,7 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
     } else {
         // The channel's base tag before `to`, so a tag on `to` itself is explained instead of skipped.
         const channel = getReleaseChannel(getCurrentBranch(cwd)) ?? getReleaseChannel('main')!
-        const reachable = getVersionTags(cwd, `${to}^`)
+        const reachable = getPriorVersionTags(cwd, to)
         from = options.from ?? getBaseTag(channel, reachable)
         const decision = resolveRelease(getRangeCommits(cwd, from, to), policy, isReleasePath ? { isReleasePath } : {})
         const version = decision.release && options.from === undefined

@@ -321,12 +321,22 @@ export function getVersionTags(cwd: string, mergedInto?: string) {
     }
 }
 
-/** The checked-out branch, or `undefined` on a detached HEAD. */
+/**
+ * `v*` tags reachable from `ref` except those on `ref` itself, so a tag on `ref` is
+ * explained instead of skipped. Unlike tags of `ref^`, this keeps tags on every parent
+ * of a merge commit, as `aronrepo release` does.
+ */
+export function getPriorVersionTags(cwd: string, ref: string) {
+    const own = new Set(splitPaths(git(cwd, ['tag', '--list', 'v*', '--points-at', ref]).replace(/\n/g, '\0')))
+    return getVersionTags(cwd, ref).filter((tag) => !own.has(tag))
+}
+
 /** The full hash of the commit a ref points at. */
 export function getCommitHash(cwd: string, ref = 'HEAD') {
     return git(cwd, ['rev-parse', '--verify', `${ref}^{commit}`]).trim()
 }
 
+/** The checked-out branch, or `undefined` on a detached HEAD. */
 export function getCurrentBranch(cwd: string) {
     const branch = git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']).trim()
     return branch === 'HEAD' ? undefined : branch
