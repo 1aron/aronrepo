@@ -304,6 +304,30 @@ test('releases only commits that are on the remote release branch', async () => 
     expect((await runRelease({ branch: 'main' }, environment(cwd, registry))).status).toBe('released')
 })
 
+test('stops a release that is not the expected version', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    const logs: string[] = []
+
+    await expect(runRelease({ branch: 'main', expectVersion: 'next' }, environment(cwd, registry))).rejects.toThrow('The expected version next is not a version, such as 1.2.4.')
+    await expect(runRelease({ branch: 'main', expectVersion: '1.1.0' }, environment(cwd, registry))).rejects.toThrow('This release is 1.0.1, not the expected 1.1.0. Review the plan again.')
+    await runRelease({ branch: 'main', expectVersion: '1.1.0', dryRun: true }, environment(cwd, registry, logs))
+    expect(logs).toContain('! This release is 1.0.1, not the expected 1.1.0. Review the plan again. A release would stop here.')
+    expect(registry.published).toEqual([])
+
+    // A version taken by an interrupted release from another commit is not the approved one either.
+    registry.packuments.set('@fixture/core', { 'dist-tags': {}, versions: { '1.0.1': { gitHead: 'f'.repeat(40) } } })
+    await expect(runRelease({ branch: 'main', expectVersion: '1.0.1' }, environment(cwd, registry))).rejects.toThrow('This release is 1.0.2, not the expected 1.0.1.')
+    registry.packuments.clear()
+
+    expect((await runRelease({ branch: 'main', expectVersion: 'v1.0.1' }, environment(cwd, registry))).status).toBe('released')
+    // Resuming the tagged release checks its version too.
+    await expect(runRelease({ branch: 'main', expectVersion: '1.0.2' }, environment(cwd, registry))).rejects.toThrow('This release is 1.0.1, not the expected 1.0.2.')
+    commit(cwd, 'Chore: Tidy up', { 'site/index.js': 'export {}\n' })
+    await expect(runRelease({ branch: 'main', expectVersion: '1.0.2' }, environment(cwd, registry))).rejects.toThrow('Nothing releases, but 1.0.2 was expected.')
+})
+
 test('skips branches that do not release', async () => {
     const cwd = createRepo()
     const result = await runRelease({ branch: 'feature/x' }, environment(cwd, createRegistry()))

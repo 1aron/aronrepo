@@ -686,6 +686,11 @@ export async function publishGitHubRelease(environment: ReleaseEnvironment, rele
 export interface ReleaseOptions extends PlanReleaseOptions {
     /** Plans and prints the release without changing anything. */
     dryRun?: boolean
+    /**
+     * The version a reviewer approved, such as `1.2.4` or `v1.2.4`. The release stops before
+     * publishing anything when it would release another version, or nothing.
+     */
+    expectVersion?: string
 }
 
 export interface ReleaseResult {
@@ -727,6 +732,15 @@ async function checkOnReleaseBranch(environment: ReleaseEnvironment, plan: Relea
     return `The ${plan.branch} branch is not in this clone, so aronrepo cannot check that ${commit} is on it. Fetch it, such as \`fetch-depth: 0\` in actions/checkout.`
 }
 
+/** Why a release of `version` does not match the approved version, or `undefined` when it does. */
+function checkExpectedVersion(options: ReleaseOptions, version: string | undefined) {
+    const expected = options.expectVersion?.replace(/^v/, '')
+    if (!expected || expected === version) return undefined
+    return version
+        ? `This release is ${version}, not the expected ${expected}. Review the plan again.`
+        : `Nothing releases, but ${expected} was expected. Review the plan again.`
+}
+
 /** Pushes a version tag without the repository's pre-push hooks, which would run after npm already published. */
 async function pushTag(environment: ReleaseEnvironment, tag: string) {
     await git(environment, ['push', '--no-verify', 'origin', `refs/tags/${tag}`])
@@ -747,7 +761,7 @@ async function resumeTaggedRelease(environment: ReleaseEnvironment, options: Rel
     // The tag's own version, so a later prerelease of the same version does not renumber it.
     const previous = await planRelease({ ...options, ignoreTags: [tag], version: parseVersionTag(tag)! }, environment)
     if (!previous.notes) return false
-    const problem = await checkOnReleaseBranch(environment, plan)
+    const problem = await checkOnReleaseBranch(environment, plan) ?? checkExpectedVersion(options, previous.version)
     if (problem) throw new Error(problem)
     environment.log(`${tag} points at HEAD; make sure the tag is pushed and its GitHub release exists.`)
     await pushTag(environment, tag)
@@ -782,6 +796,9 @@ function nextFreeVersion(version: string) {
  * finishes a release instead of skipping or duplicating it.
  */
 export async function runRelease(options: ReleaseOptions = {}, environmentOptions: Partial<ReleaseEnvironment> = {}): Promise<ReleaseResult> {
+    if (options.expectVersion && !semver.valid(options.expectVersion.replace(/^v/, ''))) {
+        throw new Error(`The expected version ${options.expectVersion} is not a version, such as 1.2.4.`)
+    }
     const environment = createEnvironment(environmentOptions)
     const { cwd, log } = environment
     const plan = await planRelease(options, environment)
@@ -793,6 +810,9 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
     }
     if (!plan.version || !plan.tag || !plan.notes) {
         if (await resumeTaggedRelease(environment, options, plan)) return { status: 'resumed', plan }
+        const unexpected = checkExpectedVersion(options, undefined)
+        if (unexpected && !options.dryRun) throw new Error(unexpected)
+        if (unexpected) log(`! ${unexpected} A release would stop here.`)
         log('No release.')
         return { status: 'none', plan }
     }
@@ -816,7 +836,9 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         } catch (error) {
             log(`! ${(error as Error).message} A release would stop here.`)
         }
-        if (offBranch) log(`! ${offBranch} A release would stop here.`)
+        for (const problem of [offBranch, checkExpectedVersion(options, plan.version)]) {
+            if (problem) log(`! ${problem} A release would stop here.`)
+        }
         if (dirty) log('! The working tree has changes; a release would stop here.')
         if (existingTag) log(`! ${plan.tag} exists but is not reachable from ${plan.branch}; a release would stop here.`)
         log(`\nDry run: would publish ${plan.tag} on ${plan.channel.distTag}.\n\n${plan.notes}`)
@@ -855,6 +877,9 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         log(`! ${taken.join(', ')} is already published from another commit without a ${toVersionTag(version)} tag; releasing ${next} instead.`)
         version = next
     }
+    // A version taken by an interrupted release is not the one the reviewer approved.
+    const unexpected = checkExpectedVersion(options, version)
+    if (unexpected) throw new Error(unexpected)
     if (version !== plan.version) {
         plan.version = version
         plan.tag = toVersionTag(version)

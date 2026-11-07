@@ -311,6 +311,7 @@ test('the CLI finds the repository root, prints reports to stdout, and validates
     expect(JSON.parse(fromSubfolder.stdout).mode).toBe('auto')
 
     expect(runCli(['release', '--from', 'v1.0.0'], cwd)).toMatchObject({ code: 2, stderr: expect.stringContaining('`aronrepo release` does not take --from.') })
+    expect(runCli(['explain', '--expect', '1.0.1'], cwd)).toMatchObject({ code: 2, stderr: expect.stringContaining('`aronrepo explain` does not take --expect.') })
     expect(runCli(['--version'])).toMatchObject({ code: 0, stdout: `${JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../package.json'), 'utf8')).version}\n` })
     expect(runCli(['help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: aronrepo') })
     expect(JSON.parse(runCli(['check', '--json'], cwd).stderr)).toEqual({ error: 'Pass --edit <file>, --message <text>, --title <text>, or --from <ref>.', code: 2 })

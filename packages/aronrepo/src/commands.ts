@@ -309,6 +309,8 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
 export interface ReleaseCommandOptions extends CommonOptions {
     dryRun?: boolean
     branch?: string
+    /** The approved version; the release stops when it would release another one. */
+    expect?: string
     /** Receives progress lines; defaults to stdout. JSON output stays quiet. */
     log?: (message: string) => void
 }
@@ -318,7 +320,8 @@ export async function release(options: ReleaseCommandOptions): Promise<CommandRe
     const result = await runRelease({
         ...(options.mode ? { mode: options.mode } : {}),
         ...(options.branch ? { branch: options.branch } : {}),
-        ...(options.dryRun ? { dryRun: true } : {})
+        ...(options.dryRun ? { dryRun: true } : {}),
+        ...(options.expect ? { expectVersion: options.expect } : {})
     }, { cwd, log: options.json ? () => {} : options.log ?? ((message) => console.log(message)) })
     if (!options.json) return { code: 0, output: '' }
     const { packages, ...plan } = result.plan

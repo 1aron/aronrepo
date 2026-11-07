@@ -19,6 +19,7 @@ Commands:
   release   Publish the next release: npm packages, the version tag, and the GitHub release
             [--dry-run]               prints the plan and notes without changes
             [--branch <name>]         the release branch, for a detached commit; it must be on that branch
+            [--expect <version>]      stop unless the release is this approved version
   policy    Print the release policy [--json | --markdown]
   agents    Check the AGENTS.md policy block, or regenerate it with --write [--file <path>]
   doctor    Check the Aronrepo setup of this repository
@@ -49,6 +50,7 @@ const options = {
     files: { type: 'string' },
     'dry-run': { type: 'boolean' },
     branch: { type: 'string' },
+    expect: { type: 'string' },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' }
 } as const
@@ -61,7 +63,7 @@ const common: OptionName[] = ['cwd', 'mode', 'json', 'help']
 const commandOptions: Record<string, OptionName[]> = {
     check: [...common, 'edit', 'message', 'title', 'base', 'head', 'from', 'to', 'files'],
     explain: [...common, 'from', 'to'],
-    release: [...common, 'dry-run', 'branch'],
+    release: [...common, 'dry-run', 'branch', 'expect'],
     policy: [...common, 'markdown'],
     agents: [...common, 'file', 'write'],
     doctor: common,
@@ -119,7 +121,7 @@ async function main(argv: string[]): Promise<CommandResult> {
         case 'explain':
             return explain({ ...shared, ...optional('from', 'to') })
         case 'release':
-            return release({ ...shared, ...optional('branch'), ...(values['dry-run'] ? { dryRun: true } : {}) })
+            return release({ ...shared, ...optional('branch', 'expect'), ...(values['dry-run'] ? { dryRun: true } : {}) })
         case 'policy':
             return policy({ ...shared, ...(values.markdown ? { markdown: true } : {}) })
         case 'agents':
