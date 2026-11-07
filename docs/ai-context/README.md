@@ -13,7 +13,7 @@ This directory gives agents deeper context for Aronrepo without making the root 
 
 Repository files are the source of truth. These context files are a map, not a replacement for current code and config.
 
-When docs disagree with files such as `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `.github/workflows/*`, `tsconfig.json`, or package-local configs, follow the repo files and update the docs in the same change.
+When docs disagree with files such as `package.json`, `bun.lock`, `turbo.json`, `.github/workflows/*`, `tsconfig.json`, or package-local configs, follow the repo files and update the docs in the same change.
 
 ## When to Update This Context
 
