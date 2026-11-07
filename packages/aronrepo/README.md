@@ -10,7 +10,7 @@ One commit standard and one release engine for JavaScript repositories, built so
 bun add -d aronrepo husky
 ```
 
-`pnpm add -D aronrepo husky` and `npm install -D aronrepo husky` work too. This package is ESM-only and has no peer tools.
+`pnpm add -D aronrepo husky` and `npm install -D aronrepo husky` work too. This package is ESM-only, needs Node.js 22.18 or later, and has no peer tools.
 
 ## Configure
 
