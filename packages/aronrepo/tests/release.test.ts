@@ -272,6 +272,38 @@ test('publishes prereleases on their channel', async () => {
     expect(registry.releases).toEqual([expect.objectContaining({ tag_name: 'v2.0.0-beta.1', prerelease: true, make_latest: 'false' })])
 })
 
+test('releases a detached commit only when it is on the release branch', async () => {
+    const cwd = createRepo()
+    git(cwd, 'checkout', '-q', '-b', 'feature/x')
+    const feature = commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    git(cwd, 'checkout', '-q', '--detach', feature)
+    const registry = createRegistry()
+    const logs: string[] = []
+
+    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(`${feature.slice(0, 9)} is not on main. Release a commit of main.`)
+    expect((await runRelease({ branch: 'main', dryRun: true }, environment(cwd, registry, logs))).status).toBe('dry-run')
+    expect(logs).toContain(`! ${feature.slice(0, 9)} is not on main. Release a commit of main. A release would stop here.`)
+    expect(registry.published).toEqual([])
+
+    git(cwd, 'checkout', '-q', 'main')
+    git(cwd, 'merge', '-q', '--ff-only', 'feature/x')
+    git(cwd, 'checkout', '-q', '--detach', feature)
+    expect((await runRelease({ branch: 'main' }, environment(cwd, registry))).status).toBe('released')
+})
+
+test('releases only commits that are on the remote release branch', async () => {
+    const cwd = createRepo()
+    git(cwd, 'update-ref', 'refs/remotes/origin/main', 'v1.0.0')
+    const head = commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+
+    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(`${head.slice(0, 9)} is not on origin/main. Push it to main first, or release a commit of main.`)
+    expect(registry.published).toEqual([])
+
+    git(cwd, 'update-ref', 'refs/remotes/origin/main', head)
+    expect((await runRelease({ branch: 'main' }, environment(cwd, registry))).status).toBe('released')
+})
+
 test('skips branches that do not release', async () => {
     const cwd = createRepo()
     const result = await runRelease({ branch: 'feature/x' }, environment(cwd, createRegistry()))

@@ -711,6 +711,22 @@ async function isLatestStable(environment: ReleaseEnvironment, version: string) 
     return !versions.some((other) => !semver.prerelease(other) && semver.gt(other, version))
 }
 
+/**
+ * Why HEAD cannot release on its branch, or `undefined` when it can: HEAD must be on the
+ * remote-tracking branch (`origin/<branch>`), or on the local branch when there is no remote one,
+ * so a detached commit from another branch never releases as the release branch.
+ */
+async function checkOnReleaseBranch(environment: ReleaseEnvironment, plan: ReleasePlan) {
+    const commit = plan.head.slice(0, 9)
+    for (const ref of [`refs/remotes/origin/${plan.branch}`, `refs/heads/${plan.branch}`]) {
+        if (!await gitSucceeds(environment, ['rev-parse', '--verify', '--quiet', ref])) continue
+        if (await gitSucceeds(environment, ['merge-base', '--is-ancestor', 'HEAD', ref])) return undefined
+        const remote = ref.startsWith('refs/remotes/')
+        return `${commit} is not on ${remote ? 'origin/' : ''}${plan.branch}. ${remote ? `Push it to ${plan.branch} first, or release` : 'Release'} a commit of ${plan.branch}.`
+    }
+    return `The ${plan.branch} branch is not in this clone, so aronrepo cannot check that ${commit} is on it. Fetch it, such as \`fetch-depth: 0\` in actions/checkout.`
+}
+
 /** Pushes a version tag without the repository's pre-push hooks, which would run after npm already published. */
 async function pushTag(environment: ReleaseEnvironment, tag: string) {
     await git(environment, ['push', '--no-verify', 'origin', `refs/tags/${tag}`])
@@ -731,6 +747,8 @@ async function resumeTaggedRelease(environment: ReleaseEnvironment, options: Rel
     // The tag's own version, so a later prerelease of the same version does not renumber it.
     const previous = await planRelease({ ...options, ignoreTags: [tag], version: parseVersionTag(tag)! }, environment)
     if (!previous.notes) return false
+    const problem = await checkOnReleaseBranch(environment, plan)
+    if (problem) throw new Error(problem)
     environment.log(`${tag} points at HEAD; make sure the tag is pushed and its GitHub release exists.`)
     await pushTag(environment, tag)
     await publishGitHubRelease(environment, {
@@ -791,17 +809,20 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         log(`${plan.tag} is on a newer commit of ${plan.branch}; this commit is already released.`)
         return { status: 'none', plan }
     }
+    const offBranch = await checkOnReleaseBranch(environment, plan)
     if (options.dryRun) {
         try {
             resolveAssets(cwd, plan.tag, plan.assets)
         } catch (error) {
             log(`! ${(error as Error).message} A release would stop here.`)
         }
+        if (offBranch) log(`! ${offBranch} A release would stop here.`)
         if (dirty) log('! The working tree has changes; a release would stop here.')
         if (existingTag) log(`! ${plan.tag} exists but is not reachable from ${plan.branch}; a release would stop here.`)
         log(`\nDry run: would publish ${plan.tag} on ${plan.channel.distTag}.\n\n${plan.notes}`)
         return { status: 'dry-run', plan }
     }
+    if (offBranch) throw new Error(offBranch)
     if (dirty) throw new Error('The working tree has changes. Release from a clean checkout.')
     if (existingTag) throw new Error(`${plan.tag} exists but is not reachable from ${plan.branch}.`)
     // A missing asset would fail the GitHub release after npm already published.

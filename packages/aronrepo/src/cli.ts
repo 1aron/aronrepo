@@ -17,7 +17,8 @@ Commands:
   explain   Print the next release and the reason for each commit
             [--from <ref>] [--to <ref>]   defaults to the release range of the branch
   release   Publish the next release: npm packages, the version tag, and the GitHub release
-            [--dry-run] [--branch <name>]  prints the plan and notes without changes
+            [--dry-run]               prints the plan and notes without changes
+            [--branch <name>]         the release branch, for a detached commit; it must be on that branch
   policy    Print the release policy [--json | --markdown]
   agents    Check the AGENTS.md policy block, or regenerate it with --write [--file <path>]
   doctor    Check the Aronrepo setup of this repository
