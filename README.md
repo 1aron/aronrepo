@@ -141,7 +141,7 @@ Release paths default to the directories of public, non-private workspace packag
 2. Write the version and git head into every published package and pack it with the repository's package manager, which turns `workspace:` ranges into the release version.
 3. Publish the packages in dependency order on the `aronrepo-staging` dist-tag with npm, with `--provenance` when `publishConfig.provenance` is set.
 4. Wait until the registry serves every package, then move the channel's dist-tag to the new version.
-5. Push the version tag and create the GitHub release with the release notes.
+5. Push the version tag and create the GitHub release with the release notes and the files in `release.assets`, such as `{ path: 'dist/global.min.js', name: 'global-{tag}.min.js' }`. A missing asset stops the release before anything is published, and a rerun uploads only the assets the release does not have yet.
 
 Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, from a shallow clone, or when `GITHUB_REF_NAME` names a branch other than the one checked out. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything.
 
