@@ -1,14 +1,17 @@
 {
     "private": true,
     "type": "module",
-    "packageManager": "pnpm@12.18.0",
+    "packageManager": "bun@1.4.4",
     "devEngines": {
         "packageManager": {
-            "name": "pnpm",
-            "version": "12.18.0",
+            "name": "bun",
+            "version": "1.4.4",
             "onFail": "ignore"
         }
     },
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
         "prepare": "husky",
         "build": "turbo run build --filter=\"./packages/*\"",

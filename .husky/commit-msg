@@ -1,2 +1,2 @@
-pnpm exec commitlint --edit "$1"
-pnpm exec aronrepo check --edit "$1"
+commitlint --edit "$1"
+aronrepo check --edit "$1"
