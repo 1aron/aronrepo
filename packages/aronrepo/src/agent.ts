@@ -172,7 +172,7 @@ export function getReleaseTable(policy: ReleasePolicy = defaultReleasePolicy) {
         const release = getReleaseType(type, scope, policy)
         rows[release || 'none'].push(formatRule(type, scope))
     }
-    if (policy.mode === 'auto') rows.major.push('`BREAKING CHANGE:` footer')
+    if (policy.mode === 'auto') rows.major.push('`BREAKING CHANGE:` footer', '`Type!:` header')
     return rows
 }
 
@@ -187,7 +187,8 @@ export interface RenderAgentsBlockOptions extends AgentCommitPolicyOptions {
 /** Renders the generated commit policy block for AGENTS.md, including its markers. */
 export function renderAgentsBlock(policy: ReleasePolicy = defaultReleasePolicy, options: RenderAgentsBlockOptions = {}) {
     const agent = getAgentCommitPolicy(policy, options)
-    const paths = options.releasePaths
+    const paths = options.releasePaths ?? (policy.paths || undefined)
+    const excludes = paths ? paths.exclude ?? defaultReleasePathExcludes : []
     const typeRows = commits.map(({ type, scope, description }) =>
         `| ${formatRule(type, scope)} | ${getReleaseType(type, scope, policy) || 'none'} | ${description} |`)
     const lines = [
@@ -198,7 +199,7 @@ export function renderAgentsBlock(policy: ReleasePolicy = defaultReleasePolicy, 
         '',
         `Release mode: **${policy.mode}**. ${policy.mode === 'explicit'
             ? 'Only the repository owner decides minor and major versions, with `Bump(Minor)` and `Bump(Major)` commits.'
-            : '`Add` releases minor versions, and `BREAKING CHANGE:` footers release major versions.'}`,
+            : '`Add` releases minor versions, and `BREAKING CHANGE:` footers and `Type!:` headers release major versions.'}`,
         '',
         'Commit headers and PR titles use `Type(Scope): Summary` or `Type: Summary`: a PascalCase type, an optional scope for the package or area, and a sentence-case summary without a trailing period.',
         '',
@@ -225,15 +226,16 @@ export function renderAgentsBlock(policy: ReleasePolicy = defaultReleasePolicy, 
         '',
         '### Release paths',
         '',
-        ...(paths?.include
-            ? [
-                'Only changes to these files can release a version:',
-                '',
-                ...paths.include.map((glob) => `- \`${glob}\``),
-                '',
-                `Excluding: ${(paths.exclude ?? defaultReleasePathExcludes).map((glob) => `\`${glob}\``).join(', ')}.`
-            ]
-            : ['Every path can release a version in this repository.']),
+        ...(!paths
+            ? ['Every path can release a version in this repository.']
+            : paths.include?.length === 0
+                ? ['No path can release a version in this repository.']
+                : [
+                    ...(paths.include
+                        ? ['Only changes to these files can release a version:', '', ...paths.include.map((glob) => `- \`${glob}\``)]
+                        : ['Every path can release a version, except the excluded ones.']),
+                    ...(excludes.length ? ['', `Excluding: ${excludes.map((glob) => `\`${glob}\``).join(', ')}.`] : [])
+                ]),
         '',
         '### Before handing off commits',
         '',

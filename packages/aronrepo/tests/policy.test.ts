@@ -1,6 +1,7 @@
 import {
     agentsBlockEnd,
     agentsBlockStart,
+    commits,
     createReleasePathMatcher,
     defineConfig,
     getAgentCommitPolicy,
@@ -184,7 +185,7 @@ test('reads breaking notes from footers', () => {
         'BREAKING CHANGE: Remove the adapters.',
         'Co-Authored-By: Someone <a@b.c>'
     ].join('\n')).breakingNotes).toEqual([
-        'Releases default to explicit mode. Set `release.mode` to keep the old behavior.',
+        'Releases default to explicit mode.\nSet `release.mode` to keep the old behavior.',
         'Remove the adapters.'
     ])
 })
@@ -217,7 +218,7 @@ test('describes the release table for each mode', () => {
         patch: expect.arrayContaining(['`Add`', '`Fix`', '`Docs(README)`'])
     })
     expect(getReleaseTable(auto)).toMatchObject({
-        major: ['`Bump(Major)`', '`BREAKING CHANGE:` footer'],
+        major: ['`Bump(Major)`', '`BREAKING CHANGE:` footer', '`Type!:` header'],
         minor: expect.arrayContaining(['`Add`', '`Bump(Minor)`'])
     })
 })
@@ -255,4 +256,101 @@ test('reverting a revert keeps the original commit', () => {
     ])
     expect(decision.commits.map(({ release }) => release)).toEqual(['patch', false, false])
     expect(decision.release).toBe('patch')
+})
+
+test('recognizes squash-merged reverts, reapplies, and every reverted hash', () => {
+    const fix = 'a'.repeat(40)
+    const revert = 'b'.repeat(40)
+    expect(parseCommit(`Revert "Fix: A (#12)" (#13)\n\nThis reverts commit ${fix}.`).revert).toEqual({ header: 'Fix: A (#12)', hash: fix, hashes: [fix] })
+    const decision = resolveRelease([
+        { hash: fix, message: 'Fix: A' },
+        { hash: revert, message: `Revert "Fix: A"\n\nThis reverts commit ${fix}.` },
+        { hash: 'c'.repeat(40), message: `Reapply "Fix: A"\n\nThis reverts commit ${revert}.` }
+    ])
+    expect(decision.commits.map(({ release, violations }) => [release, violations.length])).toEqual([['patch', 0], [false, 0], [false, 0]])
+
+    const squashed = resolveRelease([
+        { hash: 'd'.repeat(40), message: 'Fix: D' },
+        { hash: 'e'.repeat(40), message: 'Fix: E' },
+        { hash: 'f'.repeat(40), message: `Revert: Fix: D and E\n\nThis reverts commit ${'D'.repeat(40)}.\nThis reverts commit ${'e'.repeat(40)}.` }
+    ])
+    expect(squashed.release).toBe(false)
+})
+
+test('cancels nothing when a short reverted hash is ambiguous', () => {
+    const decision = resolveRelease([
+        { hash: 'abcdef1' + '1'.repeat(33), message: 'Add: Other' },
+        { hash: 'abcdef1' + '2'.repeat(33), message: 'Fix: A' },
+        { hash: 'c'.repeat(40), message: 'Revert "Fix: A"\n\nThis reverts commit abcdef1.' }
+    ])
+    expect(decision.commits.map(({ release }) => release)).toEqual(['patch', 'patch', 'patch'])
+})
+
+test('reverting a Bump releases a patch and reads breaking reverted headers', () => {
+    expect(resolveCommitRelease('Revert "Bump(Major): Release 2.0"').release).toBe('patch')
+    expect(resolveCommitRelease('Revert: Add!: A', auto).release).toBe('major')
+})
+
+test('accepts summaries in scripts without case and trims the header', () => {
+    expect(resolveCommitRelease('Fix(Core): 修正快取').violations).toEqual([])
+    expect(resolveCommitRelease('Fix: Ärger').violations).toEqual([])
+    const decision = resolveCommitRelease('Fix: Thing.  \n\nBody')
+    expect(decision.violations.map(({ rule, suggestion }) => [rule, suggestion])).toEqual([['subject-full-stop', 'Fix: Thing']])
+    expect(resolveCommitRelease('Fix(core)!: thing', auto).violations[0].rule).toBe('header-format')
+})
+
+test('diagnoses spacing, legacy casing, and unknown scopes precisely', () => {
+    const message = (header: string, policy = explicit) => resolveCommitRelease(header, policy).violations[0]?.message
+    expect(message('Fix:  Thing')).toMatch(/^Put exactly one space after the colon/)
+    expect(message('Fix:Thing')).toMatch(/^Put exactly one space after the colon/)
+    expect(message('Fix!:Thing', auto)).toMatch(/^Put exactly one space after the colon/)
+    expect(message('feat: X')).toMatch(/such as `Add`/)
+    expect(message('Bump(Huge): X')).toBe('`Bump(Huge)` has an unknown scope. Use one of: `Bump(Major)`, `Bump(Minor)`, `Bump(Patch)`.')
+    expect(resolveCommitRelease('Docs(Readme): Update').violations).toMatchObject([{ rule: 'scope-case', severity: 'warning', suggestion: 'Docs(README): Update' }])
+})
+
+test('ignores breaking footers in code fences and keeps notes until the next token', () => {
+    const fenced = parseCommit('Fix: A\n\n```\nBREAKING CHANGE: example\n```')
+    expect(fenced.breaking).toBeUndefined()
+    expect(fenced.layout).toBeUndefined()
+    expect(parseCommit('Fix: A\n\n  BREAKING CHANGE: indented').breaking).toBeUndefined()
+    expect(parseCommit('Bump(Major): A\n\nBREAKING CHANGE: first\n\nsecond paragraph\nSigned-off-by: X <x@y>').breakingNotes).toEqual(['first\n\nsecond paragraph'])
+})
+
+test('suggests valid non-release headers', () => {
+    const files = { files: ['site/a.js'], isReleasePath: (file: string) => file.startsWith('packages/') }
+    expect(resolveCommitRelease('Fix(Site): Tweak.', explicit, files).violations.find(({ rule }) => rule === 'release-paths')?.suggestion).toBe('Chore(Site): Tweak')
+    expect(resolveCommitRelease('Revert "Bump(Major): Release 2.0"', explicit, files).violations[0].suggestion).toBe('Chore: Revert "Bump(Major): Release 2.0"')
+    const breakingChore = resolveCommitRelease('Chore!: X', auto, files).violations[0]
+    expect(breakingChore.message).toMatch(/only because of its breaking marker/)
+    expect(breakingChore.suggestion).toBe('Chore: X')
+})
+
+test('release path matchers read negated includes, missing includes, and test artifacts', () => {
+    const negated = createReleasePathMatcher({ include: ['packages/**', '!packages/site/**'] })!
+    expect(negated('packages/core/a.ts')).toBe(true)
+    expect(negated('packages/site/a.ts')).toBe(false)
+    expect(negated('README.md')).toBe(false)
+    const excludeOnly = createReleasePathMatcher({ exclude: ['docs/**'] })!
+    expect(excludeOnly('src/a.ts')).toBe(true)
+    expect(excludeOnly('docs/a.md')).toBe(false)
+    const defaults = createReleasePathMatcher({ include: ['src/**'] })!
+    for (const file of ['src/a.test-d.ts', 'src/__snapshots__/a.snap', 'src/fixtures/a.json']) expect(defaults(file)).toBe(false)
+})
+
+test('rejects malformed release paths in the config', () => {
+    expect(() => getReleasePolicy({ release: { paths: true as never } })).toThrow(/`release.paths` must be/)
+    expect(() => getReleasePolicy({ release: { paths: { include: 'packages/**' as never } } })).toThrow(/include` must be an array/)
+})
+
+test('renders release paths from the policy and auto mode `!` headers', () => {
+    expect(renderAgentsBlock({ mode: 'explicit', paths: { include: ['src/**'] } })).toContain('- `src/**`')
+    expect(renderAgentsBlock({ mode: 'explicit', paths: { include: [] } })).toContain('No path can release a version in this repository.')
+    expect(renderAgentsBlock({ mode: 'explicit', paths: { include: ['src/**'], exclude: [] } })).not.toContain('Excluding')
+    expect(renderAgentsBlock(auto)).toContain('`Type!:` headers release major versions')
+})
+
+test('freezes the commit type table', () => {
+    expect(Object.isFrozen(commits)).toBe(true)
+    expect(Object.isFrozen(commits[0])).toBe(true)
 })

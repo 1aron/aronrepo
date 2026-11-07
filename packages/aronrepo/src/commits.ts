@@ -39,7 +39,7 @@ export function maxRelease(...releases: Array<ReleaseType | undefined>): Release
  *
  * Release notes list the groups in this order.
  */
-export const commits: readonly ConventionalCommitType[] = [
+export const commits: readonly Readonly<ConventionalCommitType>[] = Object.freeze(([
     { type: 'Bump', scope: 'Major', release: 'major', description: 'Release a major version. Only the repository owner decides it.' },
     { type: 'Bump', scope: 'Minor', release: 'minor', description: 'Release a minor version. Only the repository owner decides it.' },
     { type: 'Bump', scope: 'Patch', release: 'patch', description: 'Release a patch version without another release commit.' },
@@ -61,18 +61,18 @@ export const commits: readonly ConventionalCommitType[] = [
     { type: 'Style', release: false, description: 'Formatting and lint-only changes.' },
     { type: 'Refactor', release: false, description: 'Code changes that keep published behavior.' },
     { type: 'Chore', release: false, description: 'Maintenance: development dependencies, lockfiles, metadata, agent guidance, and unpublished workspaces.' }
-]
+] satisfies ConventionalCommitType[]).map((commit) => Object.freeze(commit)))
 
 /**
  * Types from earlier Aronrepo versions. They still resolve in history so old
  * commits release as before, but `aronrepo check` rejects them in new commits.
  */
-export const legacyCommits: readonly LegacyCommitType[] = [
+export const legacyCommits: readonly Readonly<LegacyCommitType>[] = Object.freeze(([
     { type: 'Feat', replacement: 'Add' },
     { type: 'New', replacement: 'Add' },
     { type: 'Update', replacement: 'Improve' },
     { type: 'Misc', replacement: 'Chore' }
-]
+] satisfies LegacyCommitType[]).map((commit) => Object.freeze(commit)))
 
 export const types: string[] = [...new Set(commits.map(({ type }) => type))]
 

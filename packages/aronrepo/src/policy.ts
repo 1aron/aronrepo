@@ -41,6 +41,11 @@ export const defaultReleasePathExcludes = [
     '**/test/**',
     '**/__tests__/**',
     '**/*.{test,spec}.*',
+    '**/*.test-d.*',
+    '**/__snapshots__/**',
+    '**/__fixtures__/**',
+    '**/__mocks__/**',
+    '**/fixtures/**',
     '**/benchmarks/**',
     '**/examples/**',
     '**/CHANGELOG.md',
@@ -57,19 +62,39 @@ export function getReleasePolicy(config: AronrepoConfig = {}): ReleasePolicy {
     if (!releaseModes.includes(mode)) {
         throw new Error(`Unknown Aronrepo release mode "${String(mode)}". Use one of: ${releaseModes.join(', ')}.`)
     }
+    const paths = config.release?.paths
+    if (paths !== undefined && paths !== false) validateReleasePaths(paths)
     return {
         mode,
-        ...(config.release?.paths !== undefined ? { paths: config.release.paths } : {})
+        ...(paths !== undefined ? { paths } : {})
     }
+}
+
+function validateReleasePaths(paths: unknown): asserts paths is ReleasePathsConfig {
+    const isGlobs = (value: unknown) => value === undefined || (Array.isArray(value) && value.every((glob) => typeof glob === 'string'))
+    if (typeof paths !== 'object' || paths === null || Array.isArray(paths)) {
+        throw new Error('`release.paths` must be `false` or an object with `include` and `exclude` glob arrays.')
+    }
+    const { include, exclude } = paths as Record<string, unknown>
+    if (!isGlobs(include)) throw new Error('`release.paths.include` must be an array of globs.')
+    if (!isGlobs(exclude)) throw new Error('`release.paths.exclude` must be an array of globs.')
 }
 
 export const defaultReleasePolicy: ReleasePolicy = { mode: defaultReleaseMode }
 
-/** Returns a matcher for release paths, or `undefined` when every path may release. */
+/**
+ * Returns a matcher for release paths, or `undefined` when every path may release.
+ * `include` defaults to every path; `!glob` entries in `include` exclude, as in
+ * `package.json` `files`, instead of matching everything else.
+ */
 export function createReleasePathMatcher(paths: ReleasePathsConfig | false | undefined) {
-    if (!paths || !paths.include) return undefined
-    const include = picomatch(paths.include.length ? paths.include : ['!**'], { dot: true })
-    const exclude = picomatch(paths.exclude ?? defaultReleasePathExcludes, { dot: true })
+    if (!paths) return undefined
+    const globs = paths.include ?? ['**']
+    const positive = globs.filter((glob) => !glob.startsWith('!'))
+    const negated = globs.filter((glob) => glob.startsWith('!')).map((glob) => glob.slice(1))
+    if (!positive.length) return () => false
+    const include = picomatch(positive, { dot: true })
+    const exclude = picomatch([...paths.exclude ?? defaultReleasePathExcludes, ...negated], { dot: true })
     return (file: string) => include(file) && !exclude(file)
 }
 
@@ -88,13 +113,22 @@ function capRelease(release: ReleaseType, type: string | undefined, policy: Rele
     return release
 }
 
+/**
+ * The first character of a scope or summary: an uppercase letter, a letter
+ * without case (such as CJK), a digit, or a code, issue, or emphasis marker.
+ */
+const startCharacter = String.raw`[\p{Lu}\p{Lt}\p{Lo}\p{Nd}\x60_#~]`
+const startPattern = new RegExp(`^${startCharacter}`, 'u')
+
 // The scope stops at the first `)`, so a summary such as `Handle Foo(Bar): Baz` stays whole.
-export const headerPattern = /^([A-Z]\w*)(?:\(([0-9A-Z`_#~][^)]*)\))?: ([0-9A-Z`_#~].*)$/
-const breakingHeaderPattern = /^([A-Z]\w*)(?:\(([^)]*)\))?!: (.+)$/
-const breakingNotePattern = /^BREAKING[ -]CHANGE:/m
-const footerLinePattern = /^BREAKING[ -]CHANGE:/
-const githubRevertPattern = /^Revert "([\s\S]+)"$/
-const revertHashPattern = /This reverts commit ([0-9a-f]{7,40})/i
+export const headerPattern = new RegExp(String.raw`^([A-Z]\w*)(?:\((${startCharacter}[^)]*)\))?: (${startCharacter}.*)$`, 'u')
+const breakingHeaderPattern = new RegExp(String.raw`^([A-Z]\w*)(?:\((${startCharacter}[^)]*)\))?!: (${startCharacter}.*)$`, 'u')
+const footerStartPattern = /^BREAKING[ -]CHANGE:[ \t]*(.*)$/
+// GitHub's revert button writes `Revert "<header>"`, a squash merge appends ` (#123)`,
+// and git 2.43+ writes `Reapply "<header>"` when a revert is reverted.
+const githubRevertPattern = /^(Revert|Reapply) "([\s\S]+)"(?: \(#\d+\))?$/
+const revertHashPattern = /This reverts commit ([0-9a-f]{7,40})/gi
+const fencePattern = /^\s*(```|~~~)/
 
 export interface ParsedCommit {
     hash?: string
@@ -105,68 +139,90 @@ export interface ParsedCommit {
     subject?: string
     /** Where a breaking marker was found, if any. */
     breaking?: 'header' | 'footer'
-    /** Texts of `BREAKING CHANGE:` footers. */
+    /** Texts of `BREAKING CHANGE:` footers; continuation lines keep their line breaks. */
     breakingNotes?: string[]
     /** Message layout problems that do not change the release. */
     layout?: Array<'body-leading-blank' | 'footer-leading-blank'>
     revert?: {
         header?: string
+        /** The first reverted hash, lowercase. */
         hash?: string
+        /** Every reverted hash, lowercase; a squashed commit can revert several. */
+        hashes?: string[]
+        /** `Reapply "<header>"`: a revert of the revert of `header`. */
+        reapply?: boolean
     }
 }
 
 const trailerPattern = /^[\w-]+: /
 
-/** `BREAKING CHANGE:` footer texts; each runs until a blank line, another footer, or a git trailer. */
-function readBreakingNotes(lines: string[]) {
+/**
+ * `BREAKING CHANGE:` footers outside code fences. Each runs, line breaks kept,
+ * until another footer or a git trailer, as Conventional Commits footers do.
+ */
+function readBreakingFooters(lines: string[]) {
     const notes: string[] = []
+    const starts: number[] = []
     let current: string[] | undefined
-    for (const line of lines) {
-        const start = /^BREAKING[ -]CHANGE:\s*(.*)$/.exec(line)
-        if (start) {
-            if (current) notes.push(current.join(' ').trim())
-            current = [start[1]]
-        } else if (current && line.trim() && !trailerPattern.test(line)) {
-            current.push(line.trim())
-        } else if (current) {
-            notes.push(current.join(' ').trim())
-            current = undefined
-        }
+    let fenced = false
+    const finish = () => {
+        if (current) notes.push(current.join('\n').trim())
+        current = undefined
     }
-    if (current) notes.push(current.join(' ').trim())
-    return notes.filter(Boolean)
+    lines.forEach((line, index) => {
+        if (fencePattern.test(line)) fenced = !fenced
+        const start = fenced ? null : footerStartPattern.exec(line)
+        if (start) {
+            finish()
+            starts.push(index)
+            current = [start[1]]
+        } else if (current && !fenced && trailerPattern.test(line)) {
+            finish()
+        } else if (current) {
+            current.push(line.trimEnd())
+        }
+    })
+    finish()
+    return { starts, notes: notes.filter(Boolean) }
+}
+
+function parseHeader(header: string) {
+    const regular = headerPattern.exec(header)
+    const match = regular ?? breakingHeaderPattern.exec(header)
+    return match ? { type: match[1], scope: match[2], subject: match[3], breaking: !regular } : undefined
 }
 
 export function parseCommit(message: string, hash?: string): ParsedCommit {
-    const normalized = message.replace(/\r\n/g, '\n').trim()
-    const [header = '', ...rest] = normalized.split('\n')
+    const normalized = message.replace(/\r\n?/g, '\n').trim()
+    const [rawHeader = '', ...rest] = normalized.split('\n')
+    const header = rawHeader.trimEnd()
     const body = rest.join('\n').trim()
     const parsed: ParsedCommit = { header, body, ...(hash ? { hash } : {}) }
 
+    const footers = readBreakingFooters(rest)
     const layout: NonNullable<ParsedCommit['layout']> = []
     if (rest.length && rest[0].trim()) layout.push('body-leading-blank')
-    if (rest.some((line, index) => index > 0 && footerLinePattern.test(line) && rest[index - 1].trim())) layout.push('footer-leading-blank')
+    if (footers.starts.some((index) => index > 0 && rest[index - 1].trim())) layout.push('footer-leading-blank')
     if (layout.length) parsed.layout = layout
-    const breakingNotes = readBreakingNotes(rest)
-    if (breakingNotes.length) parsed.breakingNotes = breakingNotes
+    if (footers.notes.length) parsed.breakingNotes = footers.notes
 
-    const regular = headerPattern.exec(header)
-    const match = regular ?? breakingHeaderPattern.exec(header)
+    const match = parseHeader(header)
     if (match) {
-        parsed.type = match[1]
-        if (match[2]) parsed.scope = match[2]
-        parsed.subject = match[3]
-        if (!regular) parsed.breaking = 'header'
+        parsed.type = match.type
+        if (match.scope) parsed.scope = match.scope
+        parsed.subject = match.subject
+        if (match.breaking) parsed.breaking = 'header'
     }
-    if (!parsed.breaking && breakingNotePattern.test(body)) parsed.breaking = 'footer'
+    if (!parsed.breaking && footers.starts.length) parsed.breaking = 'footer'
 
     const githubRevert = githubRevertPattern.exec(header)
     if (githubRevert || parsed.type === 'Revert') {
-        const revertedHeader = githubRevert?.[1] ?? (parsed.subject && headerPattern.test(parsed.subject) ? parsed.subject : undefined)
-        const revertedHash = revertHashPattern.exec(body)?.[1]
+        const revertedHeader = githubRevert?.[2] ?? (parsed.subject && parseHeader(parsed.subject) ? parsed.subject : undefined)
+        const hashes = [...new Set([...body.matchAll(revertHashPattern)].map((found) => found[1].toLowerCase()))]
         parsed.revert = {
             ...(revertedHeader ? { header: revertedHeader } : {}),
-            ...(revertedHash ? { hash: revertedHash } : {})
+            ...(hashes.length ? { hash: hashes[0], hashes } : {}),
+            ...(githubRevert?.[1] === 'Reapply' ? { reapply: true } : {})
         }
     }
     return parsed
@@ -179,6 +235,7 @@ export type CommitViolationRule =
     | 'legacy-type'
     | 'implicit-breaking'
     | 'release-paths'
+    | 'scope-case'
     | 'body-leading-blank'
     | 'footer-leading-blank'
 
@@ -199,6 +256,8 @@ export interface CommitDecision {
     subject?: string
     /** Texts of `BREAKING CHANGE:` footers, kept for `Bump(Major)` release notes. */
     breakingNotes?: string[]
+    /** Where a breaking marker was found, if any. */
+    breaking?: 'header' | 'footer'
     /** Effective release level after mode, breaking markers, reverts, and paths. */
     release: ReleaseType
     reasons: string[]
@@ -215,7 +274,8 @@ export interface ResolveCommitOptions {
 export const nonReleaseAlternatives = ['Chore', 'Refactor', 'Style', 'Test', 'Docs', 'Build', 'CI', 'Benchmark', 'Example']
 
 function suggestNonReleaseHeader(commit: ParsedCommit) {
-    const subject = commit.subject ?? ''
+    // A GitHub revert has no subject; its whole header becomes the summary.
+    const subject = (commit.subject ?? commit.header).replace(/\.+$/, '')
     const scope = commit.scope ? `(${commit.scope})` : ''
     switch (commit.type) {
         case 'Docs':
@@ -227,18 +287,21 @@ function suggestNonReleaseHeader(commit: ParsedCommit) {
     }
 }
 
-const looseHeaderPattern = /^(\w+)(?:\(([^)]*)\))?(!)?: ?(.*)$/
+const looseHeaderPattern = /^(\w+)(?:\(([^)]*)\))?(!)?:(\s*)(.*)$/
 
-function diagnoseHeader(header: string) {
+function diagnoseHeader(header: string, mode: ReleaseMode) {
     const format = 'Use `Type(Scope): Summary` or `Type: Summary` with an Aronrepo commit type.'
     const match = looseHeaderPattern.exec(header)
     if (!match) return format
-    const [, type, scope, bang, subject] = match
-    if (!/^[A-Z]/.test(type)) return `The type \`${type}\` must be PascalCase, such as \`${type[0].toUpperCase()}${type.slice(1)}\`. ${format}`
-    if (bang) return `Aronrepo headers do not use \`!\`. ${format}`
-    if (scope !== undefined && !/^[0-9A-Z`_#~]/.test(scope)) return `The scope \`${scope}\` must start with an uppercase letter or digit. ${format}`
+    const [, type, scope, bang, space, subject] = match
+    if (!/^[A-Z]/.test(type)) {
+        return `The type \`${type}\` must be PascalCase, such as \`${normalizeType(`${type[0].toUpperCase()}${type.slice(1)}`)}\`. ${format}`
+    }
+    if (bang && mode === 'explicit') return `Aronrepo headers do not use \`!\` in explicit mode. ${format}`
+    if (scope !== undefined && !startPattern.test(scope)) return `The scope \`${scope}\` must start with an uppercase letter or digit. ${format}`
+    if (space !== ' ') return `Put exactly one space after the colon. ${format}`
     if (!subject) return `The summary is empty. ${format}`
-    if (!/^[0-9A-Z`_#~]/.test(subject)) return `The summary must start with an uppercase letter or digit. ${format}`
+    if (!startPattern.test(subject)) return `The summary must start with an uppercase letter, a digit, or a letter without case such as CJK. ${format}`
     return format
 }
 
@@ -259,6 +322,7 @@ export function resolveCommitRelease(
         ...(commit.scope ? { scope: commit.scope } : {}),
         ...(commit.subject ? { subject: commit.subject } : {}),
         ...(commit.breakingNotes ? { breakingNotes: commit.breakingNotes } : {}),
+        ...(commit.breaking ? { breaking: commit.breaking } : {}),
         release: false,
         reasons: [],
         violations: []
@@ -271,7 +335,7 @@ export function resolveCommitRelease(
         decision.reasons.push('Header does not follow `Type(Scope): Summary`; no release.')
         decision.violations.push({
             rule: 'header-format',
-            message: diagnoseHeader(commit.header)
+            message: diagnoseHeader(commit.header, policy.mode)
         })
         return decision
     } else if (!types.includes(commit.type) && !legacyTypes.includes(commit.type)) {
@@ -282,12 +346,27 @@ export function resolveCommitRelease(
         })
         return decision
     } else if (!findCommitRule(commit.type, commit.scope)) {
+        const scoped = commits.filter(({ type }) => type === commit.type).map(({ type, scope }) => `\`${type}(${scope})\``).join(', ')
         decision.reasons.push(`\`${commit.type}${commit.scope ? `(${commit.scope})` : ''}\` is not an Aronrepo commit type; no release.`)
         decision.violations.push({
             rule: 'unknown-type',
-            message: `\`${commit.type}\` needs a scope: ${commits.filter(({ type }) => type === commit.type).map(({ type, scope }) => `\`${type}(${scope})\``).join(', ')}.`
+            message: commit.scope
+                ? `\`${commit.type}(${commit.scope})\` has an unknown scope. Use one of: ${scoped}.`
+                : `\`${commit.type}\` needs a scope: ${scoped}.`
         })
         return decision
+    }
+
+    // `Docs(Readme)` falls back to plain `Docs`; say which scope was probably meant.
+    const knownScope = commit.scope && commits.find(({ type, scope }) =>
+        type === normalizeType(commit.type) && scope && scope !== commit.scope && scope.toLowerCase() === commit.scope!.toLowerCase())?.scope
+    if (knownScope) {
+        decision.violations.push({
+            rule: 'scope-case',
+            severity: 'warning',
+            message: `\`${commit.type}(${commit.scope})\` is treated as \`${commit.type}\`. Write \`${commit.type}(${knownScope})\` for that rule.`,
+            suggestion: `${commit.type}(${knownScope}): ${commit.subject ?? ''}`
+        })
     }
 
     if (commit.subject?.endsWith('.')) {
@@ -321,8 +400,15 @@ export function resolveCommitRelease(
     let release: ReleaseType
     if (decision.type === 'Revert' && commit.revert?.header) {
         const reverted = resolveCommitRelease(commit.revert.header, policy, options)
-        release = reverted.release
-        decision.reasons.push(`Reverts \`${commit.revert.header}\`, which releases ${formatRelease(release)}.`)
+        const verb = commit.revert.reapply ? 'Reapplies' : 'Reverts'
+        if (reverted.type === 'Bump' && reverted.release) {
+            // Undoing a version bump does not raise the version again.
+            release = 'patch'
+            decision.reasons.push(`${verb} \`${commit.revert.header}\`; reverting a \`Bump\` releases patch.`)
+        } else {
+            release = reverted.release
+            decision.reasons.push(`${verb} \`${commit.revert.header}\`, which releases ${formatRelease(release)}.`)
+        }
     } else {
         const rule = findCommitRule(decision.type, decision.scope)!
         release = capRelease(rule.release, decision.type, policy)
@@ -351,12 +437,20 @@ export function resolveCommitRelease(
     if (release && !isBump && options.files && options.isReleasePath) {
         const releaseFiles = options.files.filter(options.isReleasePath)
         if (!releaseFiles.length) {
+            const label = `\`${decision.type}${decision.scope ? `(${decision.scope})` : ''}\``
+            const onlyBreaking = commit.type !== undefined && findCommitRule(commit.type, commit.scope)?.release === false
             decision.reasons.push('No changed file ships in a published package; no release.')
-            decision.violations.push({
-                rule: 'release-paths',
-                message: `\`${decision.type}${decision.scope ? `(${decision.scope})` : ''}\` releases ${formatRelease(release)}, but the commit changes no release paths. Use a non-release type: ${nonReleaseAlternatives.join(', ')}.`,
-                suggestion: suggestNonReleaseHeader({ ...commit, type: decision.type })
-            })
+            decision.violations.push(onlyBreaking
+                ? {
+                    rule: 'release-paths',
+                    message: `${label} releases ${formatRelease(release)} only because of its breaking marker, but the commit changes no release paths. Remove the breaking marker.`,
+                    ...(commit.breaking === 'header' ? { suggestion: commit.header.replace('!:', ':') } : {})
+                }
+                : {
+                    rule: 'release-paths',
+                    message: `${label} releases ${formatRelease(release)}, but the commit changes no release paths. Use a non-release type: ${nonReleaseAlternatives.join(', ')}.`,
+                    suggestion: suggestNonReleaseHeader({ ...commit, type: decision.type })
+                })
             release = false
         }
     }
@@ -385,19 +479,30 @@ export function resolveRelease(
     const decisions = parsed.map((commit, index) =>
         resolveCommitRelease(commit, policy, { ...options, ...(inputs[index].files ? { files: inputs[index].files } : {}) }))
 
-    // A revert and the commit it reverts cancel each other when both are unreleased.
+    // A revert and the commits it reverts cancel each other when both are unreleased.
     // Newest first, so reverting a revert cancels that pair and keeps the original commit.
+    // A short hash that matches several commits cancels nothing.
     const cancelled = new Set<number>()
+    const cancel = (target: number, other: number) => {
+        cancelled.add(target)
+        decisions[target].release = false
+        decisions[target].reasons.push(`Cancelled by \`${parsed[other].header}\` in the same release.`)
+    }
     for (let index = parsed.length - 1; index >= 0; index--) {
-        const revertedHash = parsed[index].revert?.hash
-        if (!revertedHash || cancelled.has(index)) continue
-        const revertedIndex = parsed.findIndex((candidate, candidateIndex) =>
-            candidateIndex < index && candidate.hash?.startsWith(revertedHash))
-        if (revertedIndex === -1 || cancelled.has(revertedIndex)) continue
-        for (const [target, other] of [[index, revertedIndex], [revertedIndex, index]]) {
-            cancelled.add(target)
-            decisions[target].release = false
-            decisions[target].reasons.push(`Cancelled by \`${parsed[other].header}\` in the same release.`)
+        const hashes = parsed[index].revert?.hashes ?? []
+        if (!hashes.length || cancelled.has(index)) continue
+        const targets = hashes.map((revertedHash) => {
+            const matches = parsed.flatMap((candidate, candidateIndex) =>
+                candidateIndex < index && candidate.hash?.toLowerCase().startsWith(revertedHash) ? [candidateIndex] : [])
+            return matches.length === 1 && !cancelled.has(matches[0]) ? matches[0] : undefined
+        })
+        for (const target of targets) if (target !== undefined) cancel(target, index)
+        // A revert that also reverts commits outside the range still releases for them.
+        if (targets.every((target) => target !== undefined)) {
+            const reverted = targets.map((target) => parsed[target!].header).join('`, `')
+            cancelled.add(index)
+            decisions[index].release = false
+            decisions[index].reasons.push(`Cancelled by \`${reverted}\` in the same release.`)
         }
     }
 

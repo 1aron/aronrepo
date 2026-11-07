@@ -129,7 +129,7 @@ Only changes to these files can release a version:
 
 - `packages/aronrepo/**`
 
-Excluding: `**/tests/**`, `**/test/**`, `**/__tests__/**`, `**/*.{test,spec}.*`, `**/benchmarks/**`, `**/examples/**`, `**/CHANGELOG.md`, `.github/**`, `.husky/**`.
+Excluding: `**/tests/**`, `**/test/**`, `**/__tests__/**`, `**/*.{test,spec}.*`, `**/*.test-d.*`, `**/__snapshots__/**`, `**/__fixtures__/**`, `**/__mocks__/**`, `**/fixtures/**`, `**/benchmarks/**`, `**/examples/**`, `**/CHANGELOG.md`, `.github/**`, `.husky/**`.
 
 ### Before handing off commits
 
