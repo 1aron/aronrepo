@@ -262,6 +262,7 @@ export type CommitViolationRule =
     | 'legacy-type'
     | 'implicit-breaking'
     | 'release-paths'
+    /** @deprecated Never reported: types and scopes match without case. */
     | 'scope-case'
     | 'body-leading-blank'
     | 'footer-leading-blank'
