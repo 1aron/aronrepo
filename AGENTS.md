@@ -32,7 +32,7 @@ bun run type-check
 bun run check
 ```
 
-`bun run check` runs `aronrepo check` on the commits since `origin/main`, then Turbo tasks for `test`, `lint`, and `type-check`. The commit-msg hook runs the local build of `aronrepo check`, so run `bun run build` after changing commit rules.
+`bun run check` runs `aronrepo check` on the commits since `origin/main`, then Turbo tasks for `test`, `lint`, and `type-check`. The root `aronrepo` script runs the local build (`packages/aronrepo/dist/cli.js`); the commit-msg hook and CI call it with `bun run aronrepo`, so run `bun run build` after cloning and after changing commit rules. Do not use `bun x aronrepo` here: it can run the published version instead of the workspace build.
 
 ## Coding Rules
 
@@ -47,9 +47,9 @@ bun run check
 
 ## Commit and PR Titles
 
-Commit types, release levels, and release paths come from `packages/aronrepo/src/commits.ts`, `packages/aronrepo/src/policy.ts`, and this repository's `aronrepo.config.js`. The generated block at the end of this file comes from them; run `bun x aronrepo agents --write` after changing either, and never edit the block by hand.
+Commit types, release levels, and release paths come from `packages/aronrepo/src/commits.ts`, `packages/aronrepo/src/policy.ts`, and this repository's `aronrepo.config.js`. The generated block at the end of this file comes from them; run `bun run aronrepo agents --write` after changing either, and never edit the block by hand.
 
-When a change modifies the release policy itself (types, modes, resolver, version numbering), check the result with `bun x aronrepo explain` and `bun x aronrepo check --from origin/main --to HEAD` before handing it off.
+When a change modifies the release policy itself (types, modes, resolver, version numbering), check the result with `bun run aronrepo explain` and `bun run aronrepo check --from origin/main --to HEAD` before handing it off.
 
 ## Agent Workflow
 
@@ -59,7 +59,7 @@ After editing:
 
 - For docs-only changes, manually verify paths, package names, commands, and workflow descriptions.
 - For package code changes, run the package tests and type-check first, then the root scripts.
-- For release engine or workflow changes, run the tests and `bun x aronrepo release --dry-run`.
+- For release engine or workflow changes, run the tests and `bun run aronrepo release --dry-run`.
 - Update `docs/ai-context/` when repo architecture, command behavior, release behavior, or validation expectations change.
 
 When local facts conflict with these instructions, trust the repository files and update this guide as part of the change.
@@ -133,8 +133,8 @@ Excluding: `**/tests/**`, `**/test/**`, `**/__tests__/**`, `**/*.{test,spec}.*`,
 
 ### Before handing off commits
 
-- `bun x aronrepo check --from origin/main --to HEAD`
-- `bun x aronrepo explain`
+- `bun run aronrepo check --from origin/main --to HEAD`
+- `bun run aronrepo explain`
 
 `aronrepo explain` prints the next release level and the reason for each commit. Tell the user when it is not what they expect.
 <!-- aronrepo:commit-policy:end -->
