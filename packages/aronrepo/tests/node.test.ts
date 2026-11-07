@@ -8,6 +8,7 @@ import {
     getProjectCliCommand,
     getRangeCommits,
     loadProjectPolicy,
+    readWorkspacePatterns,
     resolveReleasePaths
 } from '../src/node'
 
@@ -115,4 +116,23 @@ test('does not treat private packages as published', () => {
     const cwd = createRepo()
     write(cwd, 'packages/internal/package.json', JSON.stringify({ name: '@fixture/internal', private: true, publishConfig: { access: 'public' } }))
     expect(resolveReleasePaths(cwd)).toMatchObject({ include: ['packages/core/**'] })
+})
+
+test('reads an empty pnpm-workspace.yaml and .cjs or .ts configs', async () => {
+    const cwd = createRepo()
+    write(cwd, 'pnpm-workspace.yaml', '# no packages yet\n')
+    expect(readWorkspacePatterns(cwd)).toEqual([])
+
+    write(cwd, 'aronrepo.config.cjs', "module.exports = { release: { mode: 'auto' } }\n")
+    expect((await loadProjectPolicy(cwd)).policy.mode).toBe('auto')
+    fs.rmSync(path.join(cwd, 'aronrepo.config.cjs'))
+    write(cwd, 'aronrepo.config.ts', "const mode: 'auto' | 'explicit' = 'auto'\nexport default { release: { mode } }\n")
+    expect((await loadProjectPolicy(cwd)).policy.mode).toBe('auto')
+})
+
+test('names the file of invalid JSON and the git command that failed', () => {
+    const cwd = createRepo()
+    write(cwd, 'packages/core/package.json', '{')
+    expect(() => resolveReleasePaths(cwd)).toThrow(/packages\/core\/package\.json is not valid JSON/)
+    expect(() => getRangeCommits(cwd, 'nope')).toThrow(/^`git [^`]+` failed: fatal: /)
 })

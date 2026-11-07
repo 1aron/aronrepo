@@ -3,10 +3,12 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import {
+    getRegistry,
     getReleasePackages,
     getRepositoryUrl,
     hasRegistryAuth,
     officialRegistry,
+    publishGitHubRelease,
     quoteWindowsArg,
     truncateNotes,
     planRelease,
@@ -207,8 +209,14 @@ test('resolves workspace ranges in packed manifests', async () => {
     const registry = createRegistry()
     await runRelease({ branch: 'main' }, environment(cwd, registry))
 
+    // Versions are never committed, so `^0.0.0` would never accept the release; it moves to the release version.
     const cli = registry.published.find(({ manifest }) => manifest.name === '@fixture/cli')!
-    expect(cli.manifest).toMatchObject({ version: '1.0.1', dependencies: { '@fixture/core': '^0.0.0' } })
+    expect(cli.manifest).toMatchObject({
+        version: '1.0.1',
+        dependencies: { '@fixture/core': '^1.0.1' },
+        repository: { type: 'git', url: 'https://github.com/fixture/repo.git', directory: 'packages/cli' }
+    })
+    expect(JSON.parse(fs.readFileSync(path.join(cwd, 'packages/cli/package.json'), 'utf8')).dependencies['@fixture/core']).toBe('^0.0.0')
 })
 
 test('resumes an interrupted release without publishing twice', async () => {
@@ -228,13 +236,27 @@ test('resumes an interrupted release without publishing twice', async () => {
     expect(registry.releases).toEqual([expect.objectContaining({ tag_name: 'v1.0.1' })])
 })
 
-test('refuses a version published from another commit', async () => {
+test('skips a version an interrupted release published from another commit', async () => {
     const cwd = createRepo()
     commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
     const registry = createRegistry()
-    registry.packuments.set('@fixture/core', { 'dist-tags': {}, versions: { '1.0.1': { gitHead: 'f'.repeat(40) } } })
+    registry.packuments.set('@fixture/core', { 'dist-tags': { [stagingDistTag]: '1.0.1' }, versions: { '1.0.1': { gitHead: 'f'.repeat(40) } } })
+    const logs: string[] = []
 
-    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(/already published from f{40}/)
+    const result = await runRelease({ branch: 'main' }, environment(cwd, registry, logs))
+    expect(result.plan).toMatchObject({ version: '1.0.2', tag: 'v1.0.2' })
+    expect(result.plan.notes).toContain('compare/v1.0.0...v1.0.2')
+    expect(logs).toContainEqual(expect.stringMatching(/@fixture\/core@1\.0\.1 \(fffffffff\) is already published from another commit without a v1\.0\.1 tag; releasing 1\.0\.2 instead/))
+    expect(git(cwd, 'tag', '--list', 'v1.0.[12]')).toBe('v1.0.2')
+})
+
+test('refuses a version published without a gitHead', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    registry.packuments.set('@fixture/core', { 'dist-tags': {}, versions: { '1.0.1': {} } })
+
+    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(/published without a gitHead/)
     expect(git(cwd, 'tag', '--list', 'v1.0.1')).toBe('')
 })
 
@@ -324,6 +346,8 @@ test('reads GitHub repository URLs with dots and npm shorthands', () => {
     expect(urlOf('github:owner/repo')).toBe('https://github.com/owner/repo')
     expect(urlOf('owner/repo')).toBe('https://github.com/owner/repo')
     expect(urlOf('gitlab:owner/repo')).toBeUndefined()
+    expect(urlOf('https://notgithub.com/owner/repo')).toBeUndefined()
+    expect(urlOf('https://github.com/owner/repo#readme')).toBe('https://github.com/owner/repo')
 })
 
 test('does not count unset or placeholder npmrc tokens as auth', () => {
@@ -351,4 +375,227 @@ test('quotes Windows shell arguments', () => {
     expect(quoteWindowsArg('C:\\Users\\John Doe\\pkg.tgz')).toBe('"C:\\Users\\John Doe\\pkg.tgz"')
     expect(quoteWindowsArg('a"b')).toBe('"a\\"b"')
     expect(quoteWindowsArg('a&b')).toBe('"a&b"')
+})
+
+test('never moves a dist-tag backwards', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    registry.packuments.set('@fixture/core', { 'dist-tags': { latest: '3.2.0' }, versions: { '3.2.0': { gitHead: 'f'.repeat(40) } } })
+
+    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(/has 3\.2\.0 on latest, newer than 1\.0\.1/)
+    expect(registry.published).toEqual([])
+})
+
+test('retries a failed trusted publishing dist-tag with NPM_TOKEN', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    const base = environment(cwd, registry)
+    base.env.NPM_ID_TOKEN = 'identity'
+    const logs: string[] = []
+
+    const result = await runRelease({ branch: 'main' }, {
+        ...base,
+        log: (message) => logs.push(message),
+        fetch: async (input, init) => input.includes('/oidc/token/exchange/package/')
+            ? Response.json({ token: 'oidc' })
+            : registry.fetch(input, init),
+        run: async (command, args, options) => {
+            const token = command === 'npm' && args[0] === 'dist-tag'
+                ? /_authToken=(\S+)/.exec(fs.readFileSync(options.env.NPM_CONFIG_USERCONFIG!, 'utf8'))![1]
+                : undefined
+            if (token === 'oidc') throw new Error('403 Forbidden')
+            return registry.run(command, args, options)
+        }
+    })
+    expect(result.status).toBe('released')
+    expect(registry.packuments.get('@fixture/core')!['dist-tags']).toEqual({ latest: '1.0.1' })
+    expect(logs).toContainEqual(expect.stringContaining('retrying with NPM_TOKEN'))
+})
+
+test('runs npm outside the repository with project npmrc settings and the token last', async () => {
+    const cwd = createRepo()
+    write(cwd, '.npmrc', '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\nfund=false\n')
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    const base = environment(cwd, registry)
+    base.env.NODE_AUTH_TOKEN = 'XXXXX-XXXXX-XXXXX-XXXXX'
+    const npm: Array<{ cwd: string, config: string }> = []
+
+    await runRelease({ branch: 'main' }, {
+        ...base,
+        run: async (command, args, options) => {
+            if (command === 'npm' && args[0] === 'publish') npm.push({ cwd: options.cwd, config: fs.readFileSync(options.env.NPM_CONFIG_USERCONFIG!, 'utf8') })
+            return registry.run(command, args, options)
+        }
+    })
+    expect(npm).toHaveLength(2)
+    expect(path.relative(cwd, npm[0].cwd).startsWith('..')).toBe(true)
+    expect(npm[0].config).toContain('fund=false')
+    expect(npm[0].config.trim().endsWith('//registry.npmjs.org/:_authToken=npm-token')).toBe(true)
+})
+
+test('reads registries and auth like npm', () => {
+    const scoped = { name: '@fixture/core' }
+    expect(getRegistry(scoped, {}, '@fixture:registry=https://npm.pkg.github.com\n')).toBe('https://npm.pkg.github.com/')
+    expect(getRegistry(scoped, { npm_config_registry: 'https://registry.example.com' })).toBe('https://registry.example.com/')
+    expect(getRegistry({ name: 'x', publishConfig: { registry: 'https://a.example.com' } }, {}, 'registry=https://b.example.com')).toBe('https://a.example.com/')
+    expect(hasRegistryAuth('_authToken=npm_real', officialRegistry, {})).toBe(false)
+    expect(hasRegistryAuth('//registry.npmjs.org/:_authToken=${TOKEN?}', officialRegistry, { TOKEN: 'npm_real' })).toBe(true)
+    expect(hasRegistryAuth('//registry.npmjs.org/:username=me\n//registry.npmjs.org/:_password=c2VjcmV0', officialRegistry, {})).toBe(true)
+    expect(hasRegistryAuth('# //registry.npmjs.org/:_authToken=npm_real', officialRegistry, {})).toBe(false)
+})
+
+test('refuses shallow clones and a branch that is not checked out', async () => {
+    const source = createRepo()
+    commit(source, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const shallow = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-shallow-'))
+    git(shallow, 'clone', '-q', '--depth', '1', `file://${source}`, '.')
+    await expect(planRelease({ branch: 'main' }, { cwd: shallow, env: {} })).rejects.toThrow(/shallow clone/)
+
+    await expect(planRelease({}, { cwd: source, env: { GITHUB_REF_NAME: 'beta' } })).rejects.toThrow(/GITHUB_REF_NAME is beta, but main is checked out/)
+})
+
+test('resumes by pushing the tag and targeting the commit, ignoring floating tags', async () => {
+    const cwd = createRepo()
+    const head = commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    git(cwd, 'tag', 'v1')
+    git(cwd, 'tag', 'v1.0.1')
+    const registry = createRegistry()
+
+    const result = await runRelease({ branch: 'main' }, environment(cwd, registry))
+    expect(result.status).toBe('resumed')
+    expect(registry.commands).toContainEqual(['git', 'push', '--no-verify', 'origin', 'refs/tags/v1.0.1'])
+    expect(registry.releases).toEqual([expect.objectContaining({ tag_name: 'v1.0.1', target_commitish: head, make_latest: 'true' })])
+})
+
+test('resumes a prerelease with its own number and an older stable release without making it latest', async () => {
+    // A rerun of an older job after a newer release of the same channel.
+    const beta = createRepo()
+    git(beta, 'checkout', '-q', '-b', 'beta')
+    commit(beta, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    git(beta, 'tag', 'v1.0.1-beta.1')
+    commit(beta, 'Fix(Core): Repair it again', { 'packages/core/index.js': 'export const core = 3\n' })
+    git(beta, 'tag', 'v1.0.1-beta.2')
+    git(beta, 'checkout', '-q', 'HEAD~1')
+    const betaRegistry = createRegistry()
+    expect((await runRelease({ branch: 'beta' }, environment(beta, betaRegistry))).status).toBe('resumed')
+    expect(betaRegistry.releases).toEqual([expect.objectContaining({ tag_name: 'v1.0.1-beta.1', make_latest: 'false' })])
+
+    const main = createRepo()
+    commit(main, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    git(main, 'tag', 'v1.0.1')
+    commit(main, 'Fix(Core): Repair it again', { 'packages/core/index.js': 'export const core = 3\n' })
+    git(main, 'tag', 'v1.0.2')
+    git(main, 'checkout', '-q', 'HEAD~1')
+    const mainRegistry = createRegistry()
+    expect((await runRelease({ branch: 'main' }, environment(main, mainRegistry))).status).toBe('resumed')
+    expect(mainRegistry.releases).toEqual([expect.objectContaining({ tag_name: 'v1.0.1', make_latest: 'false' })])
+})
+
+test('skips a commit that a newer release already covers', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    commit(cwd, 'Fix(Core): Repair it again', { 'packages/core/index.js': 'export const core = 3\n' })
+    git(cwd, 'tag', 'v1.0.1')
+    git(cwd, 'checkout', '-q', 'HEAD~1')
+    const registry = createRegistry()
+
+    const result = await runRelease({ branch: 'main' }, environment(cwd, registry))
+    expect(result.status).toBe('none')
+    expect(registry.published).toEqual([])
+})
+
+test('reports GitHub API errors other than a missing release', async () => {
+    const cwd = createRepo()
+    const logs: string[] = []
+    const env = environment(cwd, createRegistry(), logs)
+    await expect(publishGitHubRelease({
+        ...env,
+        fetch: async () => new Response('Bad credentials', { status: 401 })
+    }, { tag: 'v1.0.1', notes: '', prerelease: false })).rejects.toThrow(/Could not check the GitHub release v1\.0\.1: 401 Bad credentials/)
+})
+
+test('orders packages without peers, rejects duplicate names, and ships a published root with workspaces', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-packages-'))
+    write(cwd, 'package.json', JSON.stringify({ name: 'root', publishConfig: { access: 'public' }, workspaces: ['packages/*'] }))
+    write(cwd, 'packages/a/package.json', JSON.stringify({ name: 'a', dependencies: { b: '*' }, publishConfig: { access: 'public' } }))
+    write(cwd, 'packages/b/package.json', `\uFEFF${JSON.stringify({ name: 'b', peerDependencies: { a: '*' }, publishConfig: { access: 'public' } })}`)
+    expect(getReleasePackages(cwd).map(({ dir }) => dir)).toEqual(['.', 'packages/b', 'packages/a'])
+
+    write(cwd, 'packages/c/package.json', JSON.stringify({ name: 'a', publishConfig: { access: 'public' } }))
+    expect(() => getReleasePackages(cwd)).toThrow(/packages\/a\/package\.json and packages\/c\/package\.json are both named a/)
+})
+
+test('refuses scoped packages without access and tarballs with local protocols', async () => {
+    const scoped = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-scoped-'))
+    git(scoped, 'init', '-q', '-b', 'main')
+    git(scoped, 'config', 'user.email', 'fixture@example.com')
+    git(scoped, 'config', 'user.name', 'Fixture')
+    commit(scoped, 'Fix: Initial release', { 'package.json': JSON.stringify({ name: '@fixture/single' }) })
+    await expect(runRelease({ branch: 'main' }, environment(scoped, createRegistry()))).rejects.toThrow(/@fixture\/single is scoped/)
+
+    const cwd = createRepo()
+    const cli = JSON.parse(fs.readFileSync(path.join(cwd, 'packages/cli/package.json'), 'utf8'))
+    cli.dependencies['@fixture/core'] = 'file:../core'
+    commit(cwd, 'Fix(CLI): Link the core', { 'packages/cli/package.json': JSON.stringify(cli, null, 4) })
+    await expect(runRelease({ branch: 'main' }, environment(cwd, createRegistry()))).rejects.toThrow(/keeps `@fixture\/core: file:\.\.\/core`/)
+})
+
+test('packs without credentials in the environment', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    const base = environment(cwd, registry)
+    const packEnvs: NodeJS.ProcessEnv[] = []
+    await runRelease({ branch: 'main' }, {
+        ...base,
+        run: async (command, args, options) => {
+            if (args[0] === 'pack') packEnvs.push(options.env)
+            return registry.run(command, args, options)
+        }
+    })
+    expect(packEnvs).toHaveLength(2)
+    for (const env of packEnvs) expect([env.NPM_TOKEN, env.GITHUB_TOKEN]).toEqual([undefined, undefined])
+})
+
+test('retries transient registry errors and accepts a version a stale cache hid', async () => {
+    const cwd = createRepo()
+    const head = commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    let failures = 2
+    let hidden = true
+    const result = await runRelease({ branch: 'main' }, {
+        ...environment(cwd, registry),
+        fetch: async (input, init) => {
+            if (input.startsWith(officialRegistry) && failures > 0) {
+                failures--
+                return new Response('', { status: 503 })
+            }
+            if (input.endsWith('@fixture%2fcore') && hidden) return new Response('', { status: 404 })
+            return registry.fetch(input, init)
+        },
+        run: async (command, args, options) => {
+            if (args[0] === 'publish' && args[1].includes(`${path.sep}0${path.sep}`)) {
+                // An earlier run published core; npm refuses to publish over it.
+                registry.packuments.set('@fixture/core', { 'dist-tags': { [stagingDistTag]: '1.0.1' }, versions: { '1.0.1': { gitHead: head } } })
+                hidden = false
+                throw new Error('npm error 403 You cannot publish over the previously published versions: 1.0.1.')
+            }
+            return registry.run(command, args, options)
+        }
+    })
+    expect(result.status).toBe('released')
+    expect(registry.published.map(({ manifest }) => manifest.name)).toEqual(['@fixture/cli'])
+})
+
+test('dry run reports what a release would stop at', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    write(cwd, 'packages/core/index.js', 'export const core = 3\n')
+    const logs: string[] = []
+    const result = await runRelease({ branch: 'main', dryRun: true }, environment(cwd, createRegistry(), logs))
+    expect(result.status).toBe('dry-run')
+    expect(logs).toContainEqual('! The working tree has changes; a release would stop here.')
 })

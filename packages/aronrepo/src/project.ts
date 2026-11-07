@@ -28,15 +28,24 @@ export interface PackageJson {
     [key: string]: unknown
 }
 
-export const configFileNames = ['aronrepo.config.js', 'aronrepo.config.mjs']
+/** Config files in lookup order. Node 22.18+ imports `.ts` files by stripping their types. */
+export const configFileNames = ['aronrepo.config.js', 'aronrepo.config.mjs', 'aronrepo.config.cjs', 'aronrepo.config.ts', 'aronrepo.config.mts', 'aronrepo.config.cts']
 
 function toPosixPath(value: string) {
     return value.split(path.sep).join('/')
 }
 
-function readJson<T>(file: string) {
-    return JSON.parse(fs.readFileSync(file, 'utf8')) as T
+/** Reads JSON like npm does, accepting a UTF-8 byte order mark, and names the file when it is invalid. */
+export function readJsonFile<T>(file: string) {
+    const content = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')
+    try {
+        return JSON.parse(content) as T
+    } catch (error) {
+        throw new Error(`${file} is not valid JSON: ${(error as Error).message}`, { cause: error })
+    }
 }
+
+const readJson = readJsonFile
 
 export function findConfigFile(cwd = process.cwd()) {
     return configFileNames
@@ -59,7 +68,10 @@ function readPNPMWorkspaces(cwd: string) {
     const workspacePath = path.join(cwd, 'pnpm-workspace.yaml')
     if (!fs.existsSync(workspacePath)) return undefined
 
-    const workspace = loadYaml(fs.readFileSync(workspacePath, 'utf8')) as { packages?: string[] } | undefined
+    const content = fs.readFileSync(workspacePath, 'utf8')
+    // js-yaml 5 rejects an empty document, such as a file with only comments.
+    if (!content.split('\n').some((line) => line.trim() && !line.trim().startsWith('#'))) return undefined
+    const workspace = loadYaml(content) as { packages?: string[] } | null | undefined
     return workspace?.packages
 }
 
@@ -99,6 +111,22 @@ export function readWorkspacePackage(cwd: string, workspace: string) {
     return readJson<PackageJson>(path.join(cwd, workspace, 'package.json'))
 }
 
+/**
+ * Directories of the packages that ship: public, non-private workspace packages,
+ * and the root package when it is published too. A root package without
+ * workspaces ships unless it is private; with workspaces it needs
+ * `publishConfig.access: "public"` like the others.
+ */
+export function queryReleaseDirs(cwd = process.cwd()) {
+    const dirs = queryPublicWorkspaceDirs(cwd)
+    const rootFile = path.join(cwd, 'package.json')
+    if (dirs.includes('.') || !fs.existsSync(rootFile)) return dirs
+    const root = readJson<PackageJson>(rootFile)
+    const hasWorkspaces = readWorkspacePatterns(cwd).length > 0
+    if (root.name && !root.private && (!hasWorkspaces || root.publishConfig?.access === 'public')) return ['.', ...dirs]
+    return dirs
+}
+
 /** Workspace directories whose package is published to npm: public and not private. */
 export function queryPublicWorkspaceDirs(cwd = process.cwd()) {
     return queryWorkspaceDirs(readWorkspacePatterns(cwd), cwd)
@@ -121,15 +149,9 @@ export function resolveReleasePaths(cwd = process.cwd(), policy?: Pick<ReleasePo
         return { include: policy.paths.include, exclude: policy.paths.exclude ?? defaultReleasePathExcludes }
     }
     const exclude = policy?.paths?.exclude ?? defaultReleasePathExcludes
-    const publicWorkspaces = queryPublicWorkspaceDirs(cwd)
-    if (publicWorkspaces.length) {
-        return { include: publicWorkspaces.map((dir) => dir === '.' ? '**' : `${dir}/**`), exclude }
-    }
-    const rootPackage = path.join(cwd, 'package.json')
-    if (!readWorkspacePatterns(cwd).length && fs.existsSync(rootPackage) && !readJson<PackageJson>(rootPackage).private) {
-        return { include: ['**'], exclude }
-    }
-    return undefined
+    const dirs = queryReleaseDirs(cwd)
+    if (!dirs.length) return undefined
+    return { include: dirs.includes('.') ? ['**'] : dirs.map((dir) => `${dir}/**`), exclude }
 }
 
 export type PackageManager = 'bun' | 'pnpm' | 'yarn' | 'npm'
@@ -204,7 +226,32 @@ export async function loadProjectPolicy(cwd = process.cwd(), overrides: Partial<
 }
 
 function git(cwd: string, args: string[]) {
-    return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+    if (!fs.existsSync(cwd)) throw new Error(`${cwd} does not exist.`)
+    try {
+        return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] })
+    } catch (error) {
+        const { stderr, code } = error as { stderr?: string, code?: string }
+        if (code === 'ENOENT') throw new Error('git is not installed or not on PATH.', { cause: error })
+        throw new Error(`\`git ${args.join(' ')}\` failed: ${stderr?.trim() || (error as Error).message}`, { cause: error })
+    }
+}
+
+/** The repository root that contains `cwd`, or `cwd` itself outside a git repository. */
+export function getRepositoryRoot(cwd = process.cwd()) {
+    try {
+        return git(cwd, ['rev-parse', '--show-toplevel']).trim() || cwd
+    } catch {
+        return cwd
+    }
+}
+
+/** A git config value, or `undefined` when it is not set. */
+export function getGitConfig(cwd: string, key: string) {
+    try {
+        return git(cwd, ['config', '--get', key]).trim() || undefined
+    } catch {
+        return undefined
+    }
 }
 
 /**
@@ -253,13 +300,31 @@ export function getRangeCommits(cwd: string, from: string | undefined, to = 'HEA
         })
 }
 
-/** Latest `v*` version tag reachable from `ref`, or `undefined` when there is none. */
+/**
+ * Latest `v*` version tag reachable from `ref`, or `undefined` when there is none.
+ * A tag on `ref` itself does not count, so `explain --to v1.1.0` explains v1.1.0.
+ */
 export function getLatestTag(cwd: string, ref = 'HEAD') {
     try {
-        return git(cwd, ['describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*', ref]).trim() || undefined
+        return git(cwd, ['describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*', `${ref}^`]).trim() || undefined
     } catch {
         return undefined
     }
+}
+
+/** `v*` tags, optionally only those merged into `ref`; none when `ref` does not exist, such as the parent of a root commit. */
+export function getVersionTags(cwd: string, mergedInto?: string) {
+    try {
+        return splitPaths(git(cwd, ['tag', '--list', 'v*', ...(mergedInto ? ['--merged', mergedInto] : [])]).replace(/\n/g, '\0'))
+    } catch {
+        return []
+    }
+}
+
+/** The checked-out branch, or `undefined` on a detached HEAD. */
+export function getCurrentBranch(cwd: string) {
+    const branch = git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']).trim()
+    return branch === 'HEAD' ? undefined : branch
 }
 
 /** Resolves the release of a commit range with the repository's policy and release paths. */
