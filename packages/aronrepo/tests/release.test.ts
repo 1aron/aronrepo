@@ -770,3 +770,38 @@ test('a dry run on a tagged commit previews finishing that release', async () =>
     await runRelease({ branch: 'main', dryRun: true, expectVersion: '1.0.2' }, environment(cwd, registry, logs))
     expect(logs).toContain('! This release is 1.0.1, not the expected 1.0.2. Review the plan again. A release would stop here.')
 })
+
+test('reads a restricted package with NPM_TOKEN and stops before publishing without it', async () => {
+    // A single-package repository ships its root package, restricted or not.
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-restricted-'))
+    git(cwd, 'init', '-q', '-b', 'main')
+    git(cwd, 'config', 'user.email', 'fixture@example.com')
+    git(cwd, 'config', 'user.name', 'Fixture')
+    git(cwd, 'config', 'commit.gpgsign', 'false')
+    git(cwd, 'config', 'tag.gpgsign', 'false')
+    commit(cwd, 'Chore: Initialize fixture', {
+        'package.json': JSON.stringify({ name: '@fixture/private', version: '0.0.0', files: ['index.js'], publishConfig: { access: 'restricted' } }, null, 4),
+        'index.js': 'export const value = 1\n'
+    })
+    git(cwd, 'tag', 'v1.0.0')
+    commit(cwd, 'Fix: Repair the value', { 'index.js': 'export const value = 2\n' })
+    const registry = createRegistry()
+
+    const withoutToken = environment(cwd, registry)
+    delete withoutToken.env.NPM_TOKEN
+    withoutToken.env.NPM_ID_TOKEN = 'oidc-identity'
+    await expect(runRelease({ branch: 'main' }, withoutToken)).rejects.toThrow('@fixture/private is restricted, so aronrepo needs NPM_TOKEN or .npmrc auth')
+    expect(registry.published).toEqual([])
+
+    const reads = new Set<string | undefined>()
+    const base = environment(cwd, registry)
+    const result = await runRelease({ branch: 'main' }, {
+        ...base,
+        fetch: async (input, init) => {
+            if (input === `${officialRegistry}@fixture%2fprivate`) reads.add(new Headers(init?.headers).get('authorization') ?? undefined)
+            return registry.fetch(input, init)
+        }
+    })
+    expect(result.status).toBe('released')
+    expect([...reads]).toEqual(['Bearer npm-token'])
+})

@@ -334,23 +334,24 @@ function isTransient(status: number) {
 
 /**
  * Auth to read a registry: the `.npmrc` token or basic auth of that registry, such as the
- * `${NODE_AUTH_TOKEN}` that actions/setup-node writes, then `NPM_TOKEN` for private registries.
+ * `${NODE_AUTH_TOKEN}` that actions/setup-node writes, then `NPM_TOKEN` for private registries
+ * and restricted packages.
  */
-function readAuthorization(environment: ReleaseEnvironment, registry: string, npmrc: string) {
+function readAuthorization(environment: ReleaseEnvironment, registry: string, npmrc: string, restricted = false) {
     const nerfed = nerfDart(registry)
     const usable = (value: string | undefined) => value && value !== placeholderToken ? value : undefined
     const token = usable(readNpmrcValue(npmrc, `${nerfed}:_authToken`, environment.env))
     if (token) return `Bearer ${token}`
     const auth = usable(readNpmrcValue(npmrc, `${nerfed}:_auth`, environment.env))
     if (auth) return `Basic ${auth}`
-    // The public npm registry needs no auth to read public packages.
-    if (registry !== officialRegistry && environment.env.NPM_TOKEN) return `Bearer ${environment.env.NPM_TOKEN}`
+    // The public npm registry needs no auth to read public packages, only restricted ones.
+    if ((registry !== officialRegistry || restricted) && environment.env.NPM_TOKEN) return `Bearer ${environment.env.NPM_TOKEN}`
     return undefined
 }
 
-async function readPackument(environment: ReleaseEnvironment, registry: string, name: string, npmrc = ''): Promise<Packument | undefined> {
+async function readPackument(environment: ReleaseEnvironment, registry: string, name: string, npmrc = '', restricted = false): Promise<Packument | undefined> {
     const headers: Record<string, string> = { accept: 'application/json', 'cache-control': 'no-cache' }
-    const authorization = readAuthorization(environment, registry, npmrc)
+    const authorization = readAuthorization(environment, registry, npmrc, restricted)
     if (authorization) headers.authorization = authorization
     for (let attempt = 1; ; attempt++) {
         let response: Response
@@ -576,9 +577,9 @@ function validatePackedManifest(manifest: PackageJson, pkg: ReleasePackage, vers
     }
 }
 
-async function waitForVersion(environment: ReleaseEnvironment, registry: string, name: string, version: string, npmrc = '') {
+async function waitForVersion(environment: ReleaseEnvironment, registry: string, name: string, version: string, npmrc = '', restricted = false) {
     for (let attempt = 1; attempt <= 30; attempt++) {
-        const published = (await readPackument(environment, registry, name, npmrc))?.versions?.[version]
+        const published = (await readPackument(environment, registry, name, npmrc, restricted))?.versions?.[version]
         if (published) return published
         await environment.wait(10_000)
     }
@@ -890,6 +891,13 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         return `${user}\n${project}`
     })()
     const registryOf = (pkg: ReleasePackage) => getRegistry(pkg.manifest, environment.env, npmrc)
+    // A restricted package is a 404 to a read without auth, as if it were never published.
+    const isRestricted = (pkg: ReleasePackage) => pkg.manifest.publishConfig?.access === 'restricted'
+    for (const pkg of plan.packages) {
+        if (isRestricted(pkg) && !readAuthorization(environment, registryOf(pkg), npmrc, true)) {
+            throw new Error(`${pkg.name} is restricted, so aronrepo needs NPM_TOKEN or .npmrc auth for ${registryOf(pkg)} to read it; npm trusted publishing only publishes.`)
+        }
+    }
 
     // A version published from another commit without its tag comes from an interrupted
     // release; npm never reuses a version, so this release takes the next free one.
@@ -897,7 +905,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
     for (let attempt = 0; ; attempt++) {
         const taken: string[] = []
         for (const pkg of plan.packages) {
-            const published = (await readPackument(environment, registryOf(pkg), pkg.name, npmrc))?.versions?.[version]
+            const published = (await readPackument(environment, registryOf(pkg), pkg.name, npmrc, isRestricted(pkg)))?.versions?.[version]
             if (!published || published.gitHead === plan.head) continue
             if (!published.gitHead) {
                 throw new Error(`${pkg.name}@${version} is already published without a gitHead, so aronrepo cannot tell which commit it came from. Tag that commit ${toVersionTag(version)}, or publish a newer version.`)
@@ -923,7 +931,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
     const { tag, notes, channel } = { tag: plan.tag, notes: plan.notes, channel: plan.channel }
 
     for (const pkg of plan.packages) {
-        const packument = await readPackument(environment, registryOf(pkg), pkg.name, npmrc)
+        const packument = await readPackument(environment, registryOf(pkg), pkg.name, npmrc, isRestricted(pkg))
         const current = packument?.['dist-tags']?.[channel.distTag]
         if (current && semver.valid(current) && semver.gt(current, version)) {
             throw new Error(`${pkg.name} has ${current} on ${channel.distTag}, newer than ${version}. Tag the commit of ${current} as ${toVersionTag(current)} so releases continue from it.`)
@@ -998,7 +1006,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
 
         for (const pkg of plan.packages) {
             const registry = registryOf(pkg)
-            const isPublished = async () => (await readPackument(environment, registry, pkg.name, npmrc))?.versions?.[version]?.gitHead === plan.head
+            const isPublished = async () => (await readPackument(environment, registry, pkg.name, npmrc, isRestricted(pkg)))?.versions?.[version]?.gitHead === plan.head
             if (await isPublished()) {
                 log(`✓ ${pkg.name}@${version} is already published from this commit.`)
                 continue
@@ -1020,14 +1028,14 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
 
         for (const pkg of plan.packages) {
             const registry = registryOf(pkg)
-            const published = await waitForVersion(environment, registry, pkg.name, version, npmrc)
+            const published = await waitForVersion(environment, registry, pkg.name, version, npmrc, isRestricted(pkg))
             if (pkg.manifest.publishConfig?.provenance && !published.dist?.attestations) {
                 log(`! ${pkg.name}@${version} has no provenance attestation on ${registry}.`)
             }
         }
 
         for (const pkg of plan.packages) {
-            const tags = (await readPackument(environment, registryOf(pkg), pkg.name, npmrc))?.['dist-tags'] ?? {}
+            const tags = (await readPackument(environment, registryOf(pkg), pkg.name, npmrc, isRestricted(pkg)))?.['dist-tags'] ?? {}
             if (tags[channel.distTag] !== version) {
                 await runNpm(pkg, ['dist-tag', 'add', `${pkg.name}@${version}`, channel.distTag])
             }
