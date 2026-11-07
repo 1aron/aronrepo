@@ -4,6 +4,9 @@ import {
     agentsBlockEnd,
     agentsBlockStart,
     commits,
+    getBaseTag,
+    getNextVersion,
+    getReleaseChannel,
     getReleaseType,
     legacyCommits,
     defaultReleasePathExcludes,
@@ -13,16 +16,25 @@ import {
     renderAgentsBlock,
     resolveCommitRelease,
     resolveRelease,
+    toVersionTag,
     type CommitDecision,
     type CommitViolation,
     type ReleaseMode
 } from './index'
 import {
+    detectPackageManager,
+    getCliCommand,
+    getCommitFiles,
+    getCurrentBranch,
     getDiffFiles,
-    getLatestTag,
+    getGitConfig,
     getRangeCommits,
+    getRepositoryRoot,
     getStagedFiles,
+    getVersionTags,
     loadProjectPolicy,
+    readJsonFile,
+    type PackageManager,
     type ProjectPolicy
 } from './project'
 import { getReleasePackages, planRelease, runRelease, type ReleasePlan } from './release'
@@ -33,19 +45,28 @@ export interface CommandResult {
 }
 
 export interface CommonOptions {
+    /** Repository root. Defaults to the root of the git repository around the current directory. */
     cwd?: string
     mode?: ReleaseMode
     json?: boolean
 }
 
-// Messages that git or GitHub write for you; commitlint ignores the same ones by default.
+function resolveCwd(options: CommonOptions) {
+    return options.cwd ? path.resolve(options.cwd) : getRepositoryRoot(process.cwd())
+}
+
+function usage(message: string): CommandResult {
+    return { code: 2, output: message }
+}
+
+// Messages that git, GitHub, GitLab, or Bitbucket write for you, in their exact formats.
 const ignoredMessagePatterns = [
-    /^Merge pull request /,
-    /^Merge (?:branch|remote-tracking branch|tag) /,
-    /^Merge .+ into .+/,
-    /^Merged .+ (?:in|into) .+/,
-    /^Automatic merge/,
-    /^Auto-merged .+ into .+/,
+    /^Merge pull request #\d+ from \S+/,
+    /^Merge (?:branch|branches|remote-tracking branch|tag|commit) '[^']+'/,
+    /^Merge [0-9a-f]{7,40}(?: into \S+)?$/,
+    /^Merged in \S+ \(pull request #\d+\)/,
+    /^Automatic merge from /,
+    /^Auto-merged \S+ into \S+/,
     /^(?:fixup|squash|amend)! /,
     /^Initial commit$/
 ]
@@ -55,19 +76,29 @@ export function isIgnoredMessage(message: string) {
     return ignoredMessagePatterns.some((pattern) => pattern.test(header))
 }
 
-/** A commit message file without git's comments and, with `git commit -v`, without the diff below the scissors line. */
-export function readEditMessage(file: string) {
+function escapeRegExp(text: string) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * A commit message file without git's comments and, with `git commit -v`,
+ * without the diff below the scissors line. `commentChar` is git's
+ * `core.commentChar`; `auto` falls back to `#`.
+ */
+export function readEditMessage(file: string, commentChar = '#') {
+    const comment = commentChar && commentChar !== 'auto' ? commentChar : '#'
     return fs.readFileSync(file, 'utf8')
+        .replace(/^\uFEFF/, '')
         .replace(/\r\n/g, '\n')
-        .split(/^# -+ >8 -+$/m)[0]
+        .split(new RegExp(`^${escapeRegExp(comment)} -+ >8 -+$`, 'm'))[0]
         .split('\n')
-        .filter((line) => !line.startsWith('#'))
+        .filter((line) => !line.startsWith(comment))
         .join('\n')
         .trim()
 }
 
-async function project(options: CommonOptions): Promise<ProjectPolicy> {
-    return loadProjectPolicy(options.cwd ?? process.cwd(), options.mode ? { mode: options.mode } : {})
+async function project(cwd: string, options: CommonOptions): Promise<ProjectPolicy> {
+    return loadProjectPolicy(cwd, options.mode ? { mode: options.mode } : {})
 }
 
 function isError(violation: CommitViolation) {
@@ -83,8 +114,16 @@ function formatDecision(decision: CommitDecision) {
     return `${hash}${(decision.release || 'none').padEnd(5)}  ${decision.header}\n${decision.reasons.map((reason) => `       ${reason}`).join('\n')}`
 }
 
+/** Repository-relative POSIX paths, as git prints them. */
+function normalizeFiles(files: string[], cwd: string) {
+    return files.map((file) => {
+        const relative = path.isAbsolute(file) ? path.relative(cwd, file) : file
+        return relative.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '')
+    })
+}
+
 export interface CheckOptions extends CommonOptions {
-    /** Commit message file, as passed to a commit-msg hook. Uses staged files. */
+    /** Commit message file, as passed to a commit-msg hook, relative to `cwd`. Uses staged files. */
     edit?: string
     /** Commit message text. Uses staged files unless `files` is set. */
     message?: string
@@ -99,26 +138,55 @@ export interface CheckOptions extends CommonOptions {
 }
 
 export async function check(options: CheckOptions): Promise<CommandResult> {
-    const cwd = options.cwd ?? process.cwd()
-    const { policy, isReleasePath } = await project(options)
+    const modes = [
+        options.edit !== undefined && '--edit',
+        options.message !== undefined && '--message',
+        options.title !== undefined && '--title',
+        options.from !== undefined && '--from'
+    ].filter(Boolean)
+    if (!modes.length) return usage('Pass --edit <file>, --message <text>, --title <text>, or --from <ref>.')
+    if (modes.length > 1) return usage(`Pass only one of ${modes.join(', ')}.`)
+    if (options.to !== undefined && options.from === undefined) return usage('--to needs --from.')
+    if ((options.base !== undefined || options.head !== undefined) && options.title === undefined) return usage('--base and --head only apply to --title.')
+    if ((options.base === undefined) !== (options.head === undefined)) return usage('Pass --base and --head together.')
+    if (options.files && options.from !== undefined) return usage('--files does not apply to --from; each commit has its own files.')
+
+    const cwd = resolveCwd(options)
+    const { policy, isReleasePath } = await project(cwd, options)
     const pathOptions = isReleasePath ? { isReleasePath } : {}
-    let entries: Array<{ message: string, hash?: string, files?: string[], label: string }>
+    const files = options.files && normalizeFiles(options.files, cwd)
+    const notes: string[] = []
+    let entries: Array<{ message: string, hash?: string, files?: string[], label: string, ignorable: boolean }>
 
     if (options.title !== undefined) {
-        const files = options.files ?? (options.base && options.head ? getDiffFiles(cwd, options.base, options.head) : undefined)
-        entries = [{ message: options.title, ...(files ? { files } : {}), label: 'PR title' }]
-    } else if (options.edit || options.message !== undefined) {
-        const message = options.edit ? readEditMessage(path.resolve(cwd, options.edit)) : options.message!
-        entries = [{ message, files: options.files ?? getStagedFiles(cwd), label: 'Commit message' }]
-    } else if (options.from) {
-        entries = getRangeCommits(cwd, options.from, options.to ?? 'HEAD')
-            .map((commit) => ({ ...commit, label: commit.hash.slice(0, 9) }))
+        const diff = files ?? (options.base && options.head ? getDiffFiles(cwd, options.base, options.head) : undefined)
+        if (!diff && isReleasePath) notes.push('! Release paths are not checked; pass --base and --head, or --files.')
+        // A squash merge turns the title into a commit header, so git's own messages are no excuse here.
+        entries = [{ message: options.title, ...(diff ? { files: diff } : {}), label: 'PR title', ignorable: false }]
+    } else if (options.edit !== undefined || options.message !== undefined) {
+        let message = options.message ?? ''
+        if (options.edit !== undefined) {
+            message = readEditMessage(path.resolve(cwd, options.edit), getGitConfig(cwd, 'core.commentChar'))
+            // git aborts a commit with an empty message after the hook; let it.
+            if (!message) return { code: 0, output: 'The commit message is empty; git aborts the commit.' }
+        }
+        let changed = files ?? getStagedFiles(cwd)
+        // `git commit --amend` with nothing staged and a reword in `git rebase -i` keep the files of HEAD.
+        if (!changed.length && !files && options.edit !== undefined) {
+            try {
+                changed = getCommitFiles(cwd, 'HEAD')
+            } catch {
+                changed = []
+            }
+        }
+        entries = [{ message, files: changed, label: 'Commit message', ignorable: true }]
     } else {
-        return { code: 2, output: 'Pass --edit <file>, --message <text>, --title <text>, or --from <ref>.' }
+        entries = getRangeCommits(cwd, options.from, options.to ?? 'HEAD')
+            .map((commit) => ({ ...commit, label: commit.hash.slice(0, 9), ignorable: true }))
     }
 
     const results = entries
-        .filter(({ message }) => !isIgnoredMessage(message))
+        .filter(({ message, ignorable }) => !ignorable || !isIgnoredMessage(message))
         .map((entry) => ({
             entry,
             decision: resolveCommitRelease(parseCommit(entry.message, entry.hash), policy, {
@@ -131,7 +199,11 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
     if (options.json) {
         return {
             code: failures.length ? 1 : 0,
-            output: JSON.stringify({ mode: policy.mode, results: results.map(({ entry, decision }) => ({ label: entry.label, ...decision })) }, null, 2)
+            output: JSON.stringify({
+                mode: policy.mode,
+                results: results.map(({ entry, decision }) => ({ label: entry.label, ...decision })),
+                ...(notes.length ? { notes } : {})
+            }, null, 2)
         }
     }
     if (!failures.length) {
@@ -142,6 +214,7 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
                     `✓ ${entry.label}: ${decision.release || 'none'} ← ${decision.header}`,
                     ...decision.violations.map(formatViolation)
                 ].join('\n')),
+                ...notes,
                 `${results.length} ${results.length === 1 ? 'header follows' : 'headers follow'} the Aronrepo ${policy.mode} release policy.`
             ].join('\n')
         }
@@ -150,6 +223,7 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
         code: 1,
         output: [
             ...failures.map(({ entry, decision }) => `${entry.label}: ${decision.header}\n${decision.violations.map(formatViolation).join('\n')}`),
+            ...notes,
             '',
             'Run `aronrepo policy` to see which types release and which paths ship.'
         ].join('\n')
@@ -162,8 +236,8 @@ export interface ExplainOptions extends CommonOptions {
 }
 
 export async function explain(options: ExplainOptions): Promise<CommandResult> {
-    const cwd = options.cwd ?? process.cwd()
-    const { policy, isReleasePath, releasePaths } = await project(options)
+    const cwd = resolveCwd(options)
+    const { policy, isReleasePath, releasePaths } = await project(cwd, options)
     let plan: Pick<ReleasePlan, 'release' | 'commits'> & Partial<ReleasePlan>
     let from: string | undefined
     let to = options.to ?? 'HEAD'
@@ -174,8 +248,15 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
         from = plan.from
         to = 'HEAD'
     } else {
-        from = options.from ?? getLatestTag(cwd, to)
-        plan = resolveRelease(getRangeCommits(cwd, from, to), policy, isReleasePath ? { isReleasePath } : {})
+        // The channel's base tag before `to`, so a tag on `to` itself is explained instead of skipped.
+        const channel = getReleaseChannel(getCurrentBranch(cwd)) ?? getReleaseChannel('main')!
+        const reachable = getVersionTags(cwd, `${to}^`)
+        from = options.from ?? getBaseTag(channel, reachable)
+        const decision = resolveRelease(getRangeCommits(cwd, from, to), policy, isReleasePath ? { isReleasePath } : {})
+        const version = decision.release && options.from === undefined
+            ? getNextVersion(channel, decision.release, { reachable, all: getVersionTags(cwd) })
+            : undefined
+        plan = { ...decision, channel, ...(version ? { version, tag: toVersionTag(version) } : {}) }
     }
 
     if (options.json) {
@@ -218,7 +299,7 @@ export interface ReleaseCommandOptions extends CommonOptions {
 }
 
 export async function release(options: ReleaseCommandOptions): Promise<CommandResult> {
-    const cwd = options.cwd ?? process.cwd()
+    const cwd = resolveCwd(options)
     const result = await runRelease({
         ...(options.mode ? { mode: options.mode } : {}),
         ...(options.branch ? { branch: options.branch } : {}),
@@ -233,15 +314,19 @@ export async function release(options: ReleaseCommandOptions): Promise<CommandRe
 }
 
 export async function policy(options: CommonOptions & { markdown?: boolean }): Promise<CommandResult> {
-    const resolved = await project(options)
+    if (options.json && options.markdown) return usage('Pass --json or --markdown, not both.')
+    const cwd = resolveCwd(options)
+    const resolved = await project(cwd, options)
     if (options.markdown) {
         return { code: 0, output: renderAgentsBlock(resolved.policy, { cli: resolved.cli, ...(resolved.releasePaths ? { releasePaths: resolved.releasePaths } : {}) }) }
     }
+    const table = getReleaseTable(resolved.policy)
     const data = {
         mode: resolved.policy.mode,
         configFile: resolved.configFile ? path.relative(resolved.cwd, resolved.configFile) : null,
         releasePaths: resolved.releasePaths ?? null,
-        releaseTable: getReleaseTable(resolved.policy),
+        // Plain names for machines; the Markdown backticks are for people.
+        releaseTable: Object.fromEntries(Object.entries(table).map(([level, rules]) => [level, rules.map((rule) => rule.replace(/`/g, ''))])),
         types: commits.map(({ type, scope, description, group }) => ({
             type,
             ...(scope ? { scope } : {}),
@@ -260,50 +345,71 @@ export async function policy(options: CommonOptions & { markdown?: boolean }): P
             `Release paths: ${data.releasePaths?.include ? data.releasePaths.include.join(', ') : 'every path'}`,
             ...(data.releasePaths?.include ? [`Excluded: ${(data.releasePaths.exclude ?? defaultReleasePathExcludes).join(', ')}`] : []),
             '',
-            `Major: ${data.releaseTable.major.join(', ') || '-'}`,
-            `Minor: ${data.releaseTable.minor.join(', ') || '-'}`,
-            `Patch: ${data.releaseTable.patch.join(', ') || '-'}`,
-            `None:  ${data.releaseTable.none.join(', ') || '-'}`,
+            `Major: ${table.major.join(', ') || '-'}`,
+            `Minor: ${table.minor.join(', ') || '-'}`,
+            `Patch: ${table.patch.join(', ') || '-'}`,
+            `None:  ${table.none.join(', ') || '-'}`,
             '',
             ...data.agent.ownerDecisions.map((rule) => `- ${rule}`)
         ].join('\n')
     }
 }
 
-export function replaceAgentsBlock(content: string, block: string) {
+/** Where the generated block is, `undefined` when there is none; throws when its markers are broken. */
+function findAgentsBlock(content: string) {
     const start = content.indexOf(agentsBlockStart)
-    const end = content.indexOf(agentsBlockEnd)
-    if (start !== -1 && end > start) {
-        return content.slice(0, start) + block + content.slice(end + agentsBlockEnd.length)
+    const firstEnd = content.indexOf(agentsBlockEnd)
+    if (start === -1 && firstEnd === -1) return undefined
+    const end = start === -1 ? -1 : content.indexOf(agentsBlockEnd, start)
+    if (start === -1 || end === -1 || firstEnd < start) {
+        throw new Error(`The Aronrepo commit policy markers are out of order. Keep one ${agentsBlockStart} followed by one ${agentsBlockEnd}.`)
     }
+    if (content.indexOf(agentsBlockStart, start + 1) !== -1 || content.indexOf(agentsBlockEnd, end + 1) !== -1) {
+        throw new Error('The Aronrepo commit policy block appears more than once. Keep one block.')
+    }
+    return { start, end: end + agentsBlockEnd.length }
+}
+
+export function replaceAgentsBlock(content: string, block: string) {
+    const found = findAgentsBlock(content)
+    if (found) return content.slice(0, found.start) + block + content.slice(found.end)
     return `${content.trimEnd()}${content.trim() ? '\n\n' : ''}${block}\n`
 }
 
 export function readAgentsBlock(content: string) {
-    const start = content.indexOf(agentsBlockStart)
-    const end = content.indexOf(agentsBlockEnd)
-    return start !== -1 && end > start ? content.slice(start, end + agentsBlockEnd.length) : undefined
+    try {
+        const found = findAgentsBlock(content)
+        return found ? content.slice(found.start, found.end) : undefined
+    } catch {
+        return undefined
+    }
 }
 
 export async function agents(options: CommonOptions & { file?: string, write?: boolean }): Promise<CommandResult> {
-    const resolved = await project(options)
-    const file = path.resolve(resolved.cwd, options.file ?? 'AGENTS.md')
-    const relative = path.relative(resolved.cwd, file)
+    const cwd = resolveCwd(options)
+    const resolved = await project(cwd, options)
+    const file = path.resolve(cwd, options.file ?? 'AGENTS.md')
+    const relative = path.relative(cwd, file)
     const block = renderAgentsBlock(resolved.policy, { cli: resolved.cli, ...(resolved.releasePaths ? { releasePaths: resolved.releasePaths } : {}) })
-    const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''
+    const raw = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''
+    // A Windows checkout may have CRLF line endings; compare without them and keep them on write.
+    const eol = raw.includes('\r\n') ? '\r\n' : '\n'
+    const content = raw.replace(/\r\n/g, '\n')
+    const result = (code: number, status: string, message: string): CommandResult => ({
+        code,
+        output: options.json ? JSON.stringify({ file: relative, status }, null, 2) : message
+    })
 
     if (options.write) {
         const next = replaceAgentsBlock(content || '# Agent Guide\n', block)
-        if (next === content) return { code: 0, output: `✓ ${relative} is up to date.` }
-        fs.writeFileSync(file, next)
-        return { code: 0, output: `✓ Wrote the Aronrepo commit policy block to ${relative}.` }
+        if (next === content) return result(0, 'current', `✓ ${relative} is up to date.`)
+        fs.mkdirSync(path.dirname(file), { recursive: true })
+        fs.writeFileSync(file, eol === '\n' ? next : next.replace(/\n/g, eol))
+        return result(0, 'written', `✓ Wrote the Aronrepo commit policy block to ${relative}.`)
     }
     const current = readAgentsBlock(content)
-    if (current === block) return { code: 0, output: `✓ ${relative} has the current Aronrepo commit policy block.` }
-    return {
-        code: 1,
-        output: `✗ ${relative} ${current ? 'has an outdated' : 'is missing the'} Aronrepo commit policy block. Run \`aronrepo agents --write\`.`
-    }
+    if (current === block) return result(0, 'current', `✓ ${relative} has the current Aronrepo commit policy block.`)
+    return result(1, current ? 'outdated' : 'missing', `✗ ${relative} ${current ? 'has an outdated' : 'is missing the'} Aronrepo commit policy block. Run \`${resolved.cli} agents --write\`.`)
 }
 
 interface DoctorCheck {
@@ -334,13 +440,31 @@ const legacyConfigFiles = [
     'commitlint.config.js', 'commitlint.config.mjs', 'commitlint.config.ts', '.commitlintrc', '.commitlintrc.js', '.commitlintrc.mjs', '.commitlintrc.json'
 ]
 
+function installCommand(packageManager: PackageManager) {
+    return {
+        bun: 'bun add -d aronrepo',
+        pnpm: 'pnpm add -D aronrepo',
+        yarn: 'yarn add -D aronrepo',
+        npm: 'npm install -D aronrepo'
+    }[packageManager]
+}
+
 export async function doctor(options: CommonOptions): Promise<CommandResult> {
-    const cwd = options.cwd ?? process.cwd()
+    const cwd = resolveCwd(options)
     const checks: DoctorCheck[] = []
     let resolved: ProjectPolicy | undefined
+    // An invalid package.json is reported below; fall back to npm for the hints.
+    const packageManager = (() => {
+        try {
+            return detectPackageManager(cwd)
+        } catch {
+            return 'npm'
+        }
+    })()
+    const cli = getCliCommand(packageManager)
 
     try {
-        resolved = await project(options)
+        resolved = await project(cwd, options)
         checks.push(resolved.configFile
             ? { status: 'pass', message: `Release mode ${resolved.policy.mode} from ${path.relative(cwd, resolved.configFile)}.` }
             : {
@@ -349,7 +473,7 @@ export async function doctor(options: CommonOptions): Promise<CommandResult> {
                 fix: 'Ask the repository owner whether releases are explicit (owner-controlled) or auto, then create aronrepo.config.js with `release.mode`.'
             })
     } catch (error) {
-        checks.push({ status: 'fail', message: `aronrepo.config.js failed to load: ${(error as Error).message}` })
+        checks.push({ status: 'fail', message: `The Aronrepo config failed to load: ${(error as Error).message}` })
     }
 
     if (resolved) {
@@ -362,11 +486,17 @@ export async function doctor(options: CommonOptions): Promise<CommandResult> {
             })
     }
 
-    const pkg = JSON.parse(readText(findFile(cwd, ['package.json'])) || '{}') as Record<string, Record<string, string> | undefined>
-    const dependencies = { ...pkg.dependencies, ...pkg.devDependencies }
+    let pkg: Record<string, unknown> = {}
+    try {
+        const file = findFile(cwd, ['package.json'])
+        if (file) pkg = readJsonFile<Record<string, unknown>>(file)
+    } catch (error) {
+        checks.push({ status: 'fail', message: (error as Error).message })
+    }
+    const dependencies = { ...pkg.dependencies as Record<string, string>, ...pkg.devDependencies as Record<string, string> }
     checks.push(dependencies.aronrepo
         ? { status: 'pass', message: 'aronrepo is installed.' }
-        : { status: 'fail', message: 'aronrepo is not a dependency.', fix: 'Install it as a dev dependency, for example `bun add -d aronrepo`.' })
+        : { status: 'fail', message: 'aronrepo is not a dependency.', fix: `Install it as a dev dependency: \`${installCommand(packageManager)}\`.` })
 
     const leftovers = [
         ...legacyDependencies.filter((name) => dependencies[name]),
@@ -382,30 +512,35 @@ export async function doctor(options: CommonOptions): Promise<CommandResult> {
 
     try {
         const releasePackages = getReleasePackages(cwd)
-        const rootRepository = (pkg as Record<string, unknown>).repository
-        const withoutRepository = releasePackages.filter(({ manifest }) => manifest.publishConfig?.provenance && !manifest.repository && !rootRepository)
+        // `aronrepo release` writes the root repository into workspace packages, so either one is enough.
+        const withoutRepository = releasePackages.filter(({ manifest }) => manifest.publishConfig?.provenance && !manifest.repository && !pkg.repository)
         checks.push(!releasePackages.length
             ? { status: 'warn', message: '`aronrepo release` finds no published package.', fix: 'Add `"publishConfig": { "access": "public" }` to each package that ships.' }
             : withoutRepository.length
-                ? { status: 'warn', message: `npm provenance needs a \`repository\` field: ${withoutRepository.map(({ name }) => name).join(', ')}.`, fix: 'Add `repository` to those package.json files.' }
+                ? { status: 'warn', message: `npm provenance needs a \`repository\` field: ${withoutRepository.map(({ name }) => name).join(', ')}.`, fix: 'Add `repository` to the root package.json.' }
                 : { status: 'pass', message: `\`aronrepo release\` publishes ${releasePackages.map(({ name }) => name).join(', ')}.` })
     } catch (error) {
         checks.push({ status: 'fail', message: (error as Error).message })
     }
 
-    const hook = readText(findFile(cwd, ['.husky/commit-msg']))
-    checks.push(hook.includes('aronrepo check')
-        ? { status: 'pass', message: '.husky/commit-msg runs aronrepo check.' }
-        : {
-            status: 'warn',
-            message: 'No commit-msg hook runs `aronrepo check`.',
-            fix: 'Add .husky/commit-msg with `aronrepo check --edit "$1"`.'
-        })
+    const hookFile = findFile(cwd, ['.husky/commit-msg'])
+    const hook = readText(hookFile).split(/\r?\n/).filter((line) => !line.trim().startsWith('#')).join('\n')
+    const hooksPath = getGitConfig(cwd, 'core.hooksPath')
+    if (!hook.includes('aronrepo check')) {
+        checks.push({ status: 'warn', message: 'No commit-msg hook runs `aronrepo check`.', fix: `Add .husky/commit-msg with \`${cli} check --edit "$1"\`.` })
+    } else if (!hooksPath?.replace(/\\/g, '/').startsWith('.husky')) {
+        checks.push({ status: 'warn', message: '.husky/commit-msg is not installed; git does not run it.', fix: 'Run `husky` once, for example from the `prepare` script, to set `core.hooksPath`.' })
+    } else {
+        checks.push({ status: 'pass', message: '.husky/commit-msg runs aronrepo check.' })
+    }
 
-    const agentsResult = await agents({ ...options, cwd })
-    checks.push(agentsResult.code === 0
-        ? { status: 'pass', message: 'AGENTS.md has the current commit policy block.' }
-        : { status: 'fail', message: agentsResult.output.replace(/^✗ /, ''), fix: 'aronrepo agents --write' })
+    // The policy block needs the config; a broken config is already reported above.
+    if (resolved) {
+        const agentsResult = await agents({ ...options, cwd, json: false })
+        checks.push(agentsResult.code === 0
+            ? { status: 'pass', message: 'AGENTS.md has the current commit policy block.' }
+            : { status: 'fail', message: agentsResult.output.replace(/^✗ /, '').replace(/ Run `.*`\.$/, ''), fix: `${resolved.cli} agents --write` })
+    }
 
     const failed = checks.some(({ status }) => status === 'fail')
     if (options.json) return { code: failed ? 1 : 0, output: JSON.stringify({ ok: !failed, checks }, null, 2) }

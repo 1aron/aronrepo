@@ -4,6 +4,18 @@ import os from 'node:os'
 import path from 'node:path'
 import { agents, check, doctor, explain, policy, release } from '../src/commands'
 
+const cliPath = path.join(import.meta.dirname, '../dist/cli.js')
+
+function runCli(args: string[], cwd?: string) {
+    try {
+        const stdout = execFileSync('node', [cliPath, ...args], { encoding: 'utf8', stdio: 'pipe', ...(cwd ? { cwd } : {}) })
+        return { code: 0, stdout, stderr: '' }
+    } catch (error) {
+        const { status, stdout, stderr } = error as { status: number, stdout: string, stderr: string }
+        return { code: status, stdout, stderr }
+    }
+}
+
 function write(cwd: string, file: string, content: string) {
     fs.mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true })
     fs.writeFileSync(path.join(cwd, file), content)
@@ -83,7 +95,7 @@ test('check validates a PR title against the PR diff', async () => {
 test('check validates every commit in a range and skips merge commits', async () => {
     const cwd = createRepo()
     commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
-    commit(cwd, 'Merge branch next', {})
+    commit(cwd, "Merge branch 'next'", {})
     await expect(check({ cwd, from: 'v1.0.0' })).resolves.toMatchObject({ code: 0 })
 
     commit(cwd, 'Improve(Site): Resize the photo', { 'site/photo.js': 'export {}' })
@@ -113,7 +125,7 @@ test('policy prints machine-readable release rules', async () => {
         mode: 'auto',
         configFile: 'aronrepo.config.js',
         releasePaths: { include: ['packages/core/**'] },
-        releaseTable: { minor: expect.arrayContaining(['`Add`']) },
+        releaseTable: { minor: expect.arrayContaining(['Add']), major: expect.arrayContaining(['BREAKING CHANGE: footer']) },
         types: expect.arrayContaining([expect.objectContaining({ type: 'Add', release: 'minor', group: 'Additions' })]),
         legacyTypes: expect.arrayContaining([{ type: 'Feat', replacement: 'Add' }])
     })
@@ -197,15 +209,105 @@ test('explain --to starts from the latest version tag, not any tag', async () =>
 })
 
 test('the CLI rejects unknown options and extra arguments with usage', () => {
-    const cli = path.join(import.meta.dirname, '../dist/cli.js')
-    const run = (...args: string[]) => {
-        try {
-            execFileSync('node', [cli, ...args], { encoding: 'utf8', stdio: 'pipe' })
-            return 0
-        } catch (error) {
-            return (error as { status: number }).status
-        }
-    }
-    expect(run('policy', '--nope')).toBe(2)
-    expect(run('policy', 'extra')).toBe(2)
+    expect(runCli(['policy', '--nope']).code).toBe(2)
+    expect(runCli(['policy', 'extra']).code).toBe(2)
+})
+
+test('check --edit keeps the files of HEAD for an amend or reword with nothing staged', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
+    write(cwd, '.git/COMMIT_EDITMSG', 'Fix(Core): Repair the cache\n')
+    await expect(check({ cwd, edit: '.git/COMMIT_EDITMSG' })).resolves.toMatchObject({ code: 0 })
+})
+
+test('check --edit reads core.commentChar and lets git abort an empty message', async () => {
+    const cwd = createRepo()
+    git(cwd, 'config', 'core.commentChar', ';')
+    write(cwd, 'packages/core/index.js', 'export {}')
+    git(cwd, 'add', '-A')
+    write(cwd, '.git/COMMIT_EDITMSG', 'Fix(Core): Repair the cache\n; Please enter the commit message\n; ------------------------ >8 ------------------------\n+BREAKING CHANGE: no\n')
+    const result = JSON.parse((await check({ cwd, edit: '.git/COMMIT_EDITMSG', json: true })).output)
+    expect(result.results[0]).toMatchObject({ header: 'Fix(Core): Repair the cache', violations: [] })
+
+    write(cwd, '.git/COMMIT_EDITMSG', '; only comments\n')
+    await expect(check({ cwd, edit: '.git/COMMIT_EDITMSG' })).resolves.toMatchObject({ code: 0, output: expect.stringContaining('git aborts the commit') })
+})
+
+test('check ignores only the exact merge messages git writes, never in PR titles', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Merge sort into utils', { 'packages/core/sort.js': 'export {}' })
+    const range = JSON.parse((await check({ cwd, from: 'v1.0.0', json: true })).output)
+    expect(range.results).toHaveLength(1)
+
+    await expect(check({ cwd, title: "Merge branch 'develop' into main", files: ['packages/core/a.js'] })).resolves.toMatchObject({ code: 1 })
+})
+
+test('check rejects conflicting modes and half a diff', async () => {
+    const cwd = createRepo()
+    await expect(check({ cwd, message: 'Chore: X', from: 'v1.0.0' })).resolves.toMatchObject({ code: 2, output: 'Pass only one of --message, --from.' })
+    await expect(check({ cwd, title: 'Chore: X', base: 'main' })).resolves.toMatchObject({ code: 2 })
+    await expect(check({ cwd, message: 'Chore: X', base: 'main', head: 'HEAD' })).resolves.toMatchObject({ code: 2 })
+    const unchecked = await check({ cwd, title: 'Fix(Site): Repair header' })
+    expect(unchecked).toMatchObject({ code: 0, output: expect.stringContaining('Release paths are not checked') })
+})
+
+test('check normalizes --files paths', async () => {
+    const cwd = createRepo()
+    const files = ['./packages/core/a.js', path.join(cwd, 'packages/core/b.js'), 'packages\\core\\c.js']
+    for (const file of files) await expect(check({ cwd, message: 'Fix(Core): Repair', files: [file] })).resolves.toMatchObject({ code: 0 })
+})
+
+test('agents keeps CRLF, refuses broken markers, creates folders, and prints JSON', async () => {
+    const cwd = createRepo()
+    await agents({ cwd, write: true })
+    const crlf = fs.readFileSync(path.join(cwd, 'AGENTS.md'), 'utf8').replace(/\n/g, '\r\n')
+    write(cwd, 'AGENTS.md', crlf)
+    await expect(agents({ cwd })).resolves.toMatchObject({ code: 0 })
+    await agents({ cwd, write: true, mode: 'auto' })
+    expect(fs.readFileSync(path.join(cwd, 'AGENTS.md'), 'utf8').replace(/\r\n/g, '')).not.toContain('\n')
+
+    write(cwd, 'AGENTS.md', '<!-- aronrepo:commit-policy:end -->\n<!-- aronrepo:commit-policy:start -->\n')
+    await expect(agents({ cwd, write: true })).rejects.toThrow(/out of order/)
+
+    await expect(agents({ cwd, file: 'docs/new/AGENTS.md', write: true })).resolves.toMatchObject({ code: 0 })
+    expect(JSON.parse((await agents({ cwd, file: 'docs/new/AGENTS.md', json: true })).output)).toEqual({ file: path.join('docs', 'new', 'AGENTS.md'), status: 'current' })
+})
+
+test('doctor reports a broken config, invalid package.json, and an uninstalled hook', async () => {
+    const cwd = createRepo('export default {')
+    write(cwd, '.husky/commit-msg', '# aronrepo check --edit "$1"\n')
+    const broken = JSON.parse((await doctor({ cwd, json: true })).output)
+    expect(broken.ok).toBe(false)
+    expect(broken.checks).toContainEqual(expect.objectContaining({ status: 'fail', message: expect.stringMatching(/config failed to load/) }))
+    expect(broken.checks).toContainEqual(expect.objectContaining({ status: 'warn', message: 'No commit-msg hook runs `aronrepo check`.' }))
+
+    write(cwd, 'aronrepo.config.js', 'export default {}\n')
+    write(cwd, '.husky/commit-msg', 'bun x aronrepo check --edit "$1"\n')
+    write(cwd, 'package.json', '{')
+    const checks = JSON.parse((await doctor({ cwd, json: true })).output).checks
+    expect(checks).toContainEqual(expect.objectContaining({ status: 'fail', message: expect.stringMatching(/package\.json is not valid JSON/) }))
+    expect(checks).toContainEqual(expect.objectContaining({ message: '.husky/commit-msg is not installed; git does not run it.' }))
+})
+
+test('explain --to a tag explains that release', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
+    git(cwd, 'tag', 'v1.0.1')
+    const result = JSON.parse((await explain({ cwd, to: 'v1.0.1', json: true })).output)
+    expect(result).toMatchObject({ from: 'v1.0.0', to: 'v1.0.1', release: 'patch', version: '1.0.1' })
+})
+
+test('the CLI finds the repository root, prints reports to stdout, and validates flags per command', () => {
+    const cwd = createRepo("export default { release: { mode: 'auto' } }\n")
+    write(cwd, 'site/index.js', 'export {}')
+    git(cwd, 'add', '-A')
+    const fromSubfolder = runCli(['check', '--message', 'Fix(Site): Repair', '--json'], path.join(cwd, 'packages/core'))
+    expect(fromSubfolder.code).toBe(1)
+    expect(JSON.parse(fromSubfolder.stdout).mode).toBe('auto')
+
+    expect(runCli(['release', '--from', 'v1.0.0'], cwd)).toMatchObject({ code: 2, stderr: expect.stringContaining('`aronrepo release` does not take --from.') })
+    expect(runCli(['--version'])).toMatchObject({ code: 0, stdout: `${JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../package.json'), 'utf8')).version}\n` })
+    expect(runCli(['help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: aronrepo') })
+    expect(JSON.parse(runCli(['check', '--json'], cwd).stderr)).toEqual({ error: 'Pass --edit <file>, --message <text>, --title <text>, or --from <ref>.', code: 2 })
+    expect(runCli(['policy', '--cwd', path.join(cwd, 'missing')])).toMatchObject({ code: 2 })
 })
