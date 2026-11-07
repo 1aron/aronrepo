@@ -734,8 +734,10 @@ async function checkOnReleaseBranch(environment: ReleaseEnvironment, plan: Relea
 
 /** Why a release of `version` does not match the approved version, or `undefined` when it does. */
 function checkExpectedVersion(options: ReleaseOptions, version: string | undefined) {
-    const expected = options.expectVersion?.replace(/^v/, '')
-    if (!expected || expected === version) return undefined
+    if (!options.expectVersion) return undefined
+    // `semver.valid` drops a `v` and spaces, as the version check at the start accepts them.
+    const expected = semver.valid(options.expectVersion) ?? options.expectVersion
+    if (expected === version) return undefined
     return version
         ? `This release is ${version}, not the expected ${expected}. Review the plan again.`
         : `Nothing releases, but ${expected} was expected. Review the plan again.`
@@ -796,7 +798,7 @@ function nextFreeVersion(version: string) {
  * finishes a release instead of skipping or duplicating it.
  */
 export async function runRelease(options: ReleaseOptions = {}, environmentOptions: Partial<ReleaseEnvironment> = {}): Promise<ReleaseResult> {
-    if (options.expectVersion && !semver.valid(options.expectVersion.replace(/^v/, ''))) {
+    if (options.expectVersion && !semver.valid(options.expectVersion)) {
         throw new Error(`The expected version ${options.expectVersion} is not a version, such as 1.2.4.`)
     }
     const environment = createEnvironment(environmentOptions)

@@ -314,6 +314,10 @@ test('stops a release that is not the expected version', async () => {
     await expect(runRelease({ branch: 'main', expectVersion: '1.1.0' }, environment(cwd, registry))).rejects.toThrow('This release is 1.0.1, not the expected 1.1.0. Review the plan again.')
     await runRelease({ branch: 'main', expectVersion: '1.1.0', dryRun: true }, environment(cwd, registry, logs))
     expect(logs).toContain('! This release is 1.0.1, not the expected 1.1.0. Review the plan again. A release would stop here.')
+    // The version check accepts spaces and a `v`, and so does the comparison.
+    logs.length = 0
+    await runRelease({ branch: 'main', expectVersion: ' v1.0.1 ', dryRun: true }, environment(cwd, registry, logs))
+    expect(logs.filter((line) => line.startsWith('!'))).toEqual([])
     expect(registry.published).toEqual([])
 
     // A version taken by an interrupted release from another commit is not the approved one either.
