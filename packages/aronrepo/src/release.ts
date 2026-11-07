@@ -52,10 +52,13 @@ export interface ReleaseEnvironment {
     wait: (ms: number) => Promise<void>
 }
 
-/** Quotes an argument for `cmd.exe`, which runs `.cmd` shims such as `npm.cmd` on Windows. */
+/**
+ * Quotes an argument for `cmd.exe`, which runs `.cmd` shims such as `npm.cmd` on Windows.
+ * `cmd.exe` expands `%NAME%` even inside quotes, so each `%` goes between quoted parts as `^%`.
+ */
 export function quoteWindowsArg(arg: string) {
     if (/^[\w@+=:,./\\-]+$/.test(arg)) return arg
-    return `"${arg.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, '$1$1')}"`
+    return arg.split('%').map((part) => `"${part.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, '$1$1')}"`).join('^%')
 }
 
 export const runCommand: Runner = (command, args, { cwd, env }) => new Promise((resolve, reject) => {

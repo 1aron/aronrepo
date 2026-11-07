@@ -434,6 +434,8 @@ test('quotes Windows shell arguments', () => {
     expect(quoteWindowsArg('--registry')).toBe('--registry')
     expect(quoteWindowsArg('C:\\Users\\John Doe\\pkg.tgz')).toBe('"C:\\Users\\John Doe\\pkg.tgz"')
     expect(quoteWindowsArg('a"b')).toBe('"a\\"b"')
+    // cmd.exe expands `%NAME%` inside quotes too, so `%` stays outside them.
+    expect(quoteWindowsArg('C:\\Temp\\100%PATH%x')).toBe('"C:\\Temp\\100"^%"PATH"^%"x"')
     expect(quoteWindowsArg('a&b')).toBe('"a&b"')
 })
 
