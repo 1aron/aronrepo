@@ -55,7 +55,7 @@ Then add a release workflow: [Release on Push](#release-on-push) publishes every
 Type(Scope): Summary
 ```
 
-The type is one of the types below, the scope names the package or area, and the summary starts with a letter or digit and has no trailing period. Types and scopes match without case, so `fix(core): repair cache` is the same commit as `Fix(Core): Repair cache`; release notes capitalize the first letter of every summary. Leave a blank line before the body and before a `BREAKING CHANGE:` footer.
+The type is one of the types below, the scope names the package or area, and the summary starts with a letter, a digit, or one of `` ` _ # ~ @ . $ / ' " `` (so `@scope/pkg`, `.npmrc`, and quotes work) and has no trailing period. Types and scopes match without case, so `fix(core): repair cache` is the same commit as `Fix(Core): Repair cache`; release notes capitalize the first letter of every summary. Leave a blank line before the body and before a `BREAKING CHANGE:` footer.
 
 ```text
 Feat(Core): Support ESM config files
@@ -93,7 +93,7 @@ Chore(Agent): Update repository guidance for coding agents
 | `Chore` | none | none | Maintenance: development dependencies, lockfiles, metadata, agent guidance, and unpublished workspaces. |
 | `BREAKING CHANGE:` footer | rejected | major | |
 
-A revert that `git revert` or GitHub's revert button writes, `Revert "<header>"` or `Revert: <header>`, takes its release from the reverted header and ships only when its own files are on release paths, without a release path violation otherwise: git chose its header, not you. So an empty revert of a `Bump` passes `aronrepo check` and releases nothing, and a revert of a header outside the policy releases patch like `Revert`. A revert and an unreleased commit it names by hash cancel each other in `aronrepo check --from`, `aronrepo explain`, and `aronrepo release` alike.
+A revert that `git revert` or GitHub's revert button writes, `Revert "<header>"` or `Revert: <header>`, takes its release from the reverted header and ships only when its own files are on release paths, without a release path violation otherwise: git chose its header, not you. So an empty revert of a `Bump` passes `aronrepo check` and releases nothing, and a revert of a header outside the policy releases patch like `Revert`. Reapplying a `Bump` (`Reapply "Bump(Major): …"`) releases patch, because the bump may have shipped before its revert; to release that level, the owner adds a new `Bump` commit. A revert and an unreleased commit it names by hash cancel each other in `aronrepo check --from`, `aronrepo explain`, and `aronrepo release` alike.
 
 The legacy types `Add` and `New` (now `Feat`), `Update` (now `Improve`), and `Misc` (now `Chore`) still resolve in history with the level of their replacement, so old tags keep their meaning, but `aronrepo check` rejects them in new commits.
 
@@ -105,7 +105,7 @@ Use `explicit` when the owner decides minor and major versions, for example a fr
 
 ## Release Paths
 
-Release paths default to the directories of public, non-private workspace packages (`"publishConfig": { "access": "public" }`), or every path in a published single-package repository, excluding tests, type tests, snapshots, fixtures, mocks, benchmarks, examples, changelogs, `.github`, and `.husky`. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing. Override the paths with `release.paths.include` and `release.paths.exclude` (a `!glob` in `include` excludes it, as in `files`), or set `release.paths: false` to turn the check off.
+Release paths default to the directories of public, non-private workspace packages (`"publishConfig": { "access": "public" }`), or every path in a published single-package repository, excluding tests, type tests, snapshots, fixtures, mocks, benchmarks, examples, changelogs, `.github`, and `.husky`. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing; a merge commit counts what it brings into its first parent. `aronrepo doctor` lists workspace packages that are neither private nor public, since aronrepo never publishes a package on a guess. Override the paths with `release.paths.include` and `release.paths.exclude` (a `!glob` in `include` excludes it, as in `files`), or set `release.paths: false` to turn the check off.
 
 ## Releasing
 
@@ -122,7 +122,7 @@ Release paths default to the directories of public, non-private workspace packag
 4. Wait until the registry serves every package, then move the channel's dist-tag to the new version.
 5. Push the version tag and create the GitHub release with the release notes and the files in `release.assets`, such as `{ path: 'dist/global.min.js', name: 'global-{tag}.min.js' }`. A missing asset stops the release before anything is published, and a rerun uploads only the assets the release does not have yet.
 
-Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, from a shallow clone, when `GITHUB_REF_NAME` names a branch other than the one checked out, or when the commit is not on the release branch: `origin/<branch>` when the clone has it, else the local branch. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`; registry reads use the `.npmrc` auth of that registry too, such as the `${NODE_AUTH_TOKEN}` that actions/setup-node writes for GitHub Packages. Packages publish in dependency order, and a dependency cycle only loses its order. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything, or, on a tagged commit, what finishing that release would do.
+Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, when origin already has its tag on another commit, from a shallow clone, when `GITHUB_REF_NAME` names a branch other than the one checked out, or when the commit is not on the release branch: `origin/<branch>` when the clone has it, else the local branch. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`; registry reads use the `.npmrc` auth of that registry too, such as the `${NODE_AUTH_TOKEN}` that actions/setup-node writes for GitHub Packages, and a restricted package needs `NPM_TOKEN` or `.npmrc` auth to be read. Packages publish in dependency order, and a dependency cycle only loses its order. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything, or, on a tagged commit, what finishing that release would do.
 
 ## Release Workflows
 
@@ -247,9 +247,10 @@ A later release continues from the tag of the approved commit, so commits merged
 
 | Command | Use |
 | --- | --- |
-| `aronrepo check --edit <file>` | commit-msg hook: the message and the staged files |
+| `aronrepo check --edit <file>` | commit-msg hook: the message and the staged files, or the files of HEAD for an amend or reword |
 | `aronrepo check --from <ref> --to <ref>` | CI: every commit with its own changed files |
 | `aronrepo check --title <title> --base <ref> --head <ref>` | a PR title with the PR diff, for squash merges |
+| `aronrepo check --message <text> --files <a,b>` | a message with given files; repeat `--files`, and `\,` keeps a comma in a path |
 | `aronrepo explain [--json]` | the next version and the reason for each commit; `--json` adds the commit and the release notes |
 | `aronrepo release [--dry-run] [--branch <name>] [--expect <version>]` | publish the next release; `--expect` stops unless it is the approved version |
 | `aronrepo policy [--json\|--markdown]` | the effective policy: mode, release paths, and every type |
