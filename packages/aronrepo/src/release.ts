@@ -149,7 +149,9 @@ export function getReleasePackages(cwd: string): ReleasePackage[] {
     const visiting = new Set<string>()
     const visit = (pkg: ReleasePackage) => {
         if (ordered.includes(pkg)) return
-        if (visiting.has(pkg.name)) throw new Error(`Published packages depend on each other in a cycle through ${pkg.name}.`)
+        // npm does not check dependencies on publish, and the staging dist-tag hides every package
+        // until all are published, so a cycle only loses its order, not its release.
+        if (visiting.has(pkg.name)) return
         visiting.add(pkg.name)
         for (const name of dependenciesOf(pkg)) visit(packages.find((candidate) => candidate.name === name)!)
         visiting.delete(pkg.name)

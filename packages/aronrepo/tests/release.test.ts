@@ -577,11 +577,15 @@ test('reports GitHub API errors other than a missing release', async () => {
     }, { tag: 'v1.0.1', notes: '', prerelease: false })).rejects.toThrow(/Could not check the GitHub release v1\.0\.1: 401 Bad credentials/)
 })
 
-test('orders packages without peers, rejects duplicate names, and ships a published root with workspaces', () => {
+test('orders packages without peers, keeps cycles, rejects duplicate names, and ships a published root with workspaces', () => {
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-packages-'))
     write(cwd, 'package.json', JSON.stringify({ name: 'root', publishConfig: { access: 'public' }, workspaces: ['packages/*'] }))
     write(cwd, 'packages/a/package.json', JSON.stringify({ name: 'a', dependencies: { b: '*' }, publishConfig: { access: 'public' } }))
     write(cwd, 'packages/b/package.json', `\uFEFF${JSON.stringify({ name: 'b', peerDependencies: { a: '*' }, publishConfig: { access: 'public' } })}`)
+    expect(getReleasePackages(cwd).map(({ dir }) => dir)).toEqual(['.', 'packages/b', 'packages/a'])
+
+    // npm does not check dependencies on publish, so a cycle still releases.
+    write(cwd, 'packages/b/package.json', JSON.stringify({ name: 'b', dependencies: { a: '*' }, publishConfig: { access: 'public' } }))
     expect(getReleasePackages(cwd).map(({ dir }) => dir)).toEqual(['.', 'packages/b', 'packages/a'])
 
     write(cwd, 'packages/c/package.json', JSON.stringify({ name: 'a', publishConfig: { access: 'public' } }))
