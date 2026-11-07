@@ -285,21 +285,6 @@ Then adopt Aronrepo conservatively:
 When finished, summarize the changed files, the release mode and release paths, behavior intentionally left unchanged, and the validation results. Use non-release commit types for this setup work (for example Build(Release), CI(GitHub), or Chore(Agent)).
 ```
 
-## Migrating from Aronrepo 3
-
-- Write `Feat` instead of `Add`. `Add` is now a legacy type: old `Add` commits still release as before, but `aronrepo check` rejects new ones and suggests `Feat`.
-- Release notes call that section Features instead of Additions.
-- Lowercase types, scopes, and summaries now pass `aronrepo check`; nothing else changes.
-- Run `aronrepo agents --write` to regenerate the `AGENTS.md` block.
-
-## Migrating from Aronrepo 2
-
-- Remove `semantic-release`, `@semantic-release/*`, `@commitlint/cli`, every `@aronrepo/*` package, `release.config.js`, and `commitlint.config.js`. Install `aronrepo` only.
-- Replace `commitlint --edit "$1"` in the commit-msg hook with `aronrepo check --edit "$1"`, and `semantic-release` in CI with `aronrepo release`.
-- Import the commit standard from `aronrepo` instead of `@aronrepo/conventional-commits`, and the Node helpers and commands from `aronrepo/node`.
-- Write `Feat` instead of `New`, `Improve` instead of `Update`, and `Chore` instead of `Misc`.
-- Run `aronrepo agents --write`, `aronrepo doctor`, and `aronrepo release --dry-run`.
-
 ## Local Development
 
 Aronrepo itself uses Bun 1.4.4 workspaces and Node.js `^26`. `.node-version` pins Node 26 for fnm and other version managers, and `bun install` sets up the husky commit-msg hook.
@@ -317,4 +302,4 @@ bun run check
 
 ## Repository Context
 
-Use [docs/ai-context/README.md](docs/ai-context/README.md) for deeper architecture, package ownership, validation, CI, and release workflow context.
+Use [docs/ai-context/README.md](docs/ai-context/README.md) for deeper architecture, package ownership, validation, CI, and release workflow context. Upgrade notes from Aronrepo 3 and 2 are in [docs/migration.md](docs/migration.md).
