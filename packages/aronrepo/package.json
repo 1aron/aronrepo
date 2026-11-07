@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
-    "description": "Aronrepo toolchain facade and CLI for release policies that coding agents can follow.",
+    "description": "Aronrepo: one conventional commit and release policy for owners and coding agents, with commit checks, release decisions, and npm publishing.",
     "repository": {
         "type": "git",
         "url": "https://github.com/1aron/aronrepo.git",
@@ -15,6 +15,11 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "default": "./dist/index.js"
+        },
+        "./node": {
+            "types": "./dist/node.d.ts",
+            "import": "./dist/node.js",
+            "default": "./dist/node.js"
         }
     },
     "types": "./dist/index.d.ts",
@@ -36,6 +41,12 @@
         "lint": "eslint"
     },
     "dependencies": {
-        "@aronrepo/conventional-commits": "workspace:^"
+        "js-yaml": "^5.5.0",
+        "picomatch": "^4.0.7",
+        "tinyglobby": "^0.2.17"
+    },
+    "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
+        "@types/picomatch": "^4.0.3"
     }
 }
