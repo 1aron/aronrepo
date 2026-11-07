@@ -23,7 +23,7 @@ Any package manager works: `pnpm add -D aronrepo husky` or `npm install -D aronr
 
 ## Setup
 
-Choose the release mode in `aronrepo.config.js`:
+Choose the release mode in `aronrepo.config.js` (use `aronrepo.config.mjs` in a CommonJS package, or `aronrepo.config.ts` on Node 22.18+):
 
 ```js
 /** @type {import('aronrepo').AronrepoConfig} */
@@ -126,7 +126,7 @@ Use `explicit` when the owner decides minor and major versions, for example a fr
 
 ## Release Paths
 
-Release paths default to the directories of public, non-private workspace packages (`"publishConfig": { "access": "public" }`), or every path in a published single-package repository, excluding tests, benchmarks, examples, changelogs, `.github`, and `.husky`. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing. Override the paths with `release.paths.include` and `release.paths.exclude`, or set `release.paths: false` to turn the check off.
+Release paths default to the directories of public, non-private workspace packages (`"publishConfig": { "access": "public" }`), or every path in a published single-package repository, excluding tests, type tests, snapshots, fixtures, mocks, benchmarks, examples, changelogs, `.github`, and `.husky`. A release type on a commit that changes no release path is rejected by `aronrepo check` and releases nothing. Override the paths with `release.paths.include` and `release.paths.exclude` (a `!glob` in `include` excludes it, as in `files`), or set `release.paths: false` to turn the check off.
 
 ## Releasing
 
@@ -143,7 +143,7 @@ Release paths default to the directories of public, non-private workspace packag
 4. Wait until the registry serves every package, then move the channel's dist-tag to the new version.
 5. Push the version tag and create the GitHub release with the release notes.
 
-Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a version published from another commit stops the release, and a tagged commit without a GitHub release gets one. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything.
+Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, from a shallow clone, or when `GITHUB_REF_NAME` names a branch other than the one checked out. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything.
 
 ## CLI
 
@@ -158,7 +158,7 @@ Rerunning the job finishes an interrupted release: a version already published f
 | `aronrepo agents [--write]` | check or regenerate the policy block in `AGENTS.md` |
 | `aronrepo doctor` | check the setup and print fixes |
 
-Every command accepts `--cwd`, `--mode`, and `--json`. The same functions are available from `aronrepo/node`, and the commit standard itself (types, parser, release resolver, version and notes helpers) from `aronrepo`, which has no Node dependencies.
+Every command accepts `--cwd` (default: the root of the git repository around the current directory), `--mode`, and `--json`; an option a command does not use is a usage error. Reports go to stdout, usage errors to stderr with exit code 2, and `aronrepo --version` prints the installed version. The same functions are available from `aronrepo/node`, and the commit standard itself (types, parser, release resolver, version and notes helpers) from `aronrepo`, which has no Node dependencies.
 
 ## AI Coding Integration
 

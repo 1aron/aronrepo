@@ -37,6 +37,6 @@ The copy-paste prompt for this is in the root [README](../README.md#ai-coding-in
 - Inspect before editing. The package manager, Node engine, workspace layout, CI workflows, and release setup decide the exact integration shape.
 - Ask the owner for the release mode. Do not default to `auto` to make releases happen.
 - Keep ESM compatibility. `aronrepo` does not provide CommonJS fallbacks.
-- Configure release behavior through `aronrepo.config.js`; there is nothing else to configure.
-- Before committing, run `aronrepo check --message "<header>"` when unsure; it prints the release level and a suggested header. Before pushing to a release branch, run `aronrepo explain`.
+- Configure release behavior through `aronrepo.config.js` (or `.mjs`, `.cjs`, `.ts`); there is nothing else to configure.
+- Before committing, stage the change and run `aronrepo check --message "<header>"` when unsure (or pass `--files` instead of staging); a release type needs a staged file on a release path. It prints the release level, and a suggested header when the header fails. Before pushing to a release branch, run `aronrepo explain`.
 - Validate narrowly first, then run `aronrepo doctor`.

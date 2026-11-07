@@ -4,7 +4,7 @@ Aronrepo is a Bun workspace with one published TypeScript package, `aronrepo`, i
 
 ## Root Layout
 
-- `package.json`: root scripts, the Bun package manager and workspace pattern, Node requirement, and development dependencies.
+- `package.json`: root scripts, the Bun package manager and workspace pattern, Node requirement, and development dependencies (all tools are `devDependencies`).
 - `bun.lock`: the Bun lockfile.
 - `.node-version`: Node major version for fnm and other version managers.
 - `turbo.json`: task graph for build, test, lint, and type-check.
