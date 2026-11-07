@@ -129,8 +129,39 @@ export function resolveReleasePaths(cwd = process.cwd(), policy?: Pick<ReleasePo
     return undefined
 }
 
+export type PackageManager = 'bun' | 'pnpm' | 'yarn' | 'npm'
+
+const lockfiles: Array<[string, PackageManager]> = [
+    ['bun.lock', 'bun'],
+    ['bun.lockb', 'bun'],
+    ['pnpm-lock.yaml', 'pnpm'],
+    ['yarn.lock', 'yarn'],
+    ['package-lock.json', 'npm']
+]
+
+/** The package manager from `packageManager` in package.json, then from the lockfile; `npm` by default. */
+export function detectPackageManager(cwd = process.cwd()): PackageManager {
+    const rootPackage = path.join(cwd, 'package.json')
+    const declared = fs.existsSync(rootPackage) ? String(readJson<PackageJson>(rootPackage).packageManager ?? '').split('@')[0] : ''
+    if (declared === 'bun' || declared === 'pnpm' || declared === 'yarn' || declared === 'npm') return declared
+    return lockfiles.find(([file]) => fs.existsSync(path.join(cwd, file)))?.[1] ?? 'npm'
+}
+
+/** How to run the aronrepo CLI with a package manager. */
+export function getCliCommand(packageManager: PackageManager) {
+    return {
+        bun: 'bun x aronrepo',
+        pnpm: 'pnpm exec aronrepo',
+        yarn: 'yarn aronrepo',
+        npm: 'npx aronrepo'
+    }[packageManager]
+}
+
 export interface ProjectPolicy {
     cwd: string
+    packageManager: PackageManager
+    /** How to run the aronrepo CLI in this repository. */
+    cli: string
     config: AronrepoConfig
     configFile?: string
     policy: ReleasePolicy
@@ -144,8 +175,11 @@ export async function loadProjectPolicy(cwd = process.cwd(), overrides: Partial<
     const policy = { ...getReleasePolicy(config), ...overrides }
     const releasePaths = resolveReleasePaths(cwd, policy)
     const configFile = findConfigFile(cwd)
+    const packageManager = detectPackageManager(cwd)
     return {
         cwd,
+        packageManager,
+        cli: getCliCommand(packageManager),
         config,
         ...(configFile ? { configFile } : {}),
         policy,

@@ -65,7 +65,7 @@ test('loads the release mode from aronrepo.config.js', async () => {
 test('explains a commit range with changed files', async () => {
     const cwd = createRepo()
     commit(cwd, 'Fix(Site): Repair the header', { 'site/index.ts': 'export {}' })
-    commit(cwd, 'Update(Core): Rename the mode\n\nBREAKING CHANGE: Rename the mode option.', { 'packages/core/index.js': 'export {}' })
+    commit(cwd, 'Improve(Core): Rename the mode\n\nBREAKING CHANGE: Rename the mode option.', { 'packages/core/index.js': 'export {}' })
     commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
 
     expect(getRangeCommits(cwd, 'v1.0.0').map(({ files }) => files)).toEqual([

@@ -19,7 +19,7 @@ const auto: ReleasePolicy = { mode: 'auto' }
 
 // The Master CSS 2.0.1 incident: a patch type with a breaking footer released 3.0.0.
 const incident = [
-    'Update(Integrations): Rename pre-render mode to prerender',
+    'Improve(Integrations): Rename pre-render mode to prerender',
     '',
     'Use prerender across integrations.',
     '',
@@ -44,7 +44,7 @@ test('caps non-Bump types at patch in explicit mode', () => {
 
 test('parses headers, breaking markers, and reverts', () => {
     expect(parseCommit(incident)).toMatchObject({
-        type: 'Update',
+        type: 'Improve',
         scope: 'Integrations',
         subject: 'Rename pre-render mode to prerender',
         breaking: 'footer'
@@ -144,6 +144,28 @@ test('clamps release types that touch no release paths', () => {
     expect(bump.release).toBe('major')
 })
 
+test('resolves legacy types like their replacements and rejects them in new commits', () => {
+    const feat = resolveCommitRelease('Feat(Core): Add a builder', auto)
+    expect(feat.release).toBe('minor')
+    expect(feat.violations).toEqual([expect.objectContaining({
+        rule: 'legacy-type',
+        suggestion: 'Add(Core): Add a builder'
+    })])
+    expect(resolveCommitRelease('Update: Rename the option', explicit)).toMatchObject({
+        release: 'patch',
+        violations: [expect.objectContaining({ rule: 'legacy-type', suggestion: 'Improve: Rename the option' })]
+    })
+    expect(resolveCommitRelease('Misc: Tidy up', explicit).release).toBe(false)
+})
+
+test('rejects Bump without a release scope', () => {
+    expect(resolveCommitRelease('Bump: Aronrepo v3', explicit)).toMatchObject({
+        release: false,
+        violations: [expect.objectContaining({ rule: 'unknown-type', message: expect.stringContaining('`Bump(Major)`') })]
+    })
+    expect(resolveCommitRelease('Bump(Huge): Aronrepo v3', explicit).release).toBe(false)
+})
+
 test('takes the highest release of a range', () => {
     expect(resolveRelease([
         { message: 'Chore(Agent): Update guide' },
@@ -161,11 +183,11 @@ test('describes the release table for each mode', () => {
     expect(getReleaseTable(explicit)).toMatchObject({
         major: ['`Bump(Major)`'],
         minor: ['`Bump(Minor)`'],
-        patch: expect.arrayContaining(['`Feat`', '`New`', '`Fix`', '`Docs(README)`'])
+        patch: expect.arrayContaining(['`Add`', '`Fix`', '`Docs(README)`'])
     })
     expect(getReleaseTable(auto)).toMatchObject({
         major: ['`Bump(Major)`', '`BREAKING CHANGE:` footer'],
-        minor: expect.arrayContaining(['`Feat`', '`New`', '`Bump(Minor)`'])
+        minor: expect.arrayContaining(['`Add`', '`Bump(Minor)`'])
     })
 })
 

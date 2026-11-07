@@ -3,6 +3,9 @@ import path from 'node:path'
 import {
     agentsBlockEnd,
     agentsBlockStart,
+    commits,
+    getReleaseType,
+    legacyCommits,
     defaultReleasePathExcludes,
     getAgentCommitPolicy,
     getReleaseTable,
@@ -176,14 +179,22 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
 export async function policy(options: CommonOptions & { markdown?: boolean }): Promise<CommandResult> {
     const resolved = await project(options)
     if (options.markdown) {
-        return { code: 0, output: renderAgentsBlock(resolved.policy, resolved.releasePaths ? { releasePaths: resolved.releasePaths } : {}) }
+        return { code: 0, output: renderAgentsBlock(resolved.policy, { cli: resolved.cli, ...(resolved.releasePaths ? { releasePaths: resolved.releasePaths } : {}) }) }
     }
     const data = {
         mode: resolved.policy.mode,
         configFile: resolved.configFile ? path.relative(resolved.cwd, resolved.configFile) : null,
         releasePaths: resolved.releasePaths ?? null,
         releaseTable: getReleaseTable(resolved.policy),
-        agent: getAgentCommitPolicy(resolved.policy)
+        types: commits.map(({ type, scope, description, group }) => ({
+            type,
+            ...(scope ? { scope } : {}),
+            release: getReleaseType(type, scope, resolved.policy) ?? false,
+            description,
+            ...(group ? { group } : {})
+        })),
+        legacyTypes: legacyCommits,
+        agent: getAgentCommitPolicy(resolved.policy, { cli: resolved.cli })
     }
     if (options.json) return { code: 0, output: JSON.stringify(data, null, 2) }
     return {
@@ -222,7 +233,7 @@ export async function agents(options: CommonOptions & { file?: string, write?: b
     const resolved = await project(options)
     const file = path.resolve(resolved.cwd, options.file ?? 'AGENTS.md')
     const relative = path.relative(resolved.cwd, file)
-    const block = renderAgentsBlock(resolved.policy, resolved.releasePaths ? { releasePaths: resolved.releasePaths } : {})
+    const block = renderAgentsBlock(resolved.policy, { cli: resolved.cli, ...(resolved.releasePaths ? { releasePaths: resolved.releasePaths } : {}) })
     const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''
 
     if (options.write) {
