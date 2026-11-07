@@ -31,7 +31,6 @@
     "dependencies": {
         "@eslint/js": "^10.0.1",
         "@types/node": "^26.6.6",
-        "@types/semver": "^7.8.0",
         "eslint": "^10.14.0",
         "husky": "^9.1.7",
         "tsdown": "^0.23.5",
