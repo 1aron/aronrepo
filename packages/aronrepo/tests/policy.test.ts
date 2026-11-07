@@ -354,3 +354,8 @@ test('freezes the commit type table', () => {
     expect(Object.isFrozen(commits)).toBe(true)
     expect(Object.isFrozen(commits[0])).toBe(true)
 })
+
+test('validates release assets in the config', () => {
+    expect(getReleasePolicy({ release: { assets: [{ path: 'dist/a.js', name: 'a-{tag}.js' }] } }).assets).toEqual([{ path: 'dist/a.js', name: 'a-{tag}.js' }])
+    expect(() => getReleasePolicy({ release: { assets: [{ name: 'a.js' }] as never } })).toThrow(/`release.assets` must be an array/)
+})

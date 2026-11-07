@@ -20,9 +20,21 @@ export interface ReleasePathsConfig {
     exclude?: string[]
 }
 
+/** A file attached to every GitHub release. */
+export interface ReleaseAsset {
+    /** File to upload, relative to the repository root. */
+    path: string
+    /** Asset name on the release; defaults to the file name. `{tag}` and `{version}` are replaced. */
+    name?: string
+    /** Text shown for the asset instead of its name. `{tag}` and `{version}` are replaced. */
+    label?: string
+}
+
 export interface AronrepoConfig {
     release?: {
         mode?: ReleaseMode
+        /** Files `aronrepo release` attaches to the GitHub release, such as browser bundles or checksums. */
+        assets?: ReleaseAsset[]
         /**
          * Files whose changes can release a version. Omit it to derive the paths from
          * public workspace packages, or set `false` to turn the path check off.
@@ -34,6 +46,7 @@ export interface AronrepoConfig {
 export interface ReleasePolicy {
     mode: ReleaseMode
     paths?: ReleasePathsConfig | false
+    assets?: ReleaseAsset[]
 }
 
 export const defaultReleasePathExcludes = [
@@ -64,10 +77,20 @@ export function getReleasePolicy(config: AronrepoConfig = {}): ReleasePolicy {
     }
     const paths = config.release?.paths
     if (paths !== undefined && paths !== false) validateReleasePaths(paths)
+    const assets = config.release?.assets
+    if (assets !== undefined) validateReleaseAssets(assets)
     return {
         mode,
-        ...(paths !== undefined ? { paths } : {})
+        ...(paths !== undefined ? { paths } : {}),
+        ...(assets !== undefined ? { assets } : {})
     }
+}
+
+function validateReleaseAssets(assets: unknown): asserts assets is ReleaseAsset[] {
+    const valid = Array.isArray(assets) && assets.every((asset) => typeof asset === 'object' && asset !== null
+        && typeof (asset as ReleaseAsset).path === 'string'
+        && ['name', 'label'].every((key) => (asset as Record<string, unknown>)[key] === undefined || typeof (asset as Record<string, unknown>)[key] === 'string'))
+    if (!valid) throw new Error('`release.assets` must be an array of `{ path, name?, label? }` objects.')
 }
 
 function validateReleasePaths(paths: unknown): asserts paths is ReleasePathsConfig {

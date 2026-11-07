@@ -6,7 +6,7 @@ import { gunzipSync } from 'node:zlib'
 import semver from 'semver'
 import type { ReleaseType } from './commits'
 import { renderReleaseNotes } from './notes'
-import { resolveRelease, type CommitDecision, type ReleasePolicy } from './policy'
+import { resolveRelease, type CommitDecision, type ReleaseAsset, type ReleasePolicy } from './policy'
 import {
     detectPackageManager,
     getRangeCommits,
@@ -170,6 +170,8 @@ export interface ReleasePlan {
     commits: CommitDecision[]
     notes?: string
     packages: ReleasePackage[]
+    /** Files attached to the GitHub release, from `release.assets`. */
+    assets?: ReleaseAsset[]
 }
 
 export interface PlanReleaseOptions {
@@ -233,7 +235,15 @@ export async function planRelease(options: PlanReleaseOptions = {}, environmentO
     const channel = getReleaseChannel(branch) ?? (options.fallbackToMain ? getReleaseChannel('main') : undefined)
     const head = await git(environment, ['rev-parse', 'HEAD'])
     const packages = getReleasePackages(cwd)
-    const base: ReleasePlan = { branch, head, mode: project.policy.mode, release: false, commits: [], packages }
+    const base: ReleasePlan = {
+        branch,
+        head,
+        mode: project.policy.mode,
+        release: false,
+        commits: [],
+        packages,
+        ...(project.policy.assets ? { assets: project.policy.assets } : {})
+    }
     if (!channel) return base
 
     if (await git(environment, ['rev-parse', '--is-shallow-repository']) === 'true') {
@@ -551,6 +561,8 @@ async function waitForVersion(environment: ReleaseEnvironment, registry: string,
     throw new Error(`${name}@${version} did not appear on ${registry}.`)
 }
 
+export type GitHubReleaseAsset = ReleaseAsset
+
 export interface GitHubRelease {
     tag: string
     notes: string
@@ -559,6 +571,58 @@ export interface GitHubRelease {
     target?: string
     /** Whether the release becomes the repository's latest; defaults to every non-prerelease. */
     latest?: boolean
+    /** Files to attach. A rerun uploads only the assets the release does not have yet. */
+    assets?: GitHubReleaseAsset[]
+}
+
+interface GitHubReleaseResponse {
+    html_url?: string
+    upload_url?: string
+    assets?: Array<{ name: string }>
+}
+
+function fillAssetName(template: string, tag: string) {
+    return template.replaceAll('{tag}', tag).replaceAll('{version}', tag.replace(/^v/, ''))
+}
+
+/** Resolves asset files and names, and fails before any GitHub write when a file is missing. */
+function resolveAssets(cwd: string, tag: string, assets: GitHubReleaseAsset[] = []) {
+    const resolved = assets.map((asset) => {
+        const file = path.resolve(cwd, asset.path)
+        if (!fs.existsSync(file) || !fs.statSync(file).isFile()) throw new Error(`The GitHub release asset ${asset.path} does not exist.`)
+        return {
+            file,
+            name: fillAssetName(asset.name ?? path.basename(file), tag),
+            ...(asset.label ? { label: fillAssetName(asset.label, tag) } : {})
+        }
+    })
+    const names = new Set<string>()
+    for (const { name } of resolved) {
+        if (names.has(name)) throw new Error(`Two GitHub release assets are named ${name}.`)
+        names.add(name)
+    }
+    return resolved
+}
+
+async function uploadAssets(environment: ReleaseEnvironment, release: GitHubReleaseResponse, assets: ReturnType<typeof resolveAssets>, headers: Record<string, string>) {
+    if (!assets.length) return
+    if (!release.upload_url) throw new Error('The GitHub release has no upload URL for its assets.')
+    const uploadUrl = release.upload_url.replace(/\{.*\}$/, '')
+    const existing = new Set((release.assets ?? []).map(({ name }) => name))
+    for (const asset of assets) {
+        if (existing.has(asset.name)) {
+            environment.log(`✓ GitHub release asset ${asset.name} exists.`)
+            continue
+        }
+        const query = `name=${encodeURIComponent(asset.name)}${asset.label ? `&label=${encodeURIComponent(asset.label)}` : ''}`
+        const response = await environment.fetch(`${uploadUrl}?${query}`, {
+            method: 'POST',
+            headers: { ...headers, 'content-type': 'application/octet-stream' },
+            body: fs.readFileSync(asset.file)
+        })
+        if (!response.ok) throw new Error(`Could not upload ${asset.name} to the GitHub release: ${response.status} ${await response.text()}`)
+        environment.log(`✓ Uploaded ${asset.name}`)
+    }
 }
 
 /** Cuts notes at a line to fit a GitHub release body, keeping the full changelog link. */
@@ -588,10 +652,13 @@ export async function publishGitHubRelease(environment: ReleaseEnvironment, rele
         'content-type': 'application/json',
         'x-github-api-version': '2022-11-28'
     }
+    const assets = resolveAssets(environment.cwd, release.tag, release.assets)
     const existing = await environment.fetch(`${api}/tags/${encodeURIComponent(release.tag)}`, { headers })
     if (existing.ok) {
         environment.log(`✓ GitHub release ${release.tag} exists.`)
-        return (await existing.json() as { html_url?: string }).html_url
+        const found = await existing.json() as GitHubReleaseResponse
+        await uploadAssets(environment, found, assets, headers)
+        return found.html_url
     }
     if (existing.status !== 404) {
         throw new Error(`Could not check the GitHub release ${release.tag}: ${existing.status} ${await existing.text()}`)
@@ -610,9 +677,10 @@ export async function publishGitHubRelease(environment: ReleaseEnvironment, rele
         })
     })
     if (!response.ok) throw new Error(`Could not create the GitHub release ${release.tag}: ${response.status} ${await response.text()}`)
-    const url = (await response.json() as { html_url?: string }).html_url
-    environment.log(`✓ Created the GitHub release ${url ?? release.tag}.`)
-    return url
+    const created = await response.json() as GitHubReleaseResponse
+    environment.log(`✓ Created the GitHub release ${created.html_url ?? release.tag}.`)
+    await uploadAssets(environment, created, assets, headers)
+    return created.html_url
 }
 
 export interface ReleaseOptions extends PlanReleaseOptions {
@@ -670,6 +738,7 @@ async function resumeTaggedRelease(environment: ReleaseEnvironment, options: Rel
         notes: previous.notes,
         prerelease: Boolean(channel.prerelease),
         target: plan.head,
+        ...(plan.assets ? { assets: plan.assets } : {}),
         latest: !channel.prerelease && await isLatestStable(environment, previous.version!)
     })
     return true
@@ -723,6 +792,11 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         return { status: 'none', plan }
     }
     if (options.dryRun) {
+        try {
+            resolveAssets(cwd, plan.tag, plan.assets)
+        } catch (error) {
+            log(`! ${(error as Error).message} A release would stop here.`)
+        }
         if (dirty) log('! The working tree has changes; a release would stop here.')
         if (existingTag) log(`! ${plan.tag} exists but is not reachable from ${plan.branch}; a release would stop here.`)
         log(`\nDry run: would publish ${plan.tag} on ${plan.channel.distTag}.\n\n${plan.notes}`)
@@ -730,6 +804,8 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
     }
     if (dirty) throw new Error('The working tree has changes. Release from a clean checkout.')
     if (existingTag) throw new Error(`${plan.tag} exists but is not reachable from ${plan.branch}.`)
+    // A missing asset would fail the GitHub release after npm already published.
+    resolveAssets(cwd, plan.tag, plan.assets)
 
     const npmrc = (() => {
         const { project, user } = readNpmConfigs(cwd, environment.env)
@@ -896,6 +972,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         notes,
         prerelease: Boolean(channel.prerelease),
         target: plan.head,
+        ...(plan.assets ? { assets: plan.assets } : {}),
         latest: !channel.prerelease && await isLatestStable(environment, version)
     })
     return { status: 'released', plan }

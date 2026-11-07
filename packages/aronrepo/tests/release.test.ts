@@ -599,3 +599,57 @@ test('dry run reports what a release would stop at', async () => {
     expect(result.status).toBe('dry-run')
     expect(logs).toContainEqual('! The working tree has changes; a release would stop here.')
 })
+
+test('attaches release assets and uploads only the missing ones on a rerun', async () => {
+    const cwd = createRepo()
+    write(cwd, 'aronrepo.config.js', "export default { release: { mode: 'explicit', assets: [{ path: 'dist/global.min.js', name: 'global-{tag}.min.js', label: 'Browser bundle {version}' }, { path: 'checksums.json' }] } }\n")
+    write(cwd, '.gitignore', 'node_modules\ndist\nchecksums.json\n')
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    write(cwd, 'dist/global.min.js', 'console.log(1)\n')
+    write(cwd, 'checksums.json', '{}\n')
+    const registry = createRegistry()
+    const uploads: Array<{ url: string, body: string }> = []
+    const uploaded = new Set<string>()
+    const fetch: Fetch = async (input, init) => {
+        if (input.startsWith('https://uploads.github.com/')) {
+            const name = new URL(input).searchParams.get('name')!
+            uploads.push({ url: input, body: Buffer.from(init!.body as Uint8Array).toString() })
+            uploaded.add(name)
+            return Response.json({ name }, { status: 201 })
+        }
+        const response = await registry.fetch(input, init)
+        if (!input.startsWith('https://api.github.com/') || !response.ok) return response
+        const body = await response.json() as Record<string, unknown>
+        return Response.json({
+            ...body,
+            upload_url: 'https://uploads.github.com/repos/fixture/repo/releases/1/assets{?name,label}',
+            assets: [...uploaded].map((name) => ({ name }))
+        }, { status: response.status })
+    }
+
+    await runRelease({ branch: 'main' }, { ...environment(cwd, registry), fetch })
+    expect(uploads.map(({ url }) => decodeURIComponent(url))).toEqual([
+        'https://uploads.github.com/repos/fixture/repo/releases/1/assets?name=global-v1.0.1.min.js&label=Browser bundle 1.0.1',
+        'https://uploads.github.com/repos/fixture/repo/releases/1/assets?name=checksums.json'
+    ])
+    expect(uploads[0].body).toBe('console.log(1)\n')
+
+    // The release exists with one asset missing; a rerun uploads only that one.
+    uploaded.delete('checksums.json')
+    uploads.length = 0
+    await runRelease({ branch: 'main' }, { ...environment(cwd, registry), fetch })
+    expect(uploads.map(({ url }) => new URL(url).searchParams.get('name'))).toEqual(['checksums.json'])
+})
+
+test('refuses a missing release asset before publishing anything', async () => {
+    const cwd = createRepo()
+    write(cwd, 'aronrepo.config.js', "export default { release: { mode: 'explicit', assets: [{ path: 'dist/missing.js' }] } }\n")
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    await expect(runRelease({ branch: 'main' }, environment(cwd, registry))).rejects.toThrow(/The GitHub release asset dist\/missing\.js does not exist/)
+    expect(registry.published).toEqual([])
+
+    const logs: string[] = []
+    await runRelease({ branch: 'main', dryRun: true }, environment(cwd, registry, logs))
+    expect(logs).toContainEqual(expect.stringContaining('dist/missing.js does not exist. A release would stop here.'))
+})
