@@ -421,9 +421,12 @@ export function resolveCommitRelease(
             release = capRelease(findCommitRule('Revert')!.release, 'Revert', policy)
             decision.reasons.push(`${verb} \`${commit.revert.header}\`, which is not an Aronrepo header; it releases ${formatRelease(release)} like \`Revert\`.`)
         } else if (reverted.type === 'Bump' && reverted.release) {
-            // Undoing a version bump does not raise the version again.
+            // Undoing a version bump does not raise the version again, and a reapplied bump may
+            // have shipped already: only the owner knows, and says so with a new `Bump` commit.
             release = 'patch'
-            decision.reasons.push(`${verb} \`${commit.revert.header}\`; reverting a \`Bump\` releases patch.`)
+            decision.reasons.push(commit.revert.reapply
+                ? `${verb} \`${commit.revert.header}\`; reapplying a \`Bump\` releases patch. To release ${reverted.release} again, the owner adds a new \`Bump(${reverted.scope})\` commit.`
+                : `${verb} \`${commit.revert.header}\`; reverting a \`Bump\` releases patch.`)
         } else {
             release = reverted.release
             decision.reasons.push(`${verb} \`${commit.revert.header}\`, which releases ${formatRelease(release)}.`)

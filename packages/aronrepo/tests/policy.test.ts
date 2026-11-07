@@ -412,3 +412,9 @@ test('reads types and scopes without case in getReleaseType', () => {
     expect(getReleaseType('docs', 'readme', explicit)).toBe('patch')
     expect(getReleaseType('feat', undefined, explicit)).toBe('patch')
 })
+
+test('reapplying a Bump releases patch and tells the owner how to release its level', () => {
+    const decision = resolveCommitRelease('Reapply "Bump(Major): Aronrepo v4"\n\nThis reverts commit abcdef1.', explicit)
+    expect(decision.release).toBe('patch')
+    expect(decision.reasons[0]).toBe('Reapplies `Bump(Major): Aronrepo v4`; reapplying a `Bump` releases patch. To release major again, the owner adds a new `Bump(Major)` commit.')
+})
