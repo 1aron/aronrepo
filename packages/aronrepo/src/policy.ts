@@ -1,5 +1,5 @@
 import picomatch from 'picomatch'
-import { findCommitRule, maxRelease, types, type ReleaseType } from './commits'
+import { commits, findCommitRule, legacyTypes, maxRelease, normalizeType, types, type ReleaseType } from './commits'
 
 /**
  * - `explicit`: only `Bump(Major)` and `Bump(Minor)` raise major and minor versions.
@@ -137,7 +137,7 @@ export function parseCommit(message: string, hash?: string): ParsedCommit {
     return parsed
 }
 
-export type CommitViolationRule = 'header-format' | 'unknown-type' | 'implicit-breaking' | 'release-paths'
+export type CommitViolationRule = 'header-format' | 'unknown-type' | 'legacy-type' | 'implicit-breaking' | 'release-paths'
 
 export interface CommitViolation {
     rule: CommitViolationRule
@@ -224,13 +224,31 @@ export function resolveCommitRelease(
             message: diagnoseHeader(commit.header)
         })
         return decision
-    } else if (!types.includes(commit.type)) {
+    } else if (!types.includes(commit.type) && !legacyTypes.includes(commit.type)) {
         decision.reasons.push(`Unknown type \`${commit.type}\`; no release.`)
         decision.violations.push({
             rule: 'unknown-type',
             message: `\`${commit.type}\` is not an Aronrepo commit type. Use one of: ${types.join(', ')}.`
         })
         return decision
+    } else if (!findCommitRule(commit.type, commit.scope)) {
+        decision.reasons.push(`\`${commit.type}${commit.scope ? `(${commit.scope})` : ''}\` is not an Aronrepo commit type; no release.`)
+        decision.violations.push({
+            rule: 'unknown-type',
+            message: `\`${commit.type}\` needs a scope: ${commits.filter(({ type }) => type === commit.type).map(({ type, scope }) => `\`${type}(${scope})\``).join(', ')}.`
+        })
+        return decision
+    }
+
+    if (commit.type && legacyTypes.includes(commit.type)) {
+        const replacement = normalizeType(commit.type)
+        const scope = commit.scope ? `(${commit.scope})` : ''
+        decision.reasons.push(`\`${commit.type}\` is a legacy type; it releases like \`${replacement}\`.`)
+        decision.violations.push({
+            rule: 'legacy-type',
+            message: `\`${commit.type}\` is a legacy Aronrepo type. Use \`${replacement}\`.`,
+            suggestion: `${replacement}${scope}: ${commit.subject ?? ''}`
+        })
     }
 
     let release: ReleaseType

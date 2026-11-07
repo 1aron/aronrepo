@@ -8,8 +8,16 @@ export interface ConventionalCommitType {
      * `Bump` at `patch`; see `getReleaseType()` and `resolveCommitRelease()`.
      */
     release: ReleaseType
+    /** When to use the type, written for people and coding agents. */
+    description: string
+    /** Release notes section. Types without a group never appear in release notes. */
     group?: string
-    hidden?: boolean
+}
+
+export interface LegacyCommitType {
+    type: string
+    /** The type that replaces it. Legacy commits release and group like their replacement. */
+    replacement: string
 }
 
 /** Release levels in descending order. */
@@ -25,47 +33,73 @@ export function maxRelease(...releases: Array<ReleaseType | undefined>): Release
         compareRelease(release, highest) > 0 ? release as ReleaseType : highest, false)
 }
 
-export const commits = [
-    { type: 'Bump', scope: 'Major', release: 'major' },
-    { type: 'Bump', scope: 'Minor', release: 'minor' },
-    { type: 'Bump', scope: 'Patch', release: 'patch' },
-    { type: 'Feat', release: 'minor', group: 'New Features' },
-    { type: 'New', release: 'minor', group: 'New Features' },
-    { type: 'Perf', release: 'patch', group: 'Performance Upgrades' },
-    { type: 'Add', release: 'patch', group: 'Additions' },
-    { type: 'Update', release: 'patch', group: 'Updates' },
-    { type: 'Improve', release: 'patch', group: 'Improvements' },
-    { type: 'Fix', release: 'patch', group: 'Bug Fixes' },
-    { type: 'Deprecate', release: 'patch', group: 'Deprecations' },
-    { type: 'Drop', release: 'patch', group: 'Deprecations' },
-    { type: 'Docs', release: false, group: 'Documentation' },
-    { type: 'Docs', scope: 'README', release: 'patch' },
-    { type: 'Upgrade', release: 'patch', group: 'Upgrades' },
-    { type: 'Revert', release: 'patch', group: 'Reversions' },
-    { type: 'Example', release: false, group: 'Examples' },
-    { type: 'Test', release: false, group: 'Tests' },
-    { type: 'Benchmark', release: false, group: 'Benchmarks' },
-    { type: 'Build', release: false, hidden: false },
-    { type: 'CI', release: false, hidden: false },
-    { type: 'Style', release: false, hidden: false },
-    { type: 'Refactor', release: false, hidden: false },
-    { type: 'Chore', release: false, hidden: false },
-    { type: 'Misc', release: false, hidden: false }
-] satisfies ConventionalCommitType[]
+/**
+ * The Aronrepo commit types. The table is fixed: repositories choose a release
+ * mode and release paths, not their own types.
+ *
+ * Release notes list the groups in this order.
+ */
+export const commits: readonly ConventionalCommitType[] = [
+    { type: 'Bump', scope: 'Major', release: 'major', description: 'Release a major version. Only the repository owner decides it.' },
+    { type: 'Bump', scope: 'Minor', release: 'minor', description: 'Release a minor version. Only the repository owner decides it.' },
+    { type: 'Bump', scope: 'Patch', release: 'patch', description: 'Release a patch version without another release commit.' },
+    { type: 'Add', release: 'minor', group: 'Additions', description: 'A new capability: a new API, export, option, command, or package.' },
+    { type: 'Improve', release: 'patch', group: 'Improvements', description: 'A better existing capability without new API: behavior, output, messages, or defaults.' },
+    { type: 'Perf', release: 'patch', group: 'Performance', description: 'Faster or lighter published code with the same behavior.' },
+    { type: 'Fix', release: 'patch', group: 'Bug Fixes', description: 'A bug fix in published behavior.' },
+    { type: 'Deprecate', release: 'patch', group: 'Deprecations', description: 'Mark a published capability as deprecated while it keeps working.' },
+    { type: 'Drop', release: 'patch', group: 'Removals', description: 'Remove a published capability.' },
+    { type: 'Upgrade', release: 'patch', group: 'Dependencies', description: 'Change a runtime dependency of a published package.' },
+    { type: 'Revert', release: 'patch', group: 'Reverts', description: 'Revert a commit. It releases what the reverted commit released.' },
+    { type: 'Docs', scope: 'README', release: 'patch', group: 'Documentation', description: 'Change a published package README.' },
+    { type: 'Docs', release: false, description: 'Documentation that is not a published package README.' },
+    { type: 'Test', release: false, description: 'Tests that cover existing behavior.' },
+    { type: 'Benchmark', release: false, description: 'Benchmark harnesses, fixtures, and reports.' },
+    { type: 'Example', release: false, description: 'Examples that do not ship in a package.' },
+    { type: 'Build', release: false, description: 'Build tooling and development configuration.' },
+    { type: 'CI', release: false, description: 'CI workflows and automation.' },
+    { type: 'Style', release: false, description: 'Formatting and lint-only changes.' },
+    { type: 'Refactor', release: false, description: 'Code changes that keep published behavior.' },
+    { type: 'Chore', release: false, description: 'Maintenance: development dependencies, lockfiles, metadata, agent guidance, and unpublished workspaces.' }
+]
 
-export const types = [...new Set(commits.map(({ type }) => type))]
+/**
+ * Types from earlier Aronrepo versions. They still resolve in history so old
+ * commits release as before, but `aronrepo check` rejects them in new commits.
+ */
+export const legacyCommits: readonly LegacyCommitType[] = [
+    { type: 'Feat', replacement: 'Add' },
+    { type: 'New', replacement: 'Add' },
+    { type: 'Update', replacement: 'Improve' },
+    { type: 'Misc', replacement: 'Chore' }
+]
 
-export const releaseCommits = commits.filter(({ release }) => release !== false)
+export const types: string[] = [...new Set(commits.map(({ type }) => type))]
 
-export const nonReleaseCommits = commits.filter(({ release }) => release === false)
+export const legacyTypes: string[] = legacyCommits.map(({ type }) => type)
 
-export const releaseTypes = [...new Set(releaseCommits.map(({ type }) => type))]
+export const releaseCommits: ConventionalCommitType[] = commits.filter(({ release }) => release !== false)
 
-export const nonReleaseTypes = [...new Set(nonReleaseCommits.map(({ type }) => type))]
+export const nonReleaseCommits: ConventionalCommitType[] = commits.filter(({ release }) => release === false)
 
-export function findCommitRule(type: string | undefined, scope?: string) {
-    if (!type) return undefined
+export const releaseTypes: string[] = [...new Set(releaseCommits.map(({ type }) => type))]
 
-    return commits.find((commit) => commit.type === type && commit.scope === scope)
-        ?? commits.find((commit) => commit.type === type && commit.scope === undefined)
+export const nonReleaseTypes: string[] = [...new Set(nonReleaseCommits.map(({ type }) => type))]
+
+/** Release notes groups in display order. */
+export const releaseGroups: string[] = [...new Set(commits.flatMap(({ group }) => group ? [group] : []))]
+
+/** The current type for a legacy type, or the type itself. */
+export function normalizeType(type: string): string
+export function normalizeType(type: string | undefined): string | undefined
+export function normalizeType(type: string | undefined) {
+    return legacyCommits.find((legacy) => legacy.type === type)?.replacement ?? type
+}
+
+export function findCommitRule(type: string | undefined, scope?: string): ConventionalCommitType | undefined {
+    const current = normalizeType(type)
+    if (!current) return undefined
+
+    return commits.find((commit) => commit.type === current && commit.scope === scope)
+        ?? commits.find((commit) => commit.type === current && commit.scope === undefined)
 }

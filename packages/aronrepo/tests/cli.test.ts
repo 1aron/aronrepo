@@ -52,7 +52,7 @@ test('check reads a commit-msg hook file and ignores comments', async () => {
     const cwd = createRepo()
     write(cwd, 'packages/core/index.js', 'export {}')
     git(cwd, 'add', '-A')
-    write(cwd, '.git/COMMIT_EDITMSG', 'Update(Core): Rename the mode\n\nBREAKING CHANGE: Rename it.\n# Please enter the commit message\n')
+    write(cwd, '.git/COMMIT_EDITMSG', 'Improve(Core): Rename the mode\n\nBREAKING CHANGE: Rename it.\n# Please enter the commit message\n')
 
     const result = await check({ cwd, edit: '.git/COMMIT_EDITMSG' })
     expect(result.code).toBe(1)
@@ -83,7 +83,7 @@ test('check validates every commit in a range and skips merge commits', async ()
 
 test('explain reports the next release from the latest tag', async () => {
     const cwd = createRepo()
-    commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
+    commit(cwd, 'Add(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
     commit(cwd, 'Fix(Site): Repair the header', { 'site/header.js': 'export {}' })
 
     const result = await explain({ cwd })
@@ -102,7 +102,9 @@ test('policy prints machine-readable release rules', async () => {
         mode: 'auto',
         configFile: 'aronrepo.config.js',
         releasePaths: { include: ['packages/core/**'] },
-        releaseTable: { minor: expect.arrayContaining(['`Feat`']) }
+        releaseTable: { minor: expect.arrayContaining(['`Add`']) },
+        types: expect.arrayContaining([expect.objectContaining({ type: 'Add', release: 'minor', group: 'Additions' })]),
+        legacyTypes: expect.arrayContaining([{ type: 'Feat', replacement: 'Add' }])
     })
 })
 
