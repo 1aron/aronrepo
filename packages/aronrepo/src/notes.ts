@@ -75,7 +75,9 @@ function listItem(text: string) {
 }
 
 function formatEntry(decision: CommitDecision, repositoryUrl?: string) {
-    const summary = escapeMarkdown(decision.subject ?? decision.header)
+    // Lowercase summaries are valid; the notes start every entry with a capital.
+    const subject = decision.subject ?? decision.header
+    const summary = escapeMarkdown(subject.replace(/^\p{Ll}/u, (letter) => letter.toUpperCase()))
     const scope = decision.scope ? `**${escapeMarkdown(decision.scope)}:** ` : ''
     const hash = decision.hash ? decision.hash.slice(0, 7) : undefined
     const link = hash

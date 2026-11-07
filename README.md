@@ -78,10 +78,10 @@ release:
 Type(Scope): Summary
 ```
 
-The type is one of the types below, the scope names the package or area, and the summary starts with an uppercase letter or digit and has no trailing period. Leave a blank line before the body and before a `BREAKING CHANGE:` footer.
+The type is one of the types below, the scope names the package or area, and the summary starts with a letter or digit and has no trailing period. Types and scopes match without case, so `fix(core): repair cache` is the same commit as `Fix(Core): Repair cache`; release notes capitalize the first letter of every summary. Leave a blank line before the body and before a `BREAKING CHANGE:` footer.
 
 ```text
-Add(Core): Support ESM config files
+Feat(Core): Support ESM config files
 Fix(Release): Preserve workspace dependency ranges
 Docs(README): Clarify package installation
 Chore(Site): Fix the homepage header transition
@@ -96,7 +96,7 @@ Chore(Agent): Update repository guidance for coding agents
 | `Bump(Major)` | major | major | Release a major version. Only the repository owner decides it. |
 | `Bump(Minor)` | minor | minor | Release a minor version. Only the repository owner decides it. |
 | `Bump(Patch)` | patch | patch | Release a patch version without another release commit. |
-| `Add` | patch | minor | A new capability: a new API, export, option, command, or package. |
+| `Feat` | patch | minor | A new capability: a new API, export, option, command, or package. |
 | `Improve` | patch | patch | A better existing capability without new API: behavior, output, messages, or defaults. |
 | `Perf` | patch | patch | Faster or lighter published code with the same behavior. |
 | `Fix` | patch | patch | A bug fix in published behavior. |
@@ -116,9 +116,9 @@ Chore(Agent): Update repository guidance for coding agents
 | `Chore` | none | none | Maintenance: development dependencies, lockfiles, metadata, agent guidance, and unpublished workspaces. |
 | `BREAKING CHANGE:` footer | rejected | major | |
 
-The legacy types `Feat` and `New` (now `Add`), `Update` (now `Improve`), and `Misc` (now `Chore`) still resolve in history with the level of their replacement, so old tags keep their meaning, but `aronrepo check` rejects them in new commits.
+The legacy types `Add` and `New` (now `Feat`), `Update` (now `Improve`), and `Misc` (now `Chore`) still resolve in history with the level of their replacement, so old tags keep their meaning, but `aronrepo check` rejects them in new commits.
 
-Release notes list the commits that release, grouped as Additions, Improvements, Performance, Bug Fixes, Deprecations, Removals, Dependencies, Reverts, and Documentation, with the `BREAKING CHANGE:` footers of a major release first. The GitHub release shows the tag and date itself, so its body starts with the first section and ends with a **Full Changelog** link to the compare view; `renderReleaseNotes({ heading: true })` adds a `## <version> (<date>)` heading for a changelog file.
+Release notes list the commits that release, grouped as Features, Improvements, Performance, Bug Fixes, Deprecations, Removals, Dependencies, Reverts, and Documentation, with the `BREAKING CHANGE:` footers of a major release first. The GitHub release shows the tag and date itself, so its body starts with the first section and ends with a **Full Changelog** link to the compare view; `renderReleaseNotes({ heading: true })` adds a `## <version> (<date>)` heading for a changelog file.
 
 ## Release Modes
 
@@ -237,7 +237,7 @@ First inspect the repo before editing: package manager, Node version, module typ
 
 Before editing, ask me which release mode to use and wait for the answer. Do not choose it yourself:
 - explicit: only I raise minor and major versions with Bump(Minor) and Bump(Major) commits.
-- auto: Add releases minor versions, and BREAKING CHANGE footers release major versions.
+- auto: Feat releases minor versions, and BREAKING CHANGE footers release major versions.
 
 Then adopt Aronrepo conservatively:
 1. Use ESM-compatible configuration only.
@@ -253,12 +253,19 @@ Then adopt Aronrepo conservatively:
 When finished, summarize the changed files, the release mode and release paths, behavior intentionally left unchanged, and the validation results. Use non-release commit types for this setup work (for example Build(Release), CI(GitHub), or Chore(Agent)).
 ```
 
+## Migrating from Aronrepo 3
+
+- Write `Feat` instead of `Add`. `Add` is now a legacy type: old `Add` commits still release as before, but `aronrepo check` rejects new ones and suggests `Feat`.
+- Release notes call that section Features instead of Additions.
+- Lowercase types, scopes, and summaries now pass `aronrepo check`; nothing else changes.
+- Run `aronrepo agents --write` to regenerate the `AGENTS.md` block.
+
 ## Migrating from Aronrepo 2
 
 - Remove `semantic-release`, `@semantic-release/*`, `@commitlint/cli`, every `@aronrepo/*` package, `release.config.js`, and `commitlint.config.js`. Install `aronrepo` only.
 - Replace `commitlint --edit "$1"` in the commit-msg hook with `aronrepo check --edit "$1"`, and `semantic-release` in CI with `aronrepo release`.
 - Import the commit standard from `aronrepo` instead of `@aronrepo/conventional-commits`, and the Node helpers and commands from `aronrepo/node`.
-- Write `Add` instead of `Feat` or `New`, `Improve` instead of `Update`, and `Chore` instead of `Misc`.
+- Write `Feat` instead of `New`, `Improve` instead of `Update`, and `Chore` instead of `Misc`.
 - Run `aronrepo agents --write`, `aronrepo doctor`, and `aronrepo release --dry-run`.
 
 ## Local Development

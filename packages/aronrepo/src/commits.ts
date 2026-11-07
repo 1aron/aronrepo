@@ -43,7 +43,7 @@ export const commits: readonly Readonly<ConventionalCommitType>[] = Object.freez
     { type: 'Bump', scope: 'Major', release: 'major', description: 'Release a major version. Only the repository owner decides it.' },
     { type: 'Bump', scope: 'Minor', release: 'minor', description: 'Release a minor version. Only the repository owner decides it.' },
     { type: 'Bump', scope: 'Patch', release: 'patch', description: 'Release a patch version without another release commit.' },
-    { type: 'Add', release: 'minor', group: 'Additions', description: 'A new capability: a new API, export, option, command, or package.' },
+    { type: 'Feat', release: 'minor', group: 'Features', description: 'A new capability: a new API, export, option, command, or package.' },
     { type: 'Improve', release: 'patch', group: 'Improvements', description: 'A better existing capability without new API: behavior, output, messages, or defaults.' },
     { type: 'Perf', release: 'patch', group: 'Performance', description: 'Faster or lighter published code with the same behavior.' },
     { type: 'Fix', release: 'patch', group: 'Bug Fixes', description: 'A bug fix in published behavior.' },
@@ -68,8 +68,8 @@ export const commits: readonly Readonly<ConventionalCommitType>[] = Object.freez
  * commits release as before, but `aronrepo check` rejects them in new commits.
  */
 export const legacyCommits: readonly Readonly<LegacyCommitType>[] = Object.freeze(([
-    { type: 'Feat', replacement: 'Add' },
-    { type: 'New', replacement: 'Add' },
+    { type: 'Add', replacement: 'Feat' },
+    { type: 'New', replacement: 'Feat' },
     { type: 'Update', replacement: 'Improve' },
     { type: 'Misc', replacement: 'Chore' }
 ] satisfies LegacyCommitType[]).map((commit) => Object.freeze(commit)))
@@ -89,11 +89,31 @@ export const nonReleaseTypes: string[] = [...new Set(nonReleaseCommits.map(({ ty
 /** Release notes groups in display order. */
 export const releaseGroups: string[] = [...new Set(commits.flatMap(({ group }) => group ? [group] : []))]
 
+const knownTypes = [...types, ...legacyTypes]
+
+/** The type as the table spells it, matched without case (`fix` → `Fix`), or the type itself when it is unknown. */
+export function canonicalType(type: string): string
+export function canonicalType(type: string | undefined): string | undefined
+export function canonicalType(type: string | undefined) {
+    if (!type) return type
+    const lower = type.toLowerCase()
+    return knownTypes.find((known) => known.toLowerCase() === lower) ?? type
+}
+
+/** The scope as the table spells it for a type (`bump(minor)` → `Minor`), or the scope itself. */
+export function canonicalScope(type: string | undefined, scope: string | undefined) {
+    if (!scope) return scope
+    const current = normalizeType(canonicalType(type))
+    const lower = scope.toLowerCase()
+    return commits.find((commit) => commit.type === current && commit.scope?.toLowerCase() === lower)?.scope ?? scope
+}
+
 /** The current type for a legacy type, or the type itself. */
 export function normalizeType(type: string): string
 export function normalizeType(type: string | undefined): string | undefined
 export function normalizeType(type: string | undefined) {
-    return legacyCommits.find((legacy) => legacy.type === type)?.replacement ?? type
+    const known = canonicalType(type)
+    return legacyCommits.find((legacy) => legacy.type === known)?.replacement ?? known
 }
 
 export function findCommitRule(type: string | undefined, scope?: string): ConventionalCommitType | undefined {

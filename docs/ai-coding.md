@@ -8,14 +8,14 @@ Aronrepo is designed so coding agents can adopt it and then follow it without ju
 
 ## One Fixed Commit Standard
 
-Repositories cannot add or rename commit types. Each type has one meaning, so an agent picks the type that describes the change and the policy decides the release level. `Add` is a new capability, `Improve` a better existing capability, `Fix` a bug fix, `Upgrade` a runtime dependency change, and `Chore` maintenance; `aronrepo policy --json` has the full list with descriptions.
+Repositories cannot add or rename commit types. Each type has one meaning, so an agent picks the type that describes the change and the policy decides the release level. `Feat` is a new capability, `Improve` a better existing capability, `Fix` a bug fix, `Upgrade` a runtime dependency change, and `Chore` maintenance; `aronrepo policy --json` has the full list with descriptions.
 
 ## Release Modes Are an Owner Decision
 
 | Mode | Who raises minor and major versions |
 | --- | --- |
 | `explicit` (default) | Only the owner, with `Bump(Minor)` and `Bump(Major)` commits. Every other type releases at most a patch; `BREAKING CHANGE:` footers are rejected. |
-| `auto` | Commit types: `Add` releases minor, `BREAKING CHANGE:` footers release major. |
+| `auto` | Commit types: `Feat` releases minor, `BREAKING CHANGE:` footers release major. |
 
 An agent adopting Aronrepo must ask the repository owner which mode to use. An agent working in a repository that already uses Aronrepo must never write `Bump(Major)`, `Bump(Minor)`, or a breaking marker unless the user asked for that release level in the current conversation.
 

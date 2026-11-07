@@ -36,19 +36,19 @@ bun x aronrepo agents --write
 bun x aronrepo doctor
 ```
 
-In `explicit` mode (the default) only `Bump(Minor)` and `Bump(Major)` raise minor and major versions. In `auto` mode `Add` releases a minor version and a `BREAKING CHANGE:` footer releases a major version. A release type that changes no published file releases nothing.
+In `explicit` mode (the default) only `Bump(Minor)` and `Bump(Major)` raise minor and major versions. In `auto` mode `Feat` releases a minor version and a `BREAKING CHANGE:` footer releases a major version. A release type that changes no published file releases nothing.
 
 ## Commit Types
 
-`Type(Scope): Summary`, with a summary that starts with an uppercase letter or digit and has no trailing period.
+`Type(Scope): Summary`, with a summary that has no trailing period. Types and scopes match without case (`fix(core)` is `Fix(Core)`), and release notes capitalize each summary.
 
 | Release | Types |
 | --- | --- |
 | Owner decides | `Bump(Major)`, `Bump(Minor)`, `Bump(Patch)` |
-| Patch (`Add`: minor in `auto`) | `Add`, `Improve`, `Perf`, `Fix`, `Deprecate`, `Drop`, `Upgrade`, `Revert`, `Docs(README)` |
+| Patch (`Feat`: minor in `auto`) | `Feat`, `Improve`, `Perf`, `Fix`, `Deprecate`, `Drop`, `Upgrade`, `Revert`, `Docs(README)` |
 | None | `Docs`, `Test`, `Benchmark`, `Example`, `Build`, `CI`, `Style`, `Refactor`, `Chore` |
 
-`aronrepo policy --json` describes when to use each type. `Feat`, `New`, `Update`, and `Misc` are legacy types that `aronrepo check` rejects.
+`aronrepo policy --json` describes when to use each type. `Add`, `New`, `Update`, and `Misc` are legacy types that `aronrepo check` rejects.
 
 ## Commands
 

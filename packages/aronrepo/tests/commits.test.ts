@@ -13,32 +13,34 @@ import {
 
 test('exports commit types', () => {
     expect(types).toEqual([
-        'Bump', 'Add', 'Improve', 'Perf', 'Fix', 'Deprecate', 'Drop', 'Upgrade', 'Revert',
+        'Bump', 'Feat', 'Improve', 'Perf', 'Fix', 'Deprecate', 'Drop', 'Upgrade', 'Revert',
         'Docs', 'Test', 'Benchmark', 'Example', 'Build', 'CI', 'Style', 'Refactor', 'Chore'
     ])
-    expect(commits.find(({ type }) => type === 'Add')?.release).toBe('minor')
+    expect(commits.find(({ type }) => type === 'Feat')?.release).toBe('minor')
     expect(commits.every(({ description }) => description.endsWith('.'))).toBe(true)
 })
 
 test('maps legacy types to their replacements', () => {
-    expect(legacyTypes).toEqual(['Feat', 'New', 'Update', 'Misc'])
+    expect(legacyTypes).toEqual(['Add', 'New', 'Update', 'Misc'])
     expect(types).not.toEqual(expect.arrayContaining(legacyTypes))
-    expect(normalizeType('Feat')).toBe('Add')
+    expect(normalizeType('Add')).toBe('Feat')
+    expect(normalizeType('add')).toBe('Feat')
+    expect(normalizeType('fix')).toBe('Fix')
     expect(normalizeType('Update')).toBe('Improve')
     expect(normalizeType('Fix')).toBe('Fix')
-    expect(findCommitRule('New')?.type).toBe('Add')
+    expect(findCommitRule('New')?.type).toBe('Feat')
     expect(findCommitRule('Misc')?.release).toBe(false)
 })
 
 test('orders release notes groups', () => {
     expect(releaseGroups).toEqual([
-        'Additions', 'Improvements', 'Performance', 'Bug Fixes', 'Deprecations',
+        'Features', 'Improvements', 'Performance', 'Bug Fixes', 'Deprecations',
         'Removals', 'Dependencies', 'Reverts', 'Documentation'
     ])
 })
 
 test('exports release and non-release type groups', () => {
-    expect(releaseTypes).toEqual(expect.arrayContaining(['Bump', 'Add', 'Fix']))
+    expect(releaseTypes).toEqual(expect.arrayContaining(['Bump', 'Feat', 'Fix']))
     expect(nonReleaseTypes).toEqual(expect.arrayContaining(['Benchmark', 'Build', 'Chore', 'CI', 'Docs', 'Style', 'Test']))
 })
 

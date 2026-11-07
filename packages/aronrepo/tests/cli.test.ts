@@ -106,7 +106,7 @@ test('check validates every commit in a range and skips merge commits', async ()
 
 test('explain reports the next release from the latest tag', async () => {
     const cwd = createRepo()
-    commit(cwd, 'Add(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
+    commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
     commit(cwd, 'Fix(Site): Repair the header', { 'site/header.js': 'export {}' })
 
     const result = await explain({ cwd })
@@ -129,9 +129,9 @@ test('policy prints machine-readable release rules', async () => {
         mode: 'auto',
         configFile: 'aronrepo.config.js',
         releasePaths: { include: ['packages/core/**'] },
-        releaseTable: { minor: expect.arrayContaining(['Add']), major: expect.arrayContaining(['BREAKING CHANGE: footer']) },
-        types: expect.arrayContaining([expect.objectContaining({ type: 'Add', release: 'minor', group: 'Additions' })]),
-        legacyTypes: expect.arrayContaining([{ type: 'Feat', replacement: 'Add' }])
+        releaseTable: { minor: expect.arrayContaining(['Feat']), major: expect.arrayContaining(['BREAKING CHANGE: footer']) },
+        types: expect.arrayContaining([expect.objectContaining({ type: 'Feat', release: 'minor', group: 'Features' })]),
+        legacyTypes: expect.arrayContaining([{ type: 'Add', replacement: 'Feat' }])
     })
 })
 

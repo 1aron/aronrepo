@@ -1,10 +1,10 @@
 import picomatch from 'picomatch'
-import { commits, findCommitRule, legacyTypes, maxRelease, normalizeType, types, type ReleaseType } from './commits'
+import { canonicalScope, canonicalType, commits, findCommitRule, legacyTypes, maxRelease, normalizeType, types, type ReleaseType } from './commits'
 
 /**
  * - `explicit`: only `Bump(Major)` and `Bump(Minor)` raise major and minor versions.
- *   `Add` releases a patch, and breaking markers never change the level.
- * - `auto`: `Add` releases a minor version and a `BREAKING CHANGE:` footer or `!`
+ *   `Feat` releases a patch, and breaking markers never change the level.
+ * - `auto`: `Feat` releases a minor version and a `BREAKING CHANGE:` footer or `!`
  *   header releases a major version, following Conventional Commits.
  */
 export type ReleaseMode = 'explicit' | 'auto'
@@ -137,15 +137,16 @@ function capRelease(release: ReleaseType, type: string | undefined, policy: Rele
 }
 
 /**
- * The first character of a scope or summary: an uppercase letter, a letter
- * without case (such as CJK), a digit, or a code, issue, or emphasis marker.
+ * The first character of a scope or summary: a letter in either case, a digit,
+ * or a code, issue, or emphasis marker. Release notes capitalize the summary.
  */
-const startCharacter = String.raw`[\p{Lu}\p{Lt}\p{Lo}\p{Nd}\x60_#~]`
+const startCharacter = String.raw`[\p{L}\p{N}\x60_#~]`
 const startPattern = new RegExp(`^${startCharacter}`, 'u')
 
 // The scope stops at the first `)`, so a summary such as `Handle Foo(Bar): Baz` stays whole.
-export const headerPattern = new RegExp(String.raw`^([A-Z]\w*)(?:\((${startCharacter}[^)]*)\))?: (${startCharacter}.*)$`, 'u')
-const breakingHeaderPattern = new RegExp(String.raw`^([A-Z]\w*)(?:\((${startCharacter}[^)]*)\))?!: (${startCharacter}.*)$`, 'u')
+// Types match without case: `fix`, `Fix`, and `FIX` are the same type.
+export const headerPattern = new RegExp(String.raw`^([A-Za-z]\w*)(?:\((${startCharacter}[^)]*)\))?: (${startCharacter}.*)$`, 'u')
+const breakingHeaderPattern = new RegExp(String.raw`^([A-Za-z]\w*)(?:\((${startCharacter}[^)]*)\))?!: (${startCharacter}.*)$`, 'u')
 const footerStartPattern = /^BREAKING[ -]CHANGE:[ \t]*(.*)$/
 // GitHub's revert button writes `Revert "<header>"`, a squash merge appends ` (#123)`,
 // and git 2.43+ writes `Reapply "<header>"` when a revert is reverted.
@@ -212,7 +213,10 @@ function readBreakingFooters(lines: string[]) {
 function parseHeader(header: string) {
     const regular = headerPattern.exec(header)
     const match = regular ?? breakingHeaderPattern.exec(header)
-    return match ? { type: match[1], scope: match[2], subject: match[3], breaking: !regular } : undefined
+    if (!match) return undefined
+    // The table's spelling, so `bump(minor): …` and `Bump(Minor): …` resolve alike.
+    const type = canonicalType(match[1])
+    return { type, scope: canonicalScope(type, match[2]), subject: match[3], breaking: !regular }
 }
 
 export function parseCommit(message: string, hash?: string): ParsedCommit {
@@ -316,15 +320,12 @@ function diagnoseHeader(header: string, mode: ReleaseMode) {
     const format = 'Use `Type(Scope): Summary` or `Type: Summary` with an Aronrepo commit type.'
     const match = looseHeaderPattern.exec(header)
     if (!match) return format
-    const [, type, scope, bang, space, subject] = match
-    if (!/^[A-Z]/.test(type)) {
-        return `The type \`${type}\` must be PascalCase, such as \`${normalizeType(`${type[0].toUpperCase()}${type.slice(1)}`)}\`. ${format}`
-    }
+    const [, , scope, bang, space, subject] = match
     if (bang && mode === 'explicit') return `Aronrepo headers do not use \`!\` in explicit mode. ${format}`
-    if (scope !== undefined && !startPattern.test(scope)) return `The scope \`${scope}\` must start with an uppercase letter or digit. ${format}`
+    if (scope !== undefined && !startPattern.test(scope)) return `The scope \`${scope}\` must start with a letter or digit. ${format}`
     if (space !== ' ') return `Put exactly one space after the colon. ${format}`
     if (!subject) return `The summary is empty. ${format}`
-    if (!startPattern.test(subject)) return `The summary must start with an uppercase letter, a digit, or a letter without case such as CJK. ${format}`
+    if (!startPattern.test(subject)) return `The summary must start with a letter or digit. ${format}`
     return format
 }
 
@@ -378,18 +379,6 @@ export function resolveCommitRelease(
                 : `\`${commit.type}\` needs a scope: ${scoped}.`
         })
         return decision
-    }
-
-    // `Docs(Readme)` falls back to plain `Docs`; say which scope was probably meant.
-    const knownScope = commit.scope && commits.find(({ type, scope }) =>
-        type === normalizeType(commit.type) && scope && scope !== commit.scope && scope.toLowerCase() === commit.scope!.toLowerCase())?.scope
-    if (knownScope) {
-        decision.violations.push({
-            rule: 'scope-case',
-            severity: 'warning',
-            message: `\`${commit.type}(${commit.scope})\` is treated as \`${commit.type}\`. Write \`${commit.type}(${knownScope})\` for that rule.`,
-            suggestion: `${commit.type}(${knownScope}): ${commit.subject ?? ''}`
-        })
     }
 
     if (commit.subject?.endsWith('.')) {

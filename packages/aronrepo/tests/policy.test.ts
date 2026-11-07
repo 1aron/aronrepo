@@ -86,8 +86,10 @@ test('never falls back to default rules for unparsed headers', () => {
     expect(merge.release).toBe(false)
     expect(merge.violations).toEqual([expect.objectContaining({ rule: 'header-format' })])
 
-    const lowercase = resolveCommitRelease('feat: add builder', auto)
-    expect(lowercase.release).toBe(false)
+    // Types, scopes, and summaries match without case.
+    expect(resolveCommitRelease('feat(core): add builder', auto)).toMatchObject({ type: 'Feat', scope: 'core', subject: 'add builder', release: 'minor', violations: [] })
+    expect(resolveCommitRelease('bump(minor): release the theme API')).toMatchObject({ type: 'Bump', scope: 'Minor', release: 'minor' })
+    expect(resolveCommitRelease('docs(readme): clarify setup')).toMatchObject({ type: 'Docs', scope: 'README', release: 'patch' })
 
     const unknown = resolveCommitRelease('Feature(Core): Add builder', auto)
     expect(unknown.release).toBe(false)
@@ -96,9 +98,9 @@ test('never falls back to default rules for unparsed headers', () => {
 
 test('explains why a header does not parse', () => {
     const message = (header: string) => resolveCommitRelease(header).violations[0]?.message
-    expect(message('Fix(semantic-release-pnpm): Skip whoami')).toMatch(/scope `semantic-release-pnpm` must start with an uppercase letter/)
-    expect(message('fix(Core): Repair cache')).toMatch(/type `fix` must be PascalCase, such as `Fix`/)
-    expect(message('Fix(Core): repair cache')).toMatch(/summary must start with an uppercase letter/)
+    expect(resolveCommitRelease('Fix(semantic-release-pnpm): skip whoami').violations).toEqual([])
+    expect(message('Fix(-core): Repair cache')).toMatch(/scope `-core` must start with a letter or digit/)
+    expect(message('Fix(Core): -repair cache')).toMatch(/summary must start with a letter or digit/)
     expect(message('Update the cache')).toMatch(/^Use `Type\(Scope\): Summary`/)
 })
 
@@ -146,12 +148,13 @@ test('clamps release types that touch no release paths', () => {
 })
 
 test('resolves legacy types like their replacements and rejects them in new commits', () => {
-    const feat = resolveCommitRelease('Feat(Core): Add a builder', auto)
-    expect(feat.release).toBe('minor')
-    expect(feat.violations).toEqual([expect.objectContaining({
+    const add = resolveCommitRelease('Add(Core): Add a builder', auto)
+    expect(add.release).toBe('minor')
+    expect(add.violations).toEqual([expect.objectContaining({
         rule: 'legacy-type',
-        suggestion: 'Add(Core): Add a builder'
+        suggestion: 'Feat(Core): Add a builder'
     })])
+    expect(resolveCommitRelease('add: a builder', auto)).toMatchObject({ release: 'minor', violations: [expect.objectContaining({ rule: 'legacy-type' })] })
     expect(resolveCommitRelease('Update: Rename the option', explicit)).toMatchObject({
         release: 'patch',
         violations: [expect.objectContaining({ rule: 'legacy-type', suggestion: 'Improve: Rename the option' })]
@@ -215,11 +218,11 @@ test('describes the release table for each mode', () => {
     expect(getReleaseTable(explicit)).toMatchObject({
         major: ['`Bump(Major)`'],
         minor: ['`Bump(Minor)`'],
-        patch: expect.arrayContaining(['`Add`', '`Fix`', '`Docs(README)`'])
+        patch: expect.arrayContaining(['`Feat`', '`Fix`', '`Docs(README)`'])
     })
     expect(getReleaseTable(auto)).toMatchObject({
         major: ['`Bump(Major)`', '`BREAKING CHANGE:` footer', '`Type!:` header'],
-        minor: expect.arrayContaining(['`Add`', '`Bump(Minor)`'])
+        minor: expect.arrayContaining(['`Feat`', '`Bump(Minor)`'])
     })
 })
 
@@ -296,7 +299,7 @@ test('accepts summaries in scripts without case and trims the header', () => {
     expect(resolveCommitRelease('Fix: Ärger').violations).toEqual([])
     const decision = resolveCommitRelease('Fix: Thing.  \n\nBody')
     expect(decision.violations.map(({ rule, suggestion }) => [rule, suggestion])).toEqual([['subject-full-stop', 'Fix: Thing']])
-    expect(resolveCommitRelease('Fix(core)!: thing', auto).violations[0].rule).toBe('header-format')
+    expect(resolveCommitRelease('fix(core)!: thing', auto)).toMatchObject({ release: 'major', violations: [] })
 })
 
 test('diagnoses spacing, legacy casing, and unknown scopes precisely', () => {
@@ -304,9 +307,9 @@ test('diagnoses spacing, legacy casing, and unknown scopes precisely', () => {
     expect(message('Fix:  Thing')).toMatch(/^Put exactly one space after the colon/)
     expect(message('Fix:Thing')).toMatch(/^Put exactly one space after the colon/)
     expect(message('Fix!:Thing', auto)).toMatch(/^Put exactly one space after the colon/)
-    expect(message('feat: X')).toMatch(/such as `Add`/)
+    expect(message('feature: X')).toMatch(/`feature` is not an Aronrepo commit type/)
     expect(message('Bump(Huge): X')).toBe('`Bump(Huge)` has an unknown scope. Use one of: `Bump(Major)`, `Bump(Minor)`, `Bump(Patch)`.')
-    expect(resolveCommitRelease('Docs(Readme): Update').violations).toMatchObject([{ rule: 'scope-case', severity: 'warning', suggestion: 'Docs(README): Update' }])
+    expect(resolveCommitRelease('Docs(Readme): Update')).toMatchObject({ scope: 'README', release: 'patch', violations: [] })
 })
 
 test('ignores breaking footers in code fences and keeps notes until the next token', () => {

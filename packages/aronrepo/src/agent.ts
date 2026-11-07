@@ -53,7 +53,7 @@ export function getAgentCommitPolicy(policy: ReleasePolicy = defaultReleasePolic
             : [
                 'Never write `Bump(Major)` or `Bump(Minor)` unless the user explicitly asked for that release level in the current conversation.',
                 'A `BREAKING CHANGE:` footer releases a major version. Add one only for a real break in published behavior or public API, and tell the user.',
-                '`Add` releases a minor version. Use it only for new capabilities of published packages.'
+                '`Feat` releases a minor version. Use it only for new capabilities of published packages.'
             ],
         releaseWorthyChanges: [
             'Published package runtime behavior',
@@ -77,10 +77,10 @@ export function getAgentCommitPolicy(policy: ReleasePolicy = defaultReleasePolic
         ],
         examples: [
             {
-                commit: 'Add(Core): Support ESM config files',
+                commit: 'Feat(Core): Support ESM config files',
                 use: 'A new capability in a published package',
-                release: getReleaseType('Add', 'Core', policy) ?? false,
-                ...(explicit ? { avoid: 'Feat(Core): Support ESM config files' } : {})
+                release: getReleaseType('Feat', 'Core', policy) ?? false,
+                avoid: 'Add(Core): Support ESM config files'
             },
             {
                 commit: 'Chore(Site): Fix the homepage header transition',
@@ -92,7 +92,7 @@ export function getAgentCommitPolicy(policy: ReleasePolicy = defaultReleasePolic
                 commit: 'Chore(Agent): Update repository guidance for coding agents',
                 use: 'Agent instructions, prompts, or repo context',
                 release: false,
-                avoid: 'Feat(Agent): Add agent guide'
+                avoid: 'Feat(Agent): Add an agent guide'
             },
             {
                 commit: 'Test(Release): Cover scoped README bump rules',
@@ -138,7 +138,7 @@ export function getAgentCommitPolicy(policy: ReleasePolicy = defaultReleasePolic
                 commit: 'Example(Release): Add a release workflow sample',
                 use: 'Example-only additions or updates that do not change published package behavior',
                 release: false,
-                avoid: 'Add(Example): Add a release workflow sample'
+                avoid: 'Feat(Example): Add a release workflow sample'
             },
             {
                 commit: 'Docs: Add commit type examples',
@@ -199,9 +199,9 @@ export function renderAgentsBlock(policy: ReleasePolicy = defaultReleasePolicy, 
         '',
         `Release mode: **${policy.mode}**. ${policy.mode === 'explicit'
             ? 'Only the repository owner decides minor and major versions, with `Bump(Minor)` and `Bump(Major)` commits.'
-            : '`Add` releases minor versions, and `BREAKING CHANGE:` footers and `Type!:` headers release major versions.'}`,
+            : '`Feat` releases minor versions, and `BREAKING CHANGE:` footers and `Type!:` headers release major versions.'}`,
         '',
-        'Commit headers and PR titles use `Type(Scope): Summary` or `Type: Summary`: a PascalCase type, an optional scope for the package or area, and a sentence-case summary without a trailing period.',
+        'Commit headers and PR titles use `Type(Scope): Summary` or `Type: Summary`: a type from the table, an optional scope for the package or area, and a summary without a trailing period. Types and scopes match without case (`fix` is `Fix`); this repository writes them as the table does.',
         '',
         '| Type | Release | Use for |',
         '| --- | --- | --- |',
@@ -216,7 +216,7 @@ export function renderAgentsBlock(policy: ReleasePolicy = defaultReleasePolicy, 
         '### Choosing a type',
         '',
         `- ${agent.releaseImpactRule}`,
-        '- Pick the type that describes the change: a new capability is `Add`, a better existing capability is `Improve`, a bug fix is `Fix`, and a runtime dependency change is `Upgrade`.',
+        '- Pick the type that describes the change: a new capability is `Feat`, a better existing capability is `Improve`, a bug fix is `Fix`, and a runtime dependency change is `Upgrade`.',
         `- A commit that changes no release path must use a non-release type (${nonReleaseAlternatives.map((type) => `\`${type}\``).join(', ')}), even when it fixes or speeds up something.`,
         '- Split unrelated changes so each commit carries its own release level.',
         '',

@@ -3,9 +3,9 @@ import { getChangelogUrl, renderReleaseNotes, resolveRelease } from '../src'
 const decisions = resolveRelease([
     { hash: 'a'.repeat(40), message: 'Bump(Major): Aronrepo v3\n\nBREAKING CHANGE: Releases default to explicit mode.\n\nBREAKING CHANGE: Remove the adapters.' },
     { hash: 'b'.repeat(40), message: 'Fix(Release): Keep workspace ranges' },
-    { hash: 'c'.repeat(40), message: 'Add(CLI): Add the release command' },
-    { hash: 'd'.repeat(40), message: 'Add: Export the release planner' },
-    { hash: 'e'.repeat(40), message: 'Feat(Check): Lint PR titles' },
+    { hash: 'c'.repeat(40), message: 'Feat(CLI): Add the release command' },
+    { hash: 'd'.repeat(40), message: 'feat: export the release planner' },
+    { hash: 'e'.repeat(40), message: 'Add(Check): Lint PR titles' },
     { hash: 'f'.repeat(40), message: 'Chore(Agent): Refresh guidance' },
     { hash: '1'.repeat(40), message: 'Improve(Release): Explain skipped commits\n\nBREAKING CHANGE: Ignored in explicit mode.' }
 ], { mode: 'explicit' }).commits
@@ -23,7 +23,7 @@ test('renders a GitHub release body without a heading and with a full changelog 
         '- Releases default to explicit mode.',
         '- Remove the adapters.',
         '',
-        '### Additions',
+        '### Features',
         '',
         '- Export the release planner ([ddddddd](https://github.com/1aron/aronrepo/commit/' + 'd'.repeat(40) + '))',
         '- **Check:** Lint PR titles ([eeeeeee](https://github.com/1aron/aronrepo/commit/' + 'e'.repeat(40) + '))',
