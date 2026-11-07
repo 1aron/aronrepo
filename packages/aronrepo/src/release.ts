@@ -324,10 +324,26 @@ function isTransient(status: number) {
     return status === 408 || status === 429 || status >= 500
 }
 
-async function readPackument(environment: ReleaseEnvironment, registry: string, name: string): Promise<Packument | undefined> {
+/**
+ * Auth to read a registry: the `.npmrc` token or basic auth of that registry, such as the
+ * `${NODE_AUTH_TOKEN}` that actions/setup-node writes, then `NPM_TOKEN` for private registries.
+ */
+function readAuthorization(environment: ReleaseEnvironment, registry: string, npmrc: string) {
+    const nerfed = nerfDart(registry)
+    const usable = (value: string | undefined) => value && value !== placeholderToken ? value : undefined
+    const token = usable(readNpmrcValue(npmrc, `${nerfed}:_authToken`, environment.env))
+    if (token) return `Bearer ${token}`
+    const auth = usable(readNpmrcValue(npmrc, `${nerfed}:_auth`, environment.env))
+    if (auth) return `Basic ${auth}`
+    // The public npm registry needs no auth to read public packages.
+    if (registry !== officialRegistry && environment.env.NPM_TOKEN) return `Bearer ${environment.env.NPM_TOKEN}`
+    return undefined
+}
+
+async function readPackument(environment: ReleaseEnvironment, registry: string, name: string, npmrc = ''): Promise<Packument | undefined> {
     const headers: Record<string, string> = { accept: 'application/json', 'cache-control': 'no-cache' }
-    // Private registries need auth to read; the public npm registry does not.
-    if (registry !== officialRegistry && environment.env.NPM_TOKEN) headers.authorization = `Bearer ${environment.env.NPM_TOKEN}`
+    const authorization = readAuthorization(environment, registry, npmrc)
+    if (authorization) headers.authorization = authorization
     for (let attempt = 1; ; attempt++) {
         let response: Response
         try {
@@ -552,9 +568,9 @@ function validatePackedManifest(manifest: PackageJson, pkg: ReleasePackage, vers
     }
 }
 
-async function waitForVersion(environment: ReleaseEnvironment, registry: string, name: string, version: string) {
+async function waitForVersion(environment: ReleaseEnvironment, registry: string, name: string, version: string, npmrc = '') {
     for (let attempt = 1; attempt <= 30; attempt++) {
-        const published = (await readPackument(environment, registry, name))?.versions?.[version]
+        const published = (await readPackument(environment, registry, name, npmrc))?.versions?.[version]
         if (published) return published
         await environment.wait(10_000)
     }
@@ -864,7 +880,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
     for (let attempt = 0; ; attempt++) {
         const taken: string[] = []
         for (const pkg of plan.packages) {
-            const published = (await readPackument(environment, registryOf(pkg), pkg.name))?.versions?.[version]
+            const published = (await readPackument(environment, registryOf(pkg), pkg.name, npmrc))?.versions?.[version]
             if (!published || published.gitHead === plan.head) continue
             if (!published.gitHead) {
                 throw new Error(`${pkg.name}@${version} is already published without a gitHead, so aronrepo cannot tell which commit it came from. Tag that commit ${toVersionTag(version)}, or publish a newer version.`)
@@ -890,7 +906,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
     const { tag, notes, channel } = { tag: plan.tag, notes: plan.notes, channel: plan.channel }
 
     for (const pkg of plan.packages) {
-        const packument = await readPackument(environment, registryOf(pkg), pkg.name)
+        const packument = await readPackument(environment, registryOf(pkg), pkg.name, npmrc)
         const current = packument?.['dist-tags']?.[channel.distTag]
         if (current && semver.valid(current) && semver.gt(current, version)) {
             throw new Error(`${pkg.name} has ${current} on ${channel.distTag}, newer than ${version}. Tag the commit of ${current} as ${toVersionTag(current)} so releases continue from it.`)
@@ -965,7 +981,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
 
         for (const pkg of plan.packages) {
             const registry = registryOf(pkg)
-            const isPublished = async () => (await readPackument(environment, registry, pkg.name))?.versions?.[version]?.gitHead === plan.head
+            const isPublished = async () => (await readPackument(environment, registry, pkg.name, npmrc))?.versions?.[version]?.gitHead === plan.head
             if (await isPublished()) {
                 log(`✓ ${pkg.name}@${version} is already published from this commit.`)
                 continue
@@ -987,14 +1003,14 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
 
         for (const pkg of plan.packages) {
             const registry = registryOf(pkg)
-            const published = await waitForVersion(environment, registry, pkg.name, version)
+            const published = await waitForVersion(environment, registry, pkg.name, version, npmrc)
             if (pkg.manifest.publishConfig?.provenance && !published.dist?.attestations) {
                 log(`! ${pkg.name}@${version} has no provenance attestation on ${registry}.`)
             }
         }
 
         for (const pkg of plan.packages) {
-            const tags = (await readPackument(environment, registryOf(pkg), pkg.name))?.['dist-tags'] ?? {}
+            const tags = (await readPackument(environment, registryOf(pkg), pkg.name, npmrc))?.['dist-tags'] ?? {}
             if (tags[channel.distTag] !== version) {
                 await runNpm(pkg, ['dist-tag', 'add', `${pkg.name}@${version}`, channel.distTag])
             }

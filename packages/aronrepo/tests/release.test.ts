@@ -713,3 +713,25 @@ test('refuses a missing release asset before publishing anything', async () => {
     await runRelease({ branch: 'main', dryRun: true }, environment(cwd, registry, logs))
     expect(logs).toContainEqual(expect.stringContaining('dist/missing.js does not exist. A release would stop here.'))
 })
+
+test('reads a private registry with the auth of its npmrc', async () => {
+    const cwd = createRepo()
+    write(cwd, '.npmrc', '@fixture:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\n')
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    const base = environment(cwd, registry)
+    delete base.env.NPM_TOKEN
+    base.env.NODE_AUTH_TOKEN = 'github-packages-token'
+    const reads = new Set<string | undefined>()
+    const result = await runRelease({ branch: 'main' }, {
+        ...base,
+        fetch: async (input, init) => {
+            if (!input.startsWith('https://npm.pkg.github.com/')) return registry.fetch(input, init)
+            reads.add(new Headers(init?.headers).get('authorization') ?? undefined)
+            return registry.fetch(input.replace('https://npm.pkg.github.com/', officialRegistry), init)
+        }
+    })
+    expect(result.status).toBe('released')
+    expect([...reads]).toEqual(['Bearer github-packages-token'])
+})
+
