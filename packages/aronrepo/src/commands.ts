@@ -253,6 +253,21 @@ function readText(file: string | undefined) {
     return file ? fs.readFileSync(file, 'utf8') : ''
 }
 
+const legacyDependencies = [
+    'semantic-release',
+    '@commitlint/cli',
+    '@aronrepo/commitlint-config',
+    '@aronrepo/conventional-changelog-config',
+    '@aronrepo/conventional-commits',
+    '@aronrepo/semantic-release-config',
+    '@aronrepo/semantic-release-pnpm'
+]
+
+const legacyConfigFiles = [
+    'release.config.js', 'release.config.mjs', 'release.config.cjs', '.releaserc', '.releaserc.js', '.releaserc.mjs', '.releaserc.json',
+    'commitlint.config.js', 'commitlint.config.mjs', 'commitlint.config.ts', '.commitlintrc', '.commitlintrc.js', '.commitlintrc.mjs', '.commitlintrc.json'
+]
+
 export async function doctor(options: CommonOptions): Promise<CommandResult> {
     const cwd = options.cwd ?? process.cwd()
     const checks: DoctorCheck[] = []
@@ -285,36 +300,33 @@ export async function doctor(options: CommonOptions): Promise<CommandResult> {
     const dependencies = { ...pkg.dependencies, ...pkg.devDependencies }
     checks.push(dependencies.aronrepo
         ? { status: 'pass', message: 'aronrepo is installed.' }
-        : { status: 'fail', message: 'aronrepo is not a dependency.', fix: 'pnpm add -D aronrepo @commitlint/cli semantic-release' })
+        : { status: 'fail', message: 'aronrepo is not a dependency.', fix: 'Install it as a dev dependency, for example `bun add -d aronrepo`.' })
 
-    const commitlintFile = findFile(cwd, ['commitlint.config.js', 'commitlint.config.mjs', 'commitlint.config.ts', '.commitlintrc.js', '.commitlintrc.mjs', '.commitlintrc.json'])
-    checks.push(readText(commitlintFile).includes('@aronrepo/commitlint-config')
-        ? { status: 'pass', message: `${path.basename(commitlintFile!)} uses @aronrepo/commitlint-config.` }
-        : { status: 'fail', message: 'commitlint does not use @aronrepo/commitlint-config.', fix: "Create commitlint.config.js with `export { default } from '@aronrepo/commitlint-config'`." })
-
-    const releaseFile = findFile(cwd, ['release.config.js', 'release.config.mjs', '.releaserc.js', '.releaserc.mjs', '.releaserc.json', '.releaserc'])
-    const releaseText = readText(releaseFile)
-    if (!releaseText.includes('@aronrepo/semantic-release-config')) {
-        checks.push({ status: 'fail', message: 'semantic-release does not use @aronrepo/semantic-release-config.', fix: "Create release.config.js with `import { configure } from '@aronrepo/semantic-release-config'` and `export default configure()`." })
-    } else if (releaseText.includes('@semantic-release/commit-analyzer')) {
-        checks.push({ status: 'fail', message: `${path.basename(releaseFile!)} adds @semantic-release/commit-analyzer, which bypasses the release policy.`, fix: 'Remove it; configure the release mode in aronrepo.config.js.' })
-    } else {
-        checks.push({ status: 'pass', message: `${path.basename(releaseFile!)} uses @aronrepo/semantic-release-config.` })
-    }
+    const leftovers = [
+        ...legacyDependencies.filter((name) => dependencies[name]),
+        ...legacyConfigFiles.filter((name) => fs.existsSync(path.join(cwd, name)))
+    ]
+    checks.push(leftovers.length
+        ? {
+            status: 'warn',
+            message: `Leftovers from semantic-release or commitlint: ${leftovers.join(', ')}.`,
+            fix: 'Remove them; `aronrepo check` lints commits and `aronrepo release` publishes releases.'
+        }
+        : { status: 'pass', message: 'No semantic-release or commitlint leftovers.' })
 
     const hook = readText(findFile(cwd, ['.husky/commit-msg']))
-    checks.push(hook.includes('commitlint') && hook.includes('aronrepo check')
-        ? { status: 'pass', message: '.husky/commit-msg runs commitlint and aronrepo check.' }
+    checks.push(hook.includes('aronrepo check')
+        ? { status: 'pass', message: '.husky/commit-msg runs aronrepo check.' }
         : {
             status: 'warn',
-            message: 'No commit-msg hook runs both commitlint and `aronrepo check`.',
-            fix: 'Add .husky/commit-msg with `pnpm exec commitlint --edit "$1" && pnpm exec aronrepo check --edit "$1"`.'
+            message: 'No commit-msg hook runs `aronrepo check`.',
+            fix: 'Add .husky/commit-msg with `aronrepo check --edit "$1"`.'
         })
 
     const agentsResult = await agents({ ...options, cwd })
     checks.push(agentsResult.code === 0
         ? { status: 'pass', message: 'AGENTS.md has the current commit policy block.' }
-        : { status: 'fail', message: agentsResult.output.replace(/^✗ /, ''), fix: 'pnpm exec aronrepo agents --write' })
+        : { status: 'fail', message: agentsResult.output.replace(/^✗ /, ''), fix: 'aronrepo agents --write' })
 
     const failed = checks.some(({ status }) => status === 'fail')
     if (options.json) return { code: failed ? 1 : 0, output: JSON.stringify({ ok: !failed, checks }, null, 2) }

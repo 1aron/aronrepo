@@ -1,2 +1,1 @@
-commitlint --edit "$1"
 aronrepo check --edit "$1"

@@ -127,17 +127,15 @@ test('doctor lists missing setup with fixes', async () => {
     const cwd = createRepo()
     const missing = await doctor({ cwd })
     expect(missing.code).toBe(1)
-    expect(missing.output).toContain('commitlint does not use @aronrepo/commitlint-config')
+    expect(missing.output).toContain('AGENTS.md is missing the Aronrepo commit policy block')
 
-    write(cwd, 'commitlint.config.js', "export { default } from '@aronrepo/commitlint-config'\n")
-    write(cwd, 'release.config.js', "import { configure } from '@aronrepo/semantic-release-config'\nexport default configure()\n")
-    write(cwd, '.husky/commit-msg', 'pnpm exec commitlint --edit "$1" && pnpm exec aronrepo check --edit "$1"\n')
+    write(cwd, '.husky/commit-msg', 'aronrepo check --edit "$1"\n')
     await agents({ cwd, write: true })
 
     const complete = await doctor({ cwd })
     expect(complete.output).toContain('Aronrepo setup is complete.')
     expect(complete.code).toBe(0)
 
-    write(cwd, 'release.config.js', "import { configure } from '@aronrepo/semantic-release-config'\nexport default configure({ plugins: { '@semantic-release/commit-analyzer': true } })\n")
-    expect((await doctor({ cwd })).output).toMatch(/bypasses the release policy/)
+    write(cwd, 'release.config.js', 'export default {}\n')
+    expect((await doctor({ cwd })).output).toMatch(/Leftovers from semantic-release or commitlint: release\.config\.js/)
 })

@@ -19,8 +19,7 @@
         "lint": "turbo run lint --filter=\"./packages/*\"",
         "type-check": "turbo run type-check --filter=\"./packages/*\"",
         "check:commits": "aronrepo check --from origin/main --to HEAD",
-        "check": "pnpm run check:commits && turbo run test lint type-check --filter=\"./packages/*\"",
-        "release": "semantic-release"
+        "check": "pnpm run check:commits && turbo run test lint type-check --filter=\"./packages/*\""
     },
     "engines": {
         "node": "^26"
@@ -30,17 +29,11 @@
         "url": "https://github.com/1aron/aronrepo.git"
     },
     "dependencies": {
-        "@commitlint/cli": "^21.2.4",
-        "@commitlint/lint": "^21.2.4",
         "@eslint/js": "^10.0.1",
-        "@semantic-release/github": "^12.0.10",
-        "@semantic-release/release-notes-generator": "^14.1.1",
-        "@types/fs-extra": "^11.0.4",
         "@types/node": "^26.6.6",
         "@types/semver": "^7.8.0",
         "eslint": "^10.14.0",
         "husky": "^9.1.7",
-        "semantic-release": "^25.0.9",
         "tsdown": "^0.23.5",
         "tsx": "^4.23.15",
         "turbo": "^2.11.10",
@@ -50,11 +43,7 @@
     },
     "devDependencies": {
         "aronrepo": "workspace:^",
-        "@aronrepo/commitlint-config": "workspace:^",
-        "@aronrepo/conventional-changelog-config": "workspace:^",
         "@aronrepo/conventional-commits": "workspace:^",
-        "@aronrepo/semantic-release-config": "workspace:^",
-        "@aronrepo/semantic-release-pnpm": "workspace:^",
         "@types/js-yaml": "^4.0.9"
     }
 }
