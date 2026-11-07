@@ -9,6 +9,9 @@
         "url": "https://github.com/1aron/aronrepo.git",
         "directory": "packages/aronrepo"
     },
+    "engines": {
+        "node": ">=22.18"
+    },
     "sideEffects": false,
     "exports": {
         ".": {
