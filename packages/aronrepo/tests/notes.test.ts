@@ -75,3 +75,21 @@ test('leaves out commits that do not release', () => {
     const notes = renderReleaseNotes({ version: '1.0.1', commits: resolveRelease([{ message: 'Docs: Add notes' }]).commits })
     expect(notes).toBe('No changes to published packages.\n')
 })
+
+test('matches code spans like CommonMark and keeps mentions from notifying', () => {
+    const notes = renderReleaseNotes({ version: '1.0.1', commits: resolveRelease([{ message: 'Fix: Use ``Array<`T`>`` and \\`Array<T>\\` for @octocat and @types/node, mail a@b.com' }]).commits })
+    expect(notes).toContain('- Use ``Array<`T`>`` and \\`Array&lt;T>\\` for `@octocat` and `@types/node`, mail a@b.com')
+})
+
+test('normalizes the version and repository URL', () => {
+    const notes = renderReleaseNotes({ version: 'v1.0.0', repositoryUrl: 'https://github.com/o/r/', heading: true, commits: resolveRelease([{ message: 'Fix: A', hash: 'a'.repeat(40) }]).commits })
+    expect(notes).toContain('## [1.0.0](https://github.com/o/r/commits/v1.0.0)')
+    expect(notes).toContain('(https://github.com/o/r/commit/' + 'a'.repeat(40) + ')')
+})
+
+test('lists breaking `!` headers and multi-line breaking notes', () => {
+    const header = renderReleaseNotes({ version: '2.0.0', commits: resolveRelease([{ message: 'Fix!: Remove the old API' }], { mode: 'auto' }).commits })
+    expect(header).toContain('### ⚠ Breaking Changes\n\n- Remove the old API\n')
+    const footer = renderReleaseNotes({ version: '2.0.0', commits: resolveRelease([{ message: 'Bump(Major): V2\n\nBREAKING CHANGE: first\n- item\n\nsecond paragraph' }]).commits })
+    expect(footer).toContain('- first\n  - item\n\n  second paragraph\n')
+})

@@ -24,9 +24,54 @@ function groupOf(decision: CommitDecision) {
     return findCommitRule(decision.type, decision.scope)?.group
 }
 
-/** Keeps `<` outside code spans from turning into HTML, such as `Array<string>` on GitHub. */
+/** Splits text into plain parts and CommonMark code spans: a backtick run closed by a run of the same length. */
+function splitCodeSpans(text: string) {
+    const parts: Array<{ code: boolean, text: string }> = []
+    let plain = ''
+    let index = 0
+    while (index < text.length) {
+        if (text[index] === '\\' && text[index + 1] === '`') {
+            plain += text.slice(index, index + 2)
+            index += 2
+            continue
+        }
+        if (text[index] !== '`') {
+            plain += text[index++]
+            continue
+        }
+        const run = /^`+/.exec(text.slice(index))![0]
+        const close = new RegExp(`(?<!\`)${run}(?!\`)`).exec(text.slice(index + run.length))
+        if (!close) {
+            plain += run
+            index += run.length
+            continue
+        }
+        if (plain) parts.push({ code: false, text: plain })
+        plain = ''
+        const end = index + run.length + close.index + run.length
+        parts.push({ code: true, text: text.slice(index, end) })
+        index = end
+    }
+    if (plain) parts.push({ code: false, text: plain })
+    return parts
+}
+
+/**
+ * Keeps commit text from acting on GitHub outside code spans: `<` would start
+ * HTML, as in `Array<string>`, and `@name` or `@scope/pkg` would notify a user
+ * or team on every release.
+ */
 function escapeMarkdown(text: string) {
-    return text.split(/(`[^`]*`)/).map((part, index) => index % 2 ? part : part.replace(/</g, '&lt;')).join('')
+    return splitCodeSpans(text).map(({ code, text: part }) => code
+        ? part
+        : part
+            .replace(/</g, '&lt;')
+            .replace(/(^|[^\w`])(@[A-Za-z0-9][\w-]*(?:\/[\w.-]+)?)/g, '$1`$2`')).join('')
+}
+
+/** A list item; continuation lines are indented so they stay in the item. */
+function listItem(text: string) {
+    return `- ${text.split('\n').map((line, index) => index && line ? `  ${line}` : line).join('\n')}`
 }
 
 function formatEntry(decision: CommitDecision, repositoryUrl?: string) {
@@ -41,8 +86,9 @@ function formatEntry(decision: CommitDecision, repositoryUrl?: string) {
 
 /** The page that lists every change of a release: the compare view, or the commits of a first release. */
 export function getChangelogUrl(repositoryUrl: string, version: string, previousTag?: string) {
-    const tag = `v${version}`
-    return previousTag ? `${repositoryUrl}/compare/${previousTag}...${tag}` : `${repositoryUrl}/commits/${tag}`
+    const base = repositoryUrl.replace(/\/+$/, '')
+    const tag = `v${version.replace(/^v/, '')}`
+    return previousTag ? `${base}/compare/${previousTag}...${tag}` : `${base}/commits/${tag}`
 }
 
 /**
@@ -51,16 +97,20 @@ export function getChangelogUrl(repositoryUrl: string, version: string, previous
  * come first.
  */
 export function renderReleaseNotes(options: ReleaseNotesOptions) {
-    const { version, previousTag, repositoryUrl } = options
+    const { previousTag } = options
+    const version = options.version.replace(/^v/, '')
+    const repositoryUrl = options.repositoryUrl?.replace(/\/+$/, '')
     const changelogUrl = repositoryUrl ? getChangelogUrl(repositoryUrl, version, previousTag) : undefined
     const sections: string[][] = []
 
     const released = options.commits.filter(({ release }) => release)
+    // A `Type!:` header without a footer describes the break with its summary.
     const breaking = released
         .filter(({ release }) => release === 'major')
-        .flatMap(({ breakingNotes }) => breakingNotes ?? [])
+        .flatMap(({ breakingNotes, breaking: marker, subject }) =>
+            breakingNotes?.length ? breakingNotes : marker === 'header' && subject ? [subject] : [])
     if (breaking.length) {
-        sections.push([`### ${breakingTitle}`, '', ...breaking.map((note) => `- ${escapeMarkdown(note)}`)])
+        sections.push([`### ${breakingTitle}`, '', ...breaking.map((note) => listItem(escapeMarkdown(note)))])
     }
 
     const groups = new Map<string, CommitDecision[]>()
@@ -82,7 +132,7 @@ export function renderReleaseNotes(options: ReleaseNotesOptions) {
     }
 
     if (options.heading) {
-        const title = previousTag && changelogUrl ? `[${version}](${changelogUrl})` : version
+        const title = changelogUrl ? `[${version}](${changelogUrl})` : version
         sections.unshift([`## ${title}${options.date ? ` (${options.date})` : ''}`])
     } else if (changelogUrl) {
         sections.push([`**Full Changelog**: ${changelogUrl}`])
