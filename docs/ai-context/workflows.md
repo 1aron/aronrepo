@@ -35,7 +35,7 @@ The PR title workflow runs on `pull_request_target` from the base commit. It fet
 
 ## Commit Hook
 
-`bun install` runs `husky`, which installs `.husky/commit-msg`. The hook runs `bun run aronrepo check --edit`, where the root `aronrepo` script runs the local build (`packages/aronrepo/dist/cli.js`), so run `bun run build` after cloning and after changing the resolver. CI uses the same script: Bun does not link a workspace binary whose file is missing at install time, and `bun x aronrepo` would then run the published version instead. A release type on a commit that touches no release path, a legacy type, or a breaking marker outside `Bump(Major)` is rejected locally with a suggested header.
+`bun install` runs `husky`, which installs `.husky/commit-msg`. The hook runs `bun run aronrepo check --edit`, where the root `aronrepo` script runs the local build (`packages/aronrepo/dist/cli.js`), so run `bun run build` after cloning and after changing the resolver. CI uses the same script: Bun does not link a workspace binary whose file is missing at install time, and `bun x aronrepo` would then run the published version instead. A release type on a commit that touches no release path, a legacy type, or a breaking marker outside `Bump(Major)` is rejected locally with a suggested header. A revert whose header git wrote (`Revert "<header>"`) is never rejected for its paths: it releases only when its own files ship, so an empty revert of a `Bump` passes. `aronrepo check --from` resolves the range as one release, so a revert and an unreleased commit it reverts cancel there as in `explain` and `release`.
 
 ## Release
 
