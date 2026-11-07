@@ -13,7 +13,8 @@ Commands:
             --message <text>          a message + staged files (or --files)
             --title <text> [--base <ref> --head <ref>]   a PR title + PR diff (or --files)
             --from <ref> [--to <ref>] every commit in a range
-            --files <a,b,...>         changed files, comma-separated, for --message or --title
+            --files <a,b,...>         changed files for --message or --title: comma-separated
+                                      or repeated; \\, keeps a comma in a path
   explain   Print the next release and the reason for each commit
             [--from <ref>] [--to <ref>]   defaults to the release range of the branch
   release   Publish the next release: npm packages, the version tag, and the GitHub release
@@ -47,7 +48,7 @@ const options = {
     head: { type: 'string' },
     from: { type: 'string' },
     to: { type: 'string' },
-    files: { type: 'string' },
+    files: { type: 'string', multiple: true },
     'dry-run': { type: 'boolean' },
     branch: { type: 'string' },
     expect: { type: 'string' },
@@ -68,6 +69,11 @@ const commandOptions: Record<string, OptionName[]> = {
     agents: [...common, 'file', 'write'],
     doctor: common,
     help: ['help']
+}
+
+/** `--files` values: each splits at commas, and `\,` keeps a comma that is part of a path. */
+function splitFiles(values: string[]) {
+    return values.flatMap((value) => value.split(/(?<!\\),/).map((file) => file.replace(/\\,/g, ',').trim()).filter(Boolean))
 }
 
 function parse(argv: string[]) {
@@ -116,7 +122,7 @@ async function main(argv: string[]): Promise<CommandResult> {
                 ...optional('message', 'title', 'base', 'head', 'from', 'to'),
                 // A path on the command line is relative to the current directory, not to --cwd.
                 ...(values.edit !== undefined ? { edit: path.resolve(values.edit) } : {}),
-                ...(values.files !== undefined ? { files: values.files.split(',').map((file) => file.trim()).filter(Boolean) } : {})
+                ...(values.files !== undefined ? { files: splitFiles(values.files) } : {})
             })
         case 'explain':
             return explain({ ...shared, ...optional('from', 'to') })

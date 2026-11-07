@@ -391,6 +391,16 @@ test('explain --to a tag explains that release', async () => {
     expect(result.notes).toContain('Repair cache')
 })
 
+test('the CLI takes --files repeated and keeps an escaped comma in a path', () => {
+    const cwd = createRepo()
+    const message = ['check', '--message', 'Fix(Core): Repair cache', '--json']
+    // Repeated: every value counts, not only the last.
+    expect(runCli([...message, '--files', 'packages/core/a.js', '--files', 'site/x.js'], cwd).code).toBe(0)
+    // `site/a,packages/core/b.js` is one file of the site, not a file of the core.
+    expect(runCli([...message, '--files', 'site/a\\,packages/core/b.js'], cwd).code).toBe(1)
+    expect(runCli([...message, '--files', 'site/a,packages/core/b.js'], cwd).code).toBe(0)
+})
+
 test('the CLI finds the repository root, prints reports to stdout, and validates flags per command', () => {
     const cwd = createRepo("export default { release: { mode: 'auto' } }\n")
     write(cwd, 'site/index.js', 'export {}')
