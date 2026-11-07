@@ -29,7 +29,7 @@ CI jobs are intentionally separate:
 - `commits`: runs `aronrepo check` on every commit between the PR base and head, or on the commits a push adds. It does not block the release: a pushed commit cannot be rewritten, and a commit with an invalid header releases nothing.
 - `release`: builds without the turbo cache and installs with `--ignore-scripts`, so the job that holds the npm and GitHub credentials builds from source and runs no dependency scripts.
 - `lint`, `type-check`, and `build`: run the root scripts.
-- `test`: runs `bun run test` on Ubuntu, Windows, and macOS.
+- `test`: runs `bun run test` on Ubuntu, Windows, and macOS with Node 26, and on Ubuntu with Node 22 and 24, the other versions that the published package supports (`engines.node: >=22.18`). Each Node version keeps its own turbo cache.
 
 The PR title workflow runs on `pull_request_target` from the base commit. It fetches the PR head as data only, then checks the title with `aronrepo check --title` against the diff up to the event's head commit. A newer edit or push cancels an older check, and a failed install or build reports an `error` status instead of a title violation. A squash merge turns the title into the commit header, so the title must pass the same rules as a commit.
 
