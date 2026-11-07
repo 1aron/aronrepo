@@ -99,8 +99,8 @@ test('never falls back to default rules for unparsed headers', () => {
 test('explains why a header does not parse', () => {
     const message = (header: string) => resolveCommitRelease(header).violations[0]?.message
     expect(resolveCommitRelease('Fix(semantic-release-pnpm): skip whoami').violations).toEqual([])
-    expect(message('Fix(-core): Repair cache')).toMatch(/scope `-core` must start with a letter or digit/)
-    expect(message('Fix(Core): -repair cache')).toMatch(/summary must start with a letter or digit/)
+    expect(message('Fix(-core): Repair cache')).toMatch(/scope `-core` must start with a letter, a digit, or one of/)
+    expect(message('Fix(Core): -repair cache')).toMatch(/summary must start with a letter, a digit, or one of/)
     expect(message('Update the cache')).toMatch(/^Use `Type\(Scope\): Summary`/)
 })
 
@@ -411,6 +411,13 @@ test('reads types and scopes without case in getReleaseType', () => {
     expect(getReleaseType('Bump', 'minor', explicit)).toBe('minor')
     expect(getReleaseType('docs', 'readme', explicit)).toBe('patch')
     expect(getReleaseType('feat', undefined, explicit)).toBe('patch')
+})
+
+test('accepts summaries that start with a package, path, variable, or quote', () => {
+    for (const header of ['Upgrade: @types/node to 26', 'Fix: .npmrc auth for scoped registries', 'Fix: $HOME in config paths', 'Fix: /usr paths on Linux', 'Fix(Core): "Unknown type" message', "Improve: 'check' output"]) {
+        expect(resolveCommitRelease(header, explicit).violations).toEqual([])
+    }
+    expect(resolveCommitRelease('Upgrade(@fixture/core): Semver 8', explicit)).toMatchObject({ scope: '@fixture/core', violations: [] })
 })
 
 test('reapplying a Bump releases patch and tells the owner how to release its level', () => {

@@ -138,9 +138,11 @@ function capRelease(release: ReleaseType, type: string | undefined, policy: Rele
 
 /**
  * The first character of a scope or summary: a letter in either case, a digit,
- * or a code, issue, or emphasis marker. Release notes capitalize the summary.
+ * a code, issue, or emphasis marker, or what starts a name or a quote, such as
+ * `@scope/pkg`, `.npmrc`, `$HOME`, `/usr`, or `"text"`. Release notes capitalize the summary.
  */
-const startCharacter = String.raw`[\p{L}\p{N}\x60_#~]`
+const startCharacter = String.raw`[\p{L}\p{N}\x60_#~@.$/'"]`
+const startDescription = 'a letter, a digit, or one of `` ` _ # ~ @ . $ / \' " ``'
 const startPattern = new RegExp(`^${startCharacter}`, 'u')
 
 // The scope stops at the first `)`, so a summary such as `Handle Foo(Bar): Baz` stays whole.
@@ -323,10 +325,10 @@ function diagnoseHeader(header: string, mode: ReleaseMode) {
     if (!match) return format
     const [, , scope, bang, space, subject] = match
     if (bang && mode === 'explicit') return `Aronrepo headers do not use \`!\` in explicit mode. ${format}`
-    if (scope !== undefined && !startPattern.test(scope)) return `The scope \`${scope}\` must start with a letter or digit. ${format}`
+    if (scope !== undefined && !startPattern.test(scope)) return `The scope \`${scope}\` must start with ${startDescription}. ${format}`
     if (space !== ' ') return `Put exactly one space after the colon. ${format}`
     if (!subject) return `The summary is empty. ${format}`
-    if (!startPattern.test(subject)) return `The summary must start with a letter or digit. ${format}`
+    if (!startPattern.test(subject)) return `The summary must start with ${startDescription}. ${format}`
     return format
 }
 
