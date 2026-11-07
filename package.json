@@ -18,9 +18,9 @@
         "test": "turbo run test --filter=\"./packages/*\"",
         "lint": "turbo run lint --filter=\"./packages/*\"",
         "type-check": "turbo run type-check --filter=\"./packages/*\"",
-        "check:commits": "aronrepo check --from origin/main --to HEAD",
-        "check": "pnpm run check:commits && turbo run test lint type-check --filter=\"./packages/*\"",
-        "release": "aronrepo release"
+        "aronrepo": "node packages/aronrepo/dist/cli.js",
+        "check:commits": "bun run aronrepo check --from origin/main --to HEAD",
+        "check": "pnpm run check:commits && turbo run test lint type-check --filter=\"./packages/*\""
     },
     "engines": {
         "node": "^26"
