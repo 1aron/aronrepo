@@ -612,12 +612,23 @@ test('packs without credentials in the environment', async () => {
     await runRelease({ branch: 'main' }, {
         ...base,
         run: async (command, args, options) => {
+    Object.assign(base.env, {
+        'npm_config_//registry.npmjs.org/:_authToken': 'npm-env-token',
+        NPM_CONFIG__AUTH: 'dXNlcjpwYXNz',
+        'npm_config_//npm.pkg.github.com/:_password': 'secret',
+        npm_config_fund: 'false'
+    })
             if (args[0] === 'pack') packEnvs.push(options.env)
             return registry.run(command, args, options)
         }
     })
     expect(packEnvs).toHaveLength(2)
-    for (const env of packEnvs) expect([env.NPM_TOKEN, env.GITHUB_TOKEN]).toEqual([undefined, undefined])
+    for (const env of packEnvs) {
+        expect([env.NPM_TOKEN, env.GITHUB_TOKEN]).toEqual([undefined, undefined])
+        // npm reads registry auth from these too.
+        expect(Object.keys(env).filter((key) => /^npm_config_.*(auth|password)/i.test(key))).toEqual([])
+        expect(env.npm_config_fund).toBe('false')
+    }
 })
 
 test('retries transient registry errors and accepts a version a stale cache hid', async () => {

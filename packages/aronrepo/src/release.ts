@@ -91,8 +91,11 @@ const secretVariables = [
     'ACTIONS_ID_TOKEN_REQUEST_TOKEN', 'ACTIONS_ID_TOKEN_REQUEST_URL', 'ACTIONS_RUNTIME_TOKEN'
 ]
 
+/** npm reads registry auth from the environment too, such as `npm_config_//registry.npmjs.org/:_authToken`. */
+const npmAuthVariable = /^npm_config_.*_(?:auth|authtoken|password)$/i
+
 function withoutSecrets(env: NodeJS.ProcessEnv) {
-    return Object.fromEntries(Object.entries(env).filter(([key]) => !secretVariables.includes(key.toUpperCase())))
+    return Object.fromEntries(Object.entries(env).filter(([key]) => !secretVariables.includes(key.toUpperCase()) && !npmAuthVariable.test(key)))
 }
 
 async function git(environment: ReleaseEnvironment, args: string[]) {
