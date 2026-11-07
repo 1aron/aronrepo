@@ -22,15 +22,16 @@ bun run check
 
 ## CI
 
-`.github/workflows/release.yml` runs CI on pull requests (opened, reopened, synchronize) and runs CI plus the release on pushes to the release branches (`main`, `alpha`, `beta`, `rc`, `canary`). Pull request runs cancel older runs of the same PR; release branch runs queue instead, so a release is never cancelled halfway through publishing. It installs with `bun install --frozen-lockfile` using Bun 1.4.4 and Node 26.
+`.github/workflows/release.yml` runs CI on pull requests (opened, reopened, synchronize) and runs CI plus the release on pushes to the release branches (`main`, `alpha`, `beta`, `rc`, `canary`). Pull request runs cancel older runs of the same PR. A release branch run is never cancelled halfway through publishing; GitHub keeps at most one run waiting behind it, so a third push replaces the waiting run, whose commits the newer run releases too. It installs with `bun install --frozen-lockfile` using Bun 1.4.4 and Node 26. Every action is pinned to a commit SHA with its version tag in a comment.
 
 CI jobs are intentionally separate:
 
-- `commits` (pull requests only): runs `aronrepo check` on every commit between the PR base and head.
+- `commits`: runs `aronrepo check` on every commit between the PR base and head, or on the commits a push adds. It does not block the release: a pushed commit cannot be rewritten, and a commit with an invalid header releases nothing.
+- `release`: builds without the turbo cache and installs with `--ignore-scripts`, so the job that holds the npm and GitHub credentials builds from source and runs no dependency scripts.
 - `lint`, `type-check`, and `build`: run the root scripts.
 - `test`: runs `bun run test` on Ubuntu, Windows, and macOS.
 
-The PR title workflow runs on `pull_request_target` from the base commit. It fetches the PR head as data only, then checks the title with `aronrepo check --title`, which compares the title's release level with the PR diff. A squash merge turns the title into the commit header, so the title must pass the same rules as a commit.
+The PR title workflow runs on `pull_request_target` from the base commit. It fetches the PR head as data only, then checks the title with `aronrepo check --title` against the diff up to the event's head commit. A newer edit or push cancels an older check, and a failed install or build reports an `error` status instead of a title violation. A squash merge turns the title into the commit header, so the title must pass the same rules as a commit.
 
 ## Commit Hook
 
