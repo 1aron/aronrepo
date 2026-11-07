@@ -769,8 +769,11 @@ async function pushTag(environment: ReleaseEnvironment, tag: string) {
     await git(environment, ['push', '--no-verify', 'origin', `refs/tags/${tag}`])
 }
 
-/** Finishes a release whose tag points at HEAD: pushes the tag and creates a missing GitHub release. */
-async function resumeTaggedRelease(environment: ReleaseEnvironment, options: ReleaseOptions, plan: ReleasePlan) {
+/**
+ * Finishes a release whose tag points at HEAD: pushes the tag and creates a missing GitHub release.
+ * A dry run prints what it would finish instead.
+ */
+async function resumeTaggedRelease(environment: ReleaseEnvironment, options: ReleaseOptions, plan: ReleasePlan): Promise<'resumed' | 'dry-run' | false> {
     const channel = plan.channel
     if (!channel) return false
     const tags = lines(await git(environment, ['tag', '--list', 'v*', '--points-at', 'HEAD']))
@@ -780,12 +783,17 @@ async function resumeTaggedRelease(environment: ReleaseEnvironment, options: Rel
         const prerelease = semver.prerelease(version)
         return channel.prerelease ? prerelease?.[0] === channel.prerelease : !prerelease
     })
-    if (!tag || options.dryRun) return false
+    if (!tag) return false
     // The tag's own version, so a later prerelease of the same version does not renumber it.
     const previous = await planRelease({ ...options, ignoreTags: [tag], version: parseVersionTag(tag)! }, environment)
     if (!previous.notes) return false
-    const problem = await checkOnReleaseBranch(environment, plan) ?? checkExpectedVersion(options, previous.version)
-    if (problem) throw new Error(problem)
+    const problems = [await checkOnReleaseBranch(environment, plan), checkExpectedVersion(options, previous.version)].filter(Boolean)
+    if (options.dryRun) {
+        for (const problem of problems) environment.log(`! ${problem} A release would stop here.`)
+        environment.log(`\nDry run: ${tag} points at HEAD; would push it and create its GitHub release.\n\n${previous.notes}`)
+        return 'dry-run'
+    }
+    if (problems.length) throw new Error(problems[0])
     environment.log(`${tag} points at HEAD; make sure the tag is pushed and its GitHub release exists.`)
     await pushTag(environment, tag)
     await publishGitHubRelease(environment, {
@@ -796,7 +804,7 @@ async function resumeTaggedRelease(environment: ReleaseEnvironment, options: Rel
         ...(plan.assets ? { assets: plan.assets } : {}),
         latest: !channel.prerelease && await isLatestStable(environment, previous.version!)
     })
-    return true
+    return 'resumed'
 }
 
 /** The next version to try when one is taken: the next patch, or the next prerelease number. */
@@ -832,7 +840,8 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         return { status: 'skipped', plan }
     }
     if (!plan.version || !plan.tag || !plan.notes) {
-        if (await resumeTaggedRelease(environment, options, plan)) return { status: 'resumed', plan }
+        const resumed = await resumeTaggedRelease(environment, options, plan)
+        if (resumed) return { status: resumed, plan }
         const unexpected = checkExpectedVersion(options, undefined)
         if (unexpected && !options.dryRun) throw new Error(unexpected)
         if (unexpected) log(`! ${unexpected} A release would stop here.`)

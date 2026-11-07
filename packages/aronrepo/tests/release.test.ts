@@ -612,16 +612,16 @@ test('packs without credentials in the environment', async () => {
     commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
     const registry = createRegistry()
     const base = environment(cwd, registry)
-    const packEnvs: NodeJS.ProcessEnv[] = []
-    await runRelease({ branch: 'main' }, {
-        ...base,
-        run: async (command, args, options) => {
     Object.assign(base.env, {
         'npm_config_//registry.npmjs.org/:_authToken': 'npm-env-token',
         NPM_CONFIG__AUTH: 'dXNlcjpwYXNz',
         'npm_config_//npm.pkg.github.com/:_password': 'secret',
         npm_config_fund: 'false'
     })
+    const packEnvs: NodeJS.ProcessEnv[] = []
+    await runRelease({ branch: 'main' }, {
+        ...base,
+        run: async (command, args, options) => {
             if (args[0] === 'pack') packEnvs.push(options.env)
             return registry.run(command, args, options)
         }
@@ -750,3 +750,21 @@ test('reads a private registry with the auth of its npmrc', async () => {
     expect([...reads]).toEqual(['Bearer github-packages-token'])
 })
 
+test('a dry run on a tagged commit previews finishing that release', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    git(cwd, 'tag', 'v1.0.1')
+    const registry = createRegistry()
+    const logs: string[] = []
+
+    const result = await runRelease({ branch: 'main', dryRun: true, expectVersion: '1.0.1' }, environment(cwd, registry, logs))
+    expect(result.status).toBe('dry-run')
+    expect(logs.join('\n')).toContain('Dry run: v1.0.1 points at HEAD; would push it and create its GitHub release.')
+    expect(logs.filter((line) => line.startsWith('!'))).toEqual([])
+    expect(registry.commands.filter(([command, action]) => command === 'git' && action === 'push')).toEqual([])
+    expect(registry.releases).toEqual([])
+
+    logs.length = 0
+    await runRelease({ branch: 'main', dryRun: true, expectVersion: '1.0.2' }, environment(cwd, registry, logs))
+    expect(logs).toContain('! This release is 1.0.1, not the expected 1.0.2. Review the plan again. A release would stop here.')
+})
