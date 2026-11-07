@@ -133,6 +133,6 @@ test('reads an empty pnpm-workspace.yaml and .cjs or .ts configs', async () => {
 test('names the file of invalid JSON and the git command that failed', () => {
     const cwd = createRepo()
     write(cwd, 'packages/core/package.json', '{')
-    expect(() => resolveReleasePaths(cwd)).toThrow(/packages\/core\/package\.json is not valid JSON/)
+    expect(() => resolveReleasePaths(cwd)).toThrow(/packages[\\/]core[\\/]package\.json is not valid JSON/)
     expect(() => getRangeCommits(cwd, 'nope')).toThrow(/^`git [^`]+` failed: fatal: /)
 })
