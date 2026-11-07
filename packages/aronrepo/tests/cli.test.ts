@@ -287,6 +287,20 @@ test('check --edit tells an amend from an empty commit by the author date git pa
     expect(empty.output).toContain('changes no release paths')
 })
 
+test('check --edit finds the comment character git chose for core.commentChar=auto', async () => {
+    const cwd = createRepo()
+    git(cwd, 'config', 'core.commentChar', 'auto')
+    write(cwd, 'packages/core/index.js', 'export {}')
+    git(cwd, 'add', '-A')
+    // git picks `;` because the message has a line starting with `#`.
+    write(cwd, '.git/COMMIT_EDITMSG', '#12 Fix(Core): Repair the cache\n\nBody\n\n; Please enter the commit message for your changes.\n;\n; Changes to be committed:\n;\tnew file:   packages/core/index.js\n;\n')
+    const result = JSON.parse((await check({ cwd, edit: '.git/COMMIT_EDITMSG', json: true })).output)
+    expect(result.results[0].header).toBe('#12 Fix(Core): Repair the cache')
+
+    write(cwd, '.git/COMMIT_EDITMSG', 'Fix(Core): Repair the cache\n\n@ ------------------------ >8 ------------------------\n@ Do not modify or remove the line above.\n+ diff\n')
+    expect(JSON.parse((await check({ cwd, edit: '.git/COMMIT_EDITMSG', json: true })).output).results[0]).toMatchObject({ header: 'Fix(Core): Repair the cache', violations: [] })
+})
+
 test('check --edit reads core.commentChar and lets git abort an empty message', async () => {
     const cwd = createRepo()
     git(cwd, 'config', 'core.commentChar', ';')

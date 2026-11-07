@@ -82,16 +82,33 @@ function escapeRegExp(text: string) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+/** The characters `core.commentChar=auto` picks from, in git's order. */
+const autoCommentChars = '#;@!$%^&|:'
+
+/**
+ * The comment character of a message file written with `core.commentChar=auto`: git picks
+ * the first of its candidates that starts no line of the message, so it can be `;` while the
+ * header starts with `#`. Its comments follow the message, so the scissors line or the last
+ * comment line names it; a file without comments, such as from `git commit -m`, keeps `#`.
+ */
+function detectCommentChar(content: string) {
+    const scissors = new RegExp(`^([${escapeRegExp(autoCommentChars)}]) -+ >8 -+$`, 'm').exec(content)
+    if (scissors) return scissors[1]
+    const last = content.split('\n').map((line) => line.trimEnd()).filter(Boolean).at(-1) ?? ''
+    return autoCommentChars.includes(last[0] ?? '') && (last.length === 1 || /\s/.test(last[1])) ? last[0] : '#'
+}
+
 /**
  * A commit message file without git's comments and, with `git commit -v`,
  * without the diff below the scissors line. `commentChar` is git's
- * `core.commentChar`; `auto` falls back to `#`.
+ * `core.commentChar`; with `auto`, the character git chose is read from the file.
  */
 export function readEditMessage(file: string, commentChar = '#') {
-    const comment = commentChar && commentChar !== 'auto' ? commentChar : '#'
-    return fs.readFileSync(file, 'utf8')
+    const content = fs.readFileSync(file, 'utf8')
         .replace(/^\uFEFF/, '')
         .replace(/\r\n/g, '\n')
+    const comment = commentChar && commentChar !== 'auto' ? commentChar : detectCommentChar(content)
+    return content
         .split(new RegExp(`^${escapeRegExp(comment)} -+ >8 -+$`, 'm'))[0]
         .split('\n')
         .filter((line) => !line.startsWith(comment))
