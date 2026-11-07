@@ -50,8 +50,17 @@ export interface ReleaseEnvironment {
     wait: (ms: number) => Promise<void>
 }
 
+/** Quotes an argument for `cmd.exe`, which runs `.cmd` shims such as `npm.cmd` on Windows. */
+export function quoteWindowsArg(arg: string) {
+    if (/^[\w@%+=:,./\\-]+$/.test(arg)) return arg
+    return `"${arg.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, '$1$1')}"`
+}
+
 export const runCommand: Runner = (command, args, { cwd, env }) => new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' })
+    // Windows needs a shell for `.cmd` shims, and a shell joins arguments without quoting them.
+    const child = process.platform === 'win32'
+        ? spawn([command, ...args].map(quoteWindowsArg).join(' '), { cwd, env, stdio: ['ignore', 'pipe', 'pipe'], shell: true })
+        : spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] })
     let stdout = ''
     let stderr = ''
     child.stdout.on('data', (chunk) => { stdout += chunk })
@@ -160,7 +169,10 @@ export function getRepositoryUrl(cwd: string, env: NodeJS.ProcessEnv = process.e
     if (!fs.existsSync(root)) return undefined
     const repository = readJson<PackageJson>(root).repository as string | { url?: string } | undefined
     const url = typeof repository === 'string' ? repository : repository?.url
-    const match = url && /github\.com[/:]([^/]+\/[^/.]+?)(?:\.git)?\/?$/.exec(url)
+    if (!url) return undefined
+    // `owner/repo` and `github:owner/repo` are npm shorthands for GitHub.
+    const shorthand = /^(?:github:)?([\w.-]+\/[\w.-]+?)(?:\.git)?$/.exec(url)
+    const match = shorthand ?? /github\.com[/:]([^/]+\/[^/]+?)(?:\.git)?\/?$/.exec(url)
     return match ? `https://github.com/${match[1]}` : undefined
 }
 
@@ -260,7 +272,8 @@ export async function exchangeOidcToken(environment: ReleaseEnvironment, name: s
     if (registry !== officialRegistry) return undefined
     const identity = environment.env.NPM_ID_TOKEN ?? await getGitHubIdToken(environment, 'npm:registry.npmjs.org')
     if (!identity) return undefined
-    const response = await environment.fetch(`${officialRegistry}-/npm/v1/oidc/token/exchange/package/${encodeURIComponent(name)}`, {
+    // The same escaping as the npm CLI: `@scope%2fname`.
+    const response = await environment.fetch(`${officialRegistry}-/npm/v1/oidc/token/exchange/package/${name.replace('/', '%2f')}`, {
         method: 'POST',
         headers: { authorization: `Bearer ${identity}` }
     })
@@ -275,11 +288,18 @@ function readNpmrc(file: string) {
     return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''
 }
 
-function hasRegistryAuth(content: string, registry: string) {
+/** actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` and sets this placeholder when no token is given. */
+const placeholderToken = 'XXXXX-XXXXX-XXXXX-XXXXX'
+
+/** Whether `.npmrc` content has auth for the registry; `${VAR}` values count only when the variable holds a real token. */
+export function hasRegistryAuth(content: string, registry: string, env: NodeJS.ProcessEnv = process.env) {
     const nerfed = nerfDart(registry)
     return content.split(/\r?\n/).some((line) => {
-        const key = line.split('=')[0].trim()
-        return key === '_authToken' || key === '_auth' || key.startsWith(`${nerfed}:_auth`)
+        const [rawKey = '', ...rest] = line.split('=')
+        const key = rawKey.trim()
+        if (key !== '_authToken' && key !== '_auth' && !key.startsWith(`${nerfed}:_auth`)) return false
+        const value = rest.join('=').trim().replace(/\$\{([^}]+)\}/g, (_, name: string) => env[name] ?? '')
+        return Boolean(value) && value !== placeholderToken
     })
 }
 
@@ -293,7 +313,7 @@ let npmrcCount = 0
 async function createNpmEnv(environment: ReleaseEnvironment, name: string, registry: string, directory: string) {
     const userconfig = environment.env.NPM_CONFIG_USERCONFIG ?? path.join(os.homedir(), '.npmrc')
     const existing = [readNpmrc(path.join(environment.cwd, '.npmrc')), readNpmrc(userconfig)].join('\n')
-    if (hasRegistryAuth(existing, registry)) return environment.env
+    if (hasRegistryAuth(existing, registry, environment.env)) return environment.env
 
     const token = await exchangeOidcToken(environment, name, registry) ?? environment.env.NPM_TOKEN
     if (!token) {
@@ -319,14 +339,20 @@ export function writeReleaseManifest(cwd: string, dir: string, version: string, 
     return manifest
 }
 
-function packCommand(packageManager: PackageManager, destination: string): [string, string[]] {
+/** Yarn 1 names the tarball with `--filename`; Yarn 2+ uses `--out` and keeps a `.yarnrc.yml`. */
+function isYarnClassic(cwd: string) {
+    const declared = /^yarn@(\d+)/.exec(String(readJson<PackageJson>(path.join(cwd, 'package.json')).packageManager ?? ''))
+    return declared ? declared[1] === '1' : !fs.existsSync(path.join(cwd, '.yarnrc.yml'))
+}
+
+function packCommand(packageManager: PackageManager, destination: string, cwd: string): [string, string[]] {
     switch (packageManager) {
         case 'bun':
             return ['bun', ['pm', 'pack', '--destination', destination, '--quiet']]
         case 'pnpm':
             return ['pnpm', ['pack', '--pack-destination', destination]]
         case 'yarn':
-            return ['yarn', ['pack', '--out', path.join(destination, 'package.tgz')]]
+            return ['yarn', ['pack', isYarnClassic(cwd) ? '--filename' : '--out', path.join(destination, 'package.tgz')]]
         default:
             return ['npm', ['pack', '--pack-destination', destination]]
     }
@@ -386,10 +412,15 @@ export interface GitHubRelease {
     prerelease: boolean
 }
 
-function truncateNotes(notes: string, url: string | undefined) {
-    if (notes.length <= releaseBodyLimit) return notes
-    const cut = notes.slice(0, releaseBodyLimit)
-    return `${cut.slice(0, cut.lastIndexOf('\n'))}\n\n…the notes are too long for a GitHub release${url ? `; see ${url}` : ''}.\n`
+/** Cuts notes at a line to fit a GitHub release body, keeping the full changelog link. */
+export function truncateNotes(notes: string, limit = releaseBodyLimit) {
+    if (notes.length <= limit) return notes
+    const footer = /\n\n(\*\*Full Changelog\*\*: \S+)\n?$/.exec(notes)?.[1]
+    const note = `…the notes are too long for a GitHub release${footer ? '; see the full changelog' : ''}.`
+    const tail = `\n\n${note}${footer ? `\n\n${footer}` : ''}\n`
+    const cut = notes.slice(0, Math.max(0, limit - tail.length))
+    const end = cut.lastIndexOf('\n')
+    return `${(end > 0 ? cut.slice(0, end) : cut).trimEnd()}${tail}`
 }
 
 /** Creates the GitHub release of a tag unless it exists. Needs `GITHUB_TOKEN` and the repository. */
@@ -419,7 +450,7 @@ export async function publishGitHubRelease(environment: ReleaseEnvironment, rele
         body: JSON.stringify({
             tag_name: release.tag,
             name: release.tag,
-            body: truncateNotes(release.notes, repositoryUrl ? `${repositoryUrl}/compare` : undefined),
+            body: truncateNotes(release.notes),
             prerelease: release.prerelease,
             make_latest: release.prerelease ? 'false' : 'true'
         })
@@ -520,7 +551,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         for (const [index, pkg] of plan.packages.entries()) {
             const destination = path.join(directory, String(index))
             fs.mkdirSync(destination)
-            const [command, args] = packCommand(packageManager, destination)
+            const [command, args] = packCommand(packageManager, destination, cwd)
             await environment.run(command, args, { cwd: path.join(cwd, pkg.dir), env: environment.env })
             const tarball = fs.readdirSync(destination).find((file) => file.endsWith('.tgz'))
             if (!tarball) throw new Error(`Packing ${pkg.name} produced no tarball.`)

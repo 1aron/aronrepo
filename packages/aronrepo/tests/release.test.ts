@@ -4,7 +4,11 @@ import os from 'node:os'
 import path from 'node:path'
 import {
     getReleasePackages,
+    getRepositoryUrl,
+    hasRegistryAuth,
     officialRegistry,
+    quoteWindowsArg,
+    truncateNotes,
     planRelease,
     readPackedManifest,
     runCommand,
@@ -285,12 +289,16 @@ test('exchanges a new npm trusted publishing token for every npm command', async
     base.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'request-token'
     let exchanged = 0
     const used: string[] = []
+    const routes = new Set<string>()
 
     await runRelease({ branch: 'main' }, {
         ...base,
         fetch: async (input, init) => {
             if (input.startsWith('https://oidc.test/')) return Response.json({ value: 'identity' })
-            if (input.includes('/oidc/token/exchange/package/')) return Response.json({ token: `oidc-${++exchanged}` })
+            if (input.includes('/oidc/token/exchange/package/')) {
+                routes.add(input.slice(input.lastIndexOf('/') + 1))
+                return Response.json({ token: `oidc-${++exchanged}` })
+            }
             return registry.fetch(input, init)
         },
         run: async (command, args, options) => {
@@ -301,4 +309,46 @@ test('exchanges a new npm trusted publishing token for every npm command', async
     // publish, dist-tag add, and dist-tag rm for each of the two packages
     expect(used).toHaveLength(6)
     expect(new Set(used).size).toBe(6)
+    // The npm CLI escapes scoped names as `@scope%2fname`.
+    expect([...routes].sort()).toEqual(['@fixture%2fcli', '@fixture%2fcore'])
+})
+
+test('reads GitHub repository URLs with dots and npm shorthands', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aronrepo-url-'))
+    const urlOf = (repository: unknown) => {
+        write(cwd, 'package.json', JSON.stringify({ repository }))
+        return getRepositoryUrl(cwd, {})
+    }
+    expect(urlOf({ url: 'git+https://github.com/owner/my.repo.git' })).toBe('https://github.com/owner/my.repo')
+    expect(urlOf('git@github.com:owner/repo.git')).toBe('https://github.com/owner/repo')
+    expect(urlOf('github:owner/repo')).toBe('https://github.com/owner/repo')
+    expect(urlOf('owner/repo')).toBe('https://github.com/owner/repo')
+    expect(urlOf('gitlab:owner/repo')).toBeUndefined()
+})
+
+test('does not count unset or placeholder npmrc tokens as auth', () => {
+    const npmrc = '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}'
+    expect(hasRegistryAuth(npmrc, officialRegistry, {})).toBe(false)
+    expect(hasRegistryAuth(npmrc, officialRegistry, { NODE_AUTH_TOKEN: 'XXXXX-XXXXX-XXXXX-XXXXX' })).toBe(false)
+    expect(hasRegistryAuth(npmrc, officialRegistry, { NODE_AUTH_TOKEN: 'npm_real' })).toBe(true)
+    expect(hasRegistryAuth('//registry.npmjs.org/:_authToken=npm_real', officialRegistry, {})).toBe(true)
+    expect(hasRegistryAuth('//npm.pkg.github.com/:_authToken=npm_real', officialRegistry, {})).toBe(false)
+})
+
+test('truncates long notes at a line and keeps the full changelog link', () => {
+    const footer = '**Full Changelog**: https://github.com/o/r/compare/v1.0.0...v1.0.1'
+    const notes = `${Array.from({ length: 50 }, (_, index) => `- Entry ${index}`).join('\n')}\n\n${footer}\n`
+    const truncated = truncateNotes(notes, 200)
+    expect(truncated.length).toBeLessThanOrEqual(200)
+    expect(truncated).toMatch(/^- Entry 0\n/)
+    expect(truncated).toMatch(/- Entry \d+\n\n…the notes are too long for a GitHub release; see the full changelog\.\n\n/)
+    expect(truncated.endsWith(`${footer}\n`)).toBe(true)
+    expect(truncateNotes(notes)).toBe(notes)
+})
+
+test('quotes Windows shell arguments', () => {
+    expect(quoteWindowsArg('--registry')).toBe('--registry')
+    expect(quoteWindowsArg('C:\\Users\\John Doe\\pkg.tgz')).toBe('"C:\\Users\\John Doe\\pkg.tgz"')
+    expect(quoteWindowsArg('a"b')).toBe('"a\\"b"')
+    expect(quoteWindowsArg('a&b')).toBe('"a&b"')
 })
