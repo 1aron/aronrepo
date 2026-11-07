@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { agents, check, doctor, explain, policy } from '../src/commands'
+import { agents, check, doctor, explain, policy, release } from '../src/commands'
 
 function write(cwd: string, file: string, content: string) {
     fs.mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true })
@@ -151,4 +151,18 @@ test('doctor lists missing setup with fixes', async () => {
 
     write(cwd, 'release.config.js', 'export default {}\n')
     expect((await doctor({ cwd })).output).toMatch(/Leftovers from semantic-release or commitlint: release\.config\.js/)
+})
+
+test('release --dry-run --json prints the plan', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Add(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
+
+    const result = await release({ cwd, branch: 'main', dryRun: true, json: true })
+    expect(JSON.parse(result.output)).toMatchObject({
+        status: 'dry-run',
+        version: '1.0.1',
+        tag: 'v1.0.1',
+        packages: [{ dir: 'packages/core', name: '@fixture/core' }]
+    })
+    expect(git(cwd, 'status', '--porcelain')).toBe('')
 })

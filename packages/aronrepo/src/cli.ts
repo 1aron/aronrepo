@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util'
 import { releaseModes, type ReleaseMode } from './index'
-import { agents, check, doctor, explain, policy, type CommandResult } from './commands'
+import { agents, check, doctor, explain, policy, release, type CommandResult } from './commands'
 
 const help = `Usage: aronrepo <command> [options]
 
@@ -11,8 +11,10 @@ Commands:
             --message <text>          a message + staged files (or --files)
             --title <text> [--base <ref> --head <ref>]   a PR title + PR diff
             --from <ref> [--to <ref>] every commit in a range
-  explain   Print the next release level and the reason for each commit
-            [--from <ref>] [--to <ref>]   defaults to <latest tag>..HEAD
+  explain   Print the next release and the reason for each commit
+            [--from <ref>] [--to <ref>]   defaults to the release range of the branch
+  release   Publish the next release: npm packages, the version tag, and the GitHub release
+            [--dry-run] [--branch <name>]  prints the plan and notes without changes
   policy    Print the release policy [--json | --markdown]
   agents    Check the AGENTS.md policy block, or regenerate it with --write [--file <path>]
   doctor    Check the Aronrepo setup of this repository
@@ -43,6 +45,8 @@ async function main(argv: string[]): Promise<CommandResult> {
             from: { type: 'string' },
             to: { type: 'string' },
             files: { type: 'string' },
+            'dry-run': { type: 'boolean' },
+            branch: { type: 'string' },
             help: { type: 'boolean', short: 'h' }
         }
     })
@@ -68,6 +72,8 @@ async function main(argv: string[]): Promise<CommandResult> {
             })
         case 'explain':
             return explain({ ...common, ...optional('from', 'to') })
+        case 'release':
+            return release({ ...common, ...optional('branch'), ...(values['dry-run'] ? { dryRun: true } : {}) })
         case 'policy':
             return policy({ ...common, ...(values.markdown ? { markdown: true } : {}) })
         case 'agents':

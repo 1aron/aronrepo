@@ -25,6 +25,7 @@ import {
     loadProjectPolicy,
     type ProjectPolicy
 } from './project'
+import { getReleasePackages, planRelease, runRelease, type ReleasePlan } from './release'
 
 export interface CommandResult {
     code: number
@@ -161,25 +162,71 @@ export interface ExplainOptions extends CommonOptions {
 export async function explain(options: ExplainOptions): Promise<CommandResult> {
     const cwd = options.cwd ?? process.cwd()
     const { policy, isReleasePath, releasePaths } = await project(options)
-    const to = options.to ?? 'HEAD'
-    const from = options.from ?? getLatestTag(cwd, to)
-    const commits = getRangeCommits(cwd, from, to)
-    const decision = resolveRelease(commits, policy, isReleasePath ? { isReleasePath } : {})
+    let plan: Pick<ReleasePlan, 'release' | 'commits'> & Partial<ReleasePlan>
+    let from: string | undefined
+    let to = options.to ?? 'HEAD'
+
+    if (options.from === undefined && options.to === undefined) {
+        // The release range of the branch, or of main when the branch does not release.
+        plan = await planRelease({ fallbackToMain: true, ...(options.mode ? { mode: options.mode } : {}) }, { cwd })
+        from = plan.from
+        to = 'HEAD'
+    } else {
+        from = options.from ?? getLatestTag(cwd, to)
+        plan = resolveRelease(getRangeCommits(cwd, from, to), policy, isReleasePath ? { isReleasePath } : {})
+    }
 
     if (options.json) {
-        return { code: 0, output: JSON.stringify({ mode: policy.mode, from: from ?? null, to, releasePaths: releasePaths ?? null, ...decision }, null, 2) }
+        return {
+            code: 0,
+            output: JSON.stringify({
+                mode: policy.mode,
+                ...(plan.branch ? { branch: plan.branch } : {}),
+                ...(plan.channel ? { channel: plan.channel } : {}),
+                from: from ?? null,
+                to,
+                releasePaths: releasePaths ?? null,
+                release: plan.release,
+                version: plan.version ?? null,
+                tag: plan.tag ?? null,
+                commits: plan.commits
+            }, null, 2)
+        }
     }
     return {
         code: 0,
         output: [
             `Range: ${from ? `${from}..${to}` : `all commits up to ${to}`}`,
             `Mode: ${policy.mode}`,
+            ...(plan.channel ? [`Channel: ${plan.channel.branch} (npm dist-tag ${plan.channel.distTag})`] : []),
             `Release paths: ${releasePaths?.include ? releasePaths.include.join(', ') : 'every path'}`,
             '',
-            ...(decision.commits.length ? decision.commits.map(formatDecision) : ['No commits.']),
+            ...(plan.commits.length ? plan.commits.map(formatDecision) : ['No commits.']),
             '',
-            `Next release: ${decision.release || 'none'}`
+            `Next release: ${plan.release || 'none'}${plan.version ? ` (${plan.version})` : ''}`
         ].join('\n')
+    }
+}
+
+export interface ReleaseCommandOptions extends CommonOptions {
+    dryRun?: boolean
+    branch?: string
+    /** Receives progress lines; defaults to stdout. JSON output stays quiet. */
+    log?: (message: string) => void
+}
+
+export async function release(options: ReleaseCommandOptions): Promise<CommandResult> {
+    const cwd = options.cwd ?? process.cwd()
+    const result = await runRelease({
+        ...(options.mode ? { mode: options.mode } : {}),
+        ...(options.branch ? { branch: options.branch } : {}),
+        ...(options.dryRun ? { dryRun: true } : {})
+    }, { cwd, log: options.json ? () => {} : options.log ?? ((message) => console.log(message)) })
+    if (!options.json) return { code: 0, output: '' }
+    const { packages, ...plan } = result.plan
+    return {
+        code: 0,
+        output: JSON.stringify({ status: result.status, ...plan, packages: packages.map(({ dir, name }) => ({ dir, name })) }, null, 2)
     }
 }
 
@@ -331,6 +378,19 @@ export async function doctor(options: CommonOptions): Promise<CommandResult> {
             fix: 'Remove them; `aronrepo check` lints commits and `aronrepo release` publishes releases.'
         }
         : { status: 'pass', message: 'No semantic-release or commitlint leftovers.' })
+
+    try {
+        const releasePackages = getReleasePackages(cwd)
+        const rootRepository = (pkg as Record<string, unknown>).repository
+        const withoutRepository = releasePackages.filter(({ manifest }) => manifest.publishConfig?.provenance && !manifest.repository && !rootRepository)
+        checks.push(!releasePackages.length
+            ? { status: 'warn', message: '`aronrepo release` finds no published package.', fix: 'Add `"publishConfig": { "access": "public" }` to each package that ships.' }
+            : withoutRepository.length
+                ? { status: 'warn', message: `npm provenance needs a \`repository\` field: ${withoutRepository.map(({ name }) => name).join(', ')}.`, fix: 'Add `repository` to those package.json files.' }
+                : { status: 'pass', message: `\`aronrepo release\` publishes ${releasePackages.map(({ name }) => name).join(', ')}.` })
+    } catch (error) {
+        checks.push({ status: 'fail', message: (error as Error).message })
+    }
 
     const hook = readText(findFile(cwd, ['.husky/commit-msg']))
     checks.push(hook.includes('aronrepo check')
