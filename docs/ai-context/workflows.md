@@ -50,6 +50,8 @@ npm trusted publishing for `aronrepo` is bound to the `release.yml` file name, s
 
 Package versions are never committed; the manifests are restored after the release. Rerunning a failed job resumes the release.
 
+`aronrepo release` stops before publishing when the checked-out commit is not on the release branch (`origin/<branch>`, or the local branch when the clone has no remote one) and, with `--expect <version>`, when it would release another version or nothing. These checks let other repositories release an approved commit of `main` by hand instead of on every push; the root README's Approved Releases section has the workflow. `aronrepo explain --json` includes `head` and `notes`, so the reviewed preview is the data that releases. This repository still releases on every push.
+
 In explicit mode a minor or major release needs a `Bump(Minor)` or `Bump(Major)` commit from the owner. Agents never write those commits on their own.
 
 ## Validation Guidance

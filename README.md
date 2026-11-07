@@ -47,7 +47,7 @@ bun x aronrepo agents --write
 bun x aronrepo doctor
 ```
 
-Release from CI on pushes to a release branch. The job needs the full history, `contents: write` to push the tag, and `id-token: write` for npm trusted publishing and provenance:
+Release from CI on pushes to a release branch, or when a maintainer approves it (see [Approved Releases](#approved-releases)). The job needs the full history, `contents: write` to push the tag, and `id-token: write` for npm trusted publishing and provenance:
 
 ```yaml
 release:
@@ -143,7 +143,71 @@ Release paths default to the directories of public, non-private workspace packag
 4. Wait until the registry serves every package, then move the channel's dist-tag to the new version.
 5. Push the version tag and create the GitHub release with the release notes and the files in `release.assets`, such as `{ path: 'dist/global.min.js', name: 'global-{tag}.min.js' }`. A missing asset stops the release before anything is published, and a rerun uploads only the assets the release does not have yet.
 
-Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, from a shallow clone, or when `GITHUB_REF_NAME` names a branch other than the one checked out. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything.
+Rerunning the job finishes an interrupted release: a version already published from the same commit is skipped, a tagged commit gets its tag pushed and a missing GitHub release created, and a version that an interrupted run published from another commit without a tag is skipped for the next free version. A release stops instead of moving a dist-tag backwards, from a shallow clone, when `GITHUB_REF_NAME` names a branch other than the one checked out, or when the commit is not on the release branch: `origin/<branch>` when the clone has it, else the local branch. Ranges on packages of the same release, such as `^0.0.0`, are moved to the release version, and workspace packages without `repository` get the root's for npm provenance. npm auth comes from `.npmrc`, then npm trusted publishing through GitHub Actions OIDC, then `NPM_TOKEN`. Run `aronrepo release --dry-run` to print the plan and the notes without changing anything.
+
+## Approved Releases
+
+Releasing on every push to `main` is the default, not the only flow. The version is planned from the last tag to the commit that releases, so the commits merged during a week still release as one version when a maintainer releases on Friday. Release branches are not needed: `main` keeps integrating, builds of it deploy to staging as usual, and a release tags one approved commit of `main`.
+
+1. On every push to `main`, preview the next release. `aronrepo explain --json` prints the commit (`head`), the version, and the release notes that `aronrepo release` would publish.
+2. When the maintainer decides, run the release job by hand with the commit and the version from the preview, behind a GitHub environment with required reviewers.
+3. `aronrepo release --branch main --expect <version>` releases the checked-out commit only when it is on `main` and still plans the approved version. Otherwise it stops before publishing anything.
+
+```yaml
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            sha:
+                description: Commit of main to release
+                required: true
+            version:
+                description: Version from the preview, such as 1.2.4
+                required: true
+
+jobs:
+    preview:
+        if: ${{ github.event_name == 'push' }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - uses: oven-sh/setup-bun@v2
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+            - run: bun install --frozen-lockfile
+            - run: bun x aronrepo explain --json > plan.json
+            - run: jq -r '"Next release: \(.version // "none") from `\(.head)`\n\n\(.notes // "")"' plan.json >> "$GITHUB_STEP_SUMMARY"
+
+    release:
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        runs-on: ubuntu-latest
+        environment: production # required reviewers approve the release
+        permissions:
+            contents: write
+            id-token: write
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  ref: ${{ inputs.sha }}
+                  fetch-depth: 0
+            - uses: oven-sh/setup-bun@v2
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 26
+            - run: bun install --frozen-lockfile
+            - run: bun run build
+            - run: bun x aronrepo release --branch main --expect "$VERSION"
+              env:
+                  VERSION: ${{ inputs.version }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # optional with npm trusted publishing
+```
+
+`fetch-depth: 0` also fetches `origin/main`, which the release checks the commit against. A later release continues from the tag of the approved commit, so commits merged after it release next time.
 
 ## CLI
 
@@ -152,8 +216,8 @@ Rerunning the job finishes an interrupted release: a version already published f
 | `aronrepo check --edit <file>` | commit-msg hook: the message and the staged files |
 | `aronrepo check --from <ref> --to <ref>` | CI: every commit with its own changed files |
 | `aronrepo check --title <title> --base <ref> --head <ref>` | a PR title with the PR diff, for squash merges |
-| `aronrepo explain` | the next version and the reason for each commit |
-| `aronrepo release [--dry-run]` | publish the next release |
+| `aronrepo explain [--json]` | the next version and the reason for each commit; `--json` adds the commit and the release notes |
+| `aronrepo release [--dry-run] [--branch <name>] [--expect <version>]` | publish the next release; `--expect` stops unless it is the approved version |
 | `aronrepo policy [--json\|--markdown]` | the effective policy: mode, release paths, and every type |
 | `aronrepo agents [--write]` | check or regenerate the policy block in `AGENTS.md` |
 | `aronrepo doctor` | check the setup and print fixes |

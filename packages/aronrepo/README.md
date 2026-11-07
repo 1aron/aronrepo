@@ -55,13 +55,13 @@ In `explicit` mode (the default) only `Bump(Minor)` and `Bump(Major)` raise mino
 | Command | Use |
 | --- | --- |
 | `aronrepo check` | check a commit message, a commit range, or a PR title |
-| `aronrepo explain` | print the next version and the reason for each commit |
-| `aronrepo release [--dry-run]` | publish the packages, push the version tag, and create the GitHub release |
+| `aronrepo explain [--json]` | print the next version and the reason for each commit; `--json` adds the commit and the release notes |
+| `aronrepo release [--dry-run] [--expect <version>]` | publish the packages, push the version tag, and create the GitHub release; `--expect` stops unless it is the approved version |
 | `aronrepo policy [--json]` | print the policy |
 | `aronrepo agents [--write]` | check or regenerate the policy block in `AGENTS.md` |
 | `aronrepo doctor` | check the setup |
 
-`aronrepo release` publishes `main` on `latest` and `alpha`, `beta`, `rc`, and `canary` as prereleases on their own dist-tags. It publishes every package on a staging dist-tag first, moves the channel's dist-tag once all of them are on the registry, and resumes an interrupted run.
+`aronrepo release` publishes `main` on `latest` and `alpha`, `beta`, `rc`, and `canary` as prereleases on their own dist-tags. It publishes every package on a staging dist-tag first, moves the channel's dist-tag once all of them are on the registry, and resumes an interrupted run. It releases only a commit that is on the release branch, so CI can release on every push or release an approved commit when a maintainer decides.
 
 ## API
 
@@ -72,4 +72,4 @@ import { planRelease, explainRange } from 'aronrepo/node'
 
 `aronrepo` exports the commit standard without Node dependencies; `aronrepo/node` exports the config loader, git and workspace helpers, the release engine, and the CLI commands.
 
-See the [Aronrepo repository](https://github.com/1aron/aronrepo#readme) for release branches, CI setup, AI coding integration, and migrating from Aronrepo 2.
+See the [Aronrepo repository](https://github.com/1aron/aronrepo#readme) for release branches, CI setup, approved releases, AI coding integration, and migrating from Aronrepo 2.
