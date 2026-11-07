@@ -22,7 +22,7 @@ bun run check
 
 ## CI
 
-The main CI workflow runs on pushes and pull requests. It installs with `bun install --frozen-lockfile` using Bun 1.4.4 and Node 26.
+`.github/workflows/release.yml` runs CI and releases on pushes and pull requests. It installs with `bun install --frozen-lockfile` using Bun 1.4.4 and Node 26.
 
 CI jobs are intentionally separate:
 
@@ -44,6 +44,8 @@ The release job runs `aronrepo explain` and then `aronrepo release` for pushes t
 2. Writes the version and git head into the published packages and packs them with Bun.
 3. Publishes them with npm on the `aronrepo-staging` dist-tag, with provenance, in dependency order. npm auth comes from `.npmrc`, npm trusted publishing (GitHub OIDC), then `NPM_TOKEN`.
 4. Waits for the registry, moves the channel's dist-tag, pushes the tag, and creates the GitHub release.
+
+npm trusted publishing for `aronrepo` is bound to the `release.yml` file name, so renaming the workflow also needs the trusted publisher on npmjs.com updated.
 
 Package versions are never committed; the manifests are restored after the release. Rerunning a failed job resumes the release.
 
