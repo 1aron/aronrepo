@@ -116,6 +116,10 @@ test('explain reports the next release from the latest tag', async () => {
     const auto = JSON.parse((await explain({ cwd, mode: 'auto', json: true })).output)
     expect(auto.release).toBe('minor')
     expect(auto.commits.map((decision: { release: string | false }) => decision.release)).toEqual(['minor', false])
+    // The reviewed preview carries the commit and the notes that `aronrepo release` would publish.
+    expect(auto).toMatchObject({ head: git(cwd, 'rev-parse', 'HEAD'), version: '1.1.0', tag: 'v1.1.0' })
+    expect(auto.notes).toContain('Add a builder')
+    expect(auto.notes).not.toContain('Repair the header')
 })
 
 test('policy prints machine-readable release rules', async () => {
@@ -294,7 +298,8 @@ test('explain --to a tag explains that release', async () => {
     commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
     git(cwd, 'tag', 'v1.0.1')
     const result = JSON.parse((await explain({ cwd, to: 'v1.0.1', json: true })).output)
-    expect(result).toMatchObject({ from: 'v1.0.0', to: 'v1.0.1', release: 'patch', version: '1.0.1' })
+    expect(result).toMatchObject({ from: 'v1.0.0', to: 'v1.0.1', head: git(cwd, 'rev-parse', 'v1.0.1^{commit}'), release: 'patch', version: '1.0.1' })
+    expect(result.notes).toContain('Repair cache')
 })
 
 test('the CLI finds the repository root, prints reports to stdout, and validates flags per command', () => {

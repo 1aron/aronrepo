@@ -14,6 +14,7 @@ import {
     getReleaseTable,
     parseCommit,
     renderAgentsBlock,
+    renderReleaseNotes,
     resolveCommitRelease,
     resolveRelease,
     toVersionTag,
@@ -25,6 +26,7 @@ import {
     detectPackageManager,
     getCliCommand,
     getCommitFiles,
+    getCommitHash,
     getCurrentBranch,
     getDiffFiles,
     getGitConfig,
@@ -37,7 +39,7 @@ import {
     type PackageManager,
     type ProjectPolicy
 } from './project'
-import { getReleasePackages, planRelease, runRelease, type ReleasePlan } from './release'
+import { getReleasePackages, getRepositoryUrl, planRelease, runRelease, type ReleasePlan } from './release'
 
 export interface CommandResult {
     code: number
@@ -256,7 +258,18 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
         const version = decision.release && options.from === undefined
             ? getNextVersion(channel, decision.release, { reachable, all: getVersionTags(cwd) })
             : undefined
-        plan = { ...decision, channel, ...(version ? { version, tag: toVersionTag(version) } : {}) }
+        const head = getCommitHash(cwd, to)
+        const repositoryUrl = getRepositoryUrl(cwd)
+        const notes = version
+            ? renderReleaseNotes({
+                version,
+                ...(from ? { previousTag: from } : {}),
+                date: new Date().toISOString().slice(0, 10),
+                ...(repositoryUrl ? { repositoryUrl } : {}),
+                commits: decision.commits
+            })
+            : undefined
+        plan = { ...decision, channel, head, ...(version ? { version, tag: toVersionTag(version), notes } : {}) }
     }
 
     if (options.json) {
@@ -268,11 +281,13 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
                 ...(plan.channel ? { channel: plan.channel } : {}),
                 from: from ?? null,
                 to,
+                head: plan.head ?? null,
                 releasePaths: releasePaths ?? null,
                 release: plan.release,
                 version: plan.version ?? null,
                 tag: plan.tag ?? null,
-                commits: plan.commits
+                commits: plan.commits,
+                notes: plan.notes ?? null
             }, null, 2)
         }
     }

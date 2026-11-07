@@ -322,6 +322,11 @@ export function getVersionTags(cwd: string, mergedInto?: string) {
 }
 
 /** The checked-out branch, or `undefined` on a detached HEAD. */
+/** The full hash of the commit a ref points at. */
+export function getCommitHash(cwd: string, ref = 'HEAD') {
+    return git(cwd, ['rev-parse', '--verify', `${ref}^{commit}`]).trim()
+}
+
 export function getCurrentBranch(cwd: string) {
     const branch = git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']).trim()
     return branch === 'HEAD' ? undefined : branch
