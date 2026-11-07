@@ -24,20 +24,18 @@ jobs:
             - run: git fetch --no-tags origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/pull/head"
               env:
                   PR_NUMBER: ${{ github.event.pull_request.number }}
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm --filter aronrepo... run build
+            - run: bun install --frozen-lockfile
+            - run: bun run build
             - id: check-title
               continue-on-error: true
               run: |
-                  printf '%s\n' "$PR_TITLE" | pnpm exec commitlint --verbose
-                  pnpm exec aronrepo check --title "$PR_TITLE" --base "$BASE_SHA" --head refs/remotes/pull/head
+                  bun x aronrepo check --title "$PR_TITLE" --base "$BASE_SHA" --head refs/remotes/pull/head
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
                   BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -71,7 +69,7 @@ jobs:
                   PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
                   STATUS_STATE: ${{ steps.check-title.outcome == 'success' && 'success' || 'failure' }}
                   STATUS_DESCRIPTION: ${{ steps.check-title.outcome == 'success' && 'follows the Aronrepo release policy' || 'does not follow the Aronrepo release policy' }}
-                  STATUS_TARGET_URL: https://github.com/1aron/aronrepo/tree/main/packages/conventional-commits
+                  STATUS_TARGET_URL: https://github.com/1aron/aronrepo/tree/main/packages/aronrepo
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - if: ${{ always() && steps.check-title.outcome != 'success' }}
               run: exit 1
