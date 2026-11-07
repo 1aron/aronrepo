@@ -1,1 +1,1 @@
-aronrepo check --edit "$1"
+bun run aronrepo check --edit "$1"
