@@ -72,4 +72,4 @@ import { planRelease, explainRange } from 'aronrepo/node'
 
 `aronrepo` exports the commit standard without Node dependencies; `aronrepo/node` exports the config loader, git and workspace helpers, the release engine, and the CLI commands.
 
-See the [Aronrepo repository](https://github.com/1aron/aronrepo#readme) for release branches, CI setup, approved releases, AI coding integration, and migrating from Aronrepo 2.
+See the [Aronrepo repository](https://github.com/1aron/aronrepo#readme) for release branches, CI setup, approved releases, and AI coding integration.
