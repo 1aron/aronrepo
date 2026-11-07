@@ -34,7 +34,7 @@ The PR title workflow runs on `pull_request_target` from the base commit. It fet
 
 ## Commit Hook
 
-`bun install` runs `husky`, which installs `.husky/commit-msg`. The hook runs `aronrepo check --edit` from the local build, so run `bun run build` after changing the resolver. A release type on a commit that touches no release path, a legacy type, or a breaking marker outside `Bump(Major)` is rejected locally with a suggested header.
+`bun install` runs `husky`, which installs `.husky/commit-msg`. The hook runs `bun run aronrepo check --edit`, where the root `aronrepo` script runs the local build (`packages/aronrepo/dist/cli.js`), so run `bun run build` after cloning and after changing the resolver. CI uses the same script: Bun does not link a workspace binary whose file is missing at install time, and `bun x aronrepo` would then run the published version instead. A release type on a commit that touches no release path, a legacy type, or a breaking marker outside `Bump(Major)` is rejected locally with a suggested header.
 
 ## Release
 
@@ -53,6 +53,6 @@ In explicit mode a minor or major release needs a `Bump(Minor)` or `Bump(Major)`
 
 - Docs-only changes: manually verify paths, package names, commands, branch names, and workflow descriptions.
 - Package code changes: run `bun run test` and `bun run type-check` in `packages/aronrepo`, then the root scripts.
-- Commit type or release rule changes: run the tests, `bun x aronrepo agents` to confirm the AGENTS block is current, and `bun run check`.
-- Release engine changes: run the tests and `bun x aronrepo release --dry-run`.
+- Commit type or release rule changes: run the tests, `bun run aronrepo agents` to confirm the AGENTS block is current, and `bun run check`.
+- Release engine changes: run the tests and `bun run aronrepo release --dry-run`.
 - CI or release workflow changes: verify the workflow YAML against the scripts and commands it invokes.
