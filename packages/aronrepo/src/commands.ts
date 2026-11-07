@@ -13,7 +13,7 @@ import {
     type CommitDecision,
     type CommitViolation,
     type ReleaseMode
-} from '@aronrepo/conventional-commits'
+} from './index'
 import {
     getDiffFiles,
     getLatestTag,
@@ -21,7 +21,7 @@ import {
     getStagedFiles,
     loadProjectPolicy,
     type ProjectPolicy
-} from '@aronrepo/conventional-commits/node'
+} from './project'
 
 export interface CommandResult {
     code: number
@@ -258,7 +258,7 @@ const legacyDependencies = [
     '@commitlint/cli',
     '@aronrepo/commitlint-config',
     '@aronrepo/conventional-changelog-config',
-    '@aronrepo/conventional-commits',
+    '.',
     '@aronrepo/semantic-release-config',
     '@aronrepo/semantic-release-pnpm'
 ]

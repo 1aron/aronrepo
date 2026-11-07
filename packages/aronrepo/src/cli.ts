@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util'
-import { releaseModes, type ReleaseMode } from '@aronrepo/conventional-commits'
+import { releaseModes, type ReleaseMode } from './index'
 import { agents, check, doctor, explain, policy, type CommandResult } from './commands'
 
 const help = `Usage: aronrepo <command> [options]

@@ -42,8 +42,6 @@
         "vitest": "^5.1.0"
     },
     "devDependencies": {
-        "aronrepo": "workspace:^",
-        "@aronrepo/conventional-commits": "workspace:^",
-        "@types/js-yaml": "^4.0.9"
+        "aronrepo": "workspace:^"
     }
 }
