@@ -141,6 +141,18 @@ test('explain plans the checked-out branch even when GITHUB_REF_NAME names anoth
     }
 })
 
+test('a merge commit with a release type counts what it brings into its first parent', async () => {
+    const cwd = createRepo()
+    git(cwd, 'checkout', '-q', '-b', 'feature')
+    commit(cwd, 'Chore(Core): Draft the cache', { 'packages/core/cache.js': 'export {}' })
+    git(cwd, 'checkout', '-q', 'main')
+    git(cwd, 'merge', '-q', '--no-ff', '-m', 'Feat(Core): Add a cache', 'feature')
+    const result = JSON.parse((await check({ cwd, from: 'v1.0.0', json: true })).output)
+    expect(result.results.map(({ header, release, violations }: { header: string, release: string | false, violations: unknown[] }) => [header, release, violations.length]))
+        .toEqual([['Chore(Core): Draft the cache', false, 0], ['Feat(Core): Add a cache', 'patch', 0]])
+    await expect(explain({ cwd })).resolves.toMatchObject({ output: expect.stringContaining('Next release: patch (1.0.1)') })
+})
+
 test('explain reports the next release from the latest tag', async () => {
     const cwd = createRepo()
     commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })

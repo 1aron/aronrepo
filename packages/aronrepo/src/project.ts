@@ -266,9 +266,13 @@ function splitPaths(output: string) {
 // Rename detection lists only the new path; both paths decide whether a commit ships.
 const nameOnly = ['--name-only', '-z', '--no-renames']
 
-/** Files changed by one commit. Merge commits report no files. */
+// A merge commit reports what it brings into its first parent, the branch it merges into,
+// so a merge whose message has a release type ships like the squash of the same branch.
+const mergeFiles = '--diff-merges=first-parent'
+
+/** Files changed by one commit; a merge commit reports its changes to its first parent. */
 export function getCommitFiles(cwd: string, hash: string) {
-    return splitPaths(git(cwd, ['diff-tree', '--no-commit-id', ...nameOnly, '-r', '--root', hash]))
+    return splitPaths(git(cwd, ['diff-tree', '--no-commit-id', ...nameOnly, mergeFiles, '-r', '--root', hash]))
 }
 
 export function getStagedFiles(cwd = process.cwd()) {
@@ -280,12 +284,12 @@ export function getDiffFiles(cwd: string, base: string, head: string) {
     return splitPaths(git(cwd, ['diff', ...nameOnly, `${base}...${head}`]))
 }
 
-/** Commits in `from..to`, oldest first, with their changed files, from one `git log`. Merge commits report no files. */
+/** Commits in `from..to`, oldest first, with their changed files, from one `git log`. Merge commits report their changes to their first parent. */
 export function getRangeCommits(cwd: string, from: string | undefined, to = 'HEAD'): Required<CommitInput>[] {
     const range = from ? `${from}..${to}` : to
     const output = git(cwd, [
         '-c', 'log.showSignature=false',
-        'log', '--reverse', '--no-color', ...nameOnly, '--format=%x1e%H%x1f%B%x1f', range, '--'
+        'log', '--reverse', '--no-color', ...nameOnly, mergeFiles, '--format=%x1e%H%x1f%B%x1f', range, '--'
     ])
     return output.split('\x1e')
         .filter((entry) => entry.includes('\x1f'))
