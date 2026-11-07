@@ -4,14 +4,14 @@ This is the operating guide for AI agents working in this repository. Keep it cu
 
 ## Repository Identity
 
-Aronrepo is an ESM-only pnpm monorepo for Aron project toolchain packages. Published packages are under `packages/*`; JavaScript output is `dist/**/*.js`, type output is `dist/**/*.d.ts`, and package exports do not include CommonJS fallbacks.
+Aronrepo is an ESM-only Bun workspace that publishes one package, `aronrepo` (`packages/aronrepo`): the fixed commit standard, the release resolver, the release engine, and the `aronrepo` CLI. JavaScript output is `dist/**/*.js`, type output is `dist/**/*.d.ts`, and package exports do not include CommonJS fallbacks.
 
-Use `docs/ai-context/README.md` for deeper project context when the task needs architecture, workflow, or package ownership details.
+Use `docs/ai-context/README.md` for deeper project context when the task needs architecture, workflow, or ownership details.
 
 ## Environment
 
 - Node.js: `^26`
-- Package manager: `pnpm@12.18.0`
+- Package manager: `bun@1.4.4`
 - Module system: ESM only (`"type": "module"`)
 - TypeScript: strict mode, `moduleResolution: "Bundler"`
 - Workspace layout: `packages/*`
@@ -19,64 +19,48 @@ Use `docs/ai-context/README.md` for deeper project context when the task needs a
 Run installs from the repository root:
 
 ```sh
-pnpm install
+bun install
 ```
 
 ## Common Commands
 
-Run root commands unless a narrower package command is enough.
-
 ```sh
-pnpm run build
-pnpm run test
-pnpm run lint
-pnpm run type-check
-pnpm run check
+bun run build
+bun run test
+bun run lint
+bun run type-check
+bun run check
 ```
 
-For targeted package work, prefer:
-
-```sh
-pnpm --filter <package> run <script>
-```
-
-Examples:
-
-```sh
-pnpm --filter @aronrepo/semantic-release-config run test
-pnpm --filter @aronrepo/semantic-release-pnpm run type-check
-pnpm --filter aronrepo run build
-```
-
-`pnpm run check` runs `aronrepo check` on the commits since `origin/main`, then Turbo tasks for `test`, `lint`, and `type-check`.
+`bun run check` runs `aronrepo check` on the commits since `origin/main`, then Turbo tasks for `test`, `lint`, and `type-check`. The commit-msg hook runs the local build of `aronrepo check`, so run `bun run build` after changing commit rules.
 
 ## Coding Rules
 
 - Preserve ESM-only package behavior. Do not add CommonJS exports or fallbacks.
-- Keep package exports aligned with built `dist` files and generated declarations.
-- Use workspace dependencies with `workspace:^` for internal package relationships.
-- Keep build customization package-local in `tsdown.config.ts` or an explicitly added local build config.
+- Keep package exports aligned with built `dist` files and generated declarations. `aronrepo` must stay free of Node dependencies; Node code belongs in `aronrepo/node`.
+- The commit type table is fixed by design. Do not add configuration that lets repositories define their own types, parsers, or presets.
+- Keep build customization package-local in `tsdown.config.ts`.
 - Use shared Vitest defaults from `shared/vitest.config.ts`; only add package-specific overrides when behavior differs.
 - Do not commit generated `dist/`, Turbo cache output, `node_modules`, logs, or other ignored build artifacts.
-- Keep changes scoped to the package or shared config implied by the task. Avoid broad refactors when a focused edit is enough.
-- Update or add tests with behavior changes, especially for release rules, commit parsing, config generation, and publish behavior.
+- Keep changes scoped. Avoid broad refactors when a focused edit is enough.
+- Update or add tests with behavior changes, especially for commit parsing, release rules, version numbering, release notes, and publishing.
 
 ## Commit and PR Titles
 
-Commit types, release levels, and release paths come from `@aronrepo/conventional-commits` (`packages/conventional-commits/src/`) and this repository's `aronrepo.config.js`. The generated block at the end of this file comes from them; run `pnpm exec aronrepo agents --write` after changing either, and never edit the block by hand.
+Commit types, release levels, and release paths come from `packages/aronrepo/src/commits.ts`, `packages/aronrepo/src/policy.ts`, and this repository's `aronrepo.config.js`. The generated block at the end of this file comes from them; run `bun x aronrepo agents --write` after changing either, and never edit the block by hand.
 
-When a change modifies the release policy itself (types, modes, analyzer, commitlint rules), check the result with `pnpm exec aronrepo explain` and `pnpm exec aronrepo check --from origin/main --to HEAD` before handing it off.
+When a change modifies the release policy itself (types, modes, resolver, version numbering), check the result with `bun x aronrepo explain` and `bun x aronrepo check --from origin/main --to HEAD` before handing it off.
 
 ## Agent Workflow
 
-Before editing, inspect the relevant package `package.json`, `src`, `tests`, and local config files. For shared behavior, inspect the shared config or package that owns it instead of copying patterns by memory.
+Before editing, inspect `packages/aronrepo/package.json`, the relevant `src` and `tests` files, and local config files.
 
 After editing:
 
 - For docs-only changes, manually verify paths, package names, commands, and workflow descriptions.
-- For package code changes, run the narrowest meaningful package test/type-check/build commands first, then broaden if shared behavior changed.
-- For config or release workflow changes, run the affected package tests and consider `pnpm run check`.
-- Update `docs/ai-context/` when repo architecture, command behavior, package responsibility, release behavior, or validation expectations change.
+- For package code changes, run the package tests and type-check first, then the root scripts.
+- For release engine or workflow changes, run the tests and `bun x aronrepo release --dry-run`.
+- Update `docs/ai-context/` when repo architecture, command behavior, release behavior, or validation expectations change.
 
 When local facts conflict with these instructions, trust the repository files and update this guide as part of the change.
 
@@ -89,23 +73,42 @@ Release mode: **explicit**. Only the repository owner decides minor and major ve
 
 Commit headers and PR titles use `Type(Scope): Summary` or `Type: Summary`: a PascalCase type, an optional scope for the package or area, and a sentence-case summary without a trailing period.
 
-| Release | Types |
-| --- | --- |
-| Major | `Bump(Major)` |
-| Minor | `Bump(Minor)` |
-| Patch | `Bump(Patch)`, `Feat`, `New`, `Perf`, `Add`, `Update`, `Improve`, `Fix`, `Deprecate`, `Drop`, `Docs(README)`, `Upgrade`, `Revert` |
-| None | `Docs`, `Example`, `Test`, `Benchmark`, `Build`, `CI`, `Style`, `Refactor`, `Chore`, `Misc` |
+| Type | Release | Use for |
+| --- | --- | --- |
+| `Bump(Major)` | major | Release a major version. Only the repository owner decides it. |
+| `Bump(Minor)` | minor | Release a minor version. Only the repository owner decides it. |
+| `Bump(Patch)` | patch | Release a patch version without another release commit. |
+| `Add` | patch | A new capability: a new API, export, option, command, or package. |
+| `Improve` | patch | A better existing capability without new API: behavior, output, messages, or defaults. |
+| `Perf` | patch | Faster or lighter published code with the same behavior. |
+| `Fix` | patch | A bug fix in published behavior. |
+| `Deprecate` | patch | Mark a published capability as deprecated while it keeps working. |
+| `Drop` | patch | Remove a published capability. |
+| `Upgrade` | patch | Change a runtime dependency of a published package. |
+| `Revert` | patch | Revert a commit. It releases what the reverted commit released. |
+| `Docs(README)` | patch | Change a published package README. |
+| `Docs` | none | Documentation that is not a published package README. |
+| `Test` | none | Tests that cover existing behavior. |
+| `Benchmark` | none | Benchmark harnesses, fixtures, and reports. |
+| `Example` | none | Examples that do not ship in a package. |
+| `Build` | none | Build tooling and development configuration. |
+| `CI` | none | CI workflows and automation. |
+| `Style` | none | Formatting and lint-only changes. |
+| `Refactor` | none | Code changes that keep published behavior. |
+| `Chore` | none | Maintenance: development dependencies, lockfiles, metadata, agent guidance, and unpublished workspaces. |
+
+Legacy types are rejected: `Feat` (use `Add`), `New` (use `Add`), `Update` (use `Improve`), `Misc` (use `Chore`).
 
 ### Release decisions belong to the owner
 
 - Never write `Bump(Major)` or `Bump(Minor)` unless the user explicitly asked for that release level in the current conversation.
 - Never add a `BREAKING CHANGE:` footer or a `Type!:` header. If a change breaks published behavior, stop and ask the user how to release it.
-- `Feat` and `New` release a patch in explicit mode; prefer `Add` for new capabilities.
+- Every type except `Bump(Minor)` and `Bump(Major)` releases at most a patch. Pick the type that describes the change, not the release level you want.
 
 ### Choosing a type
 
 - Use a release type only when the commit changes files that ship in a published package (release paths) and affects published behavior, public API, release behavior, or published README content. Otherwise use a non-release type.
-- Pick the lowest accurate type: a new capability is `Add`, an enhancement is `Improve` or `Update`, a bug fix is `Fix`, and a runtime dependency change is `Upgrade`.
+- Pick the type that describes the change: a new capability is `Add`, a better existing capability is `Improve`, a bug fix is `Fix`, and a runtime dependency change is `Upgrade`.
 - A commit that changes no release path must use a non-release type (`Chore`, `Refactor`, `Style`, `Test`, `Docs`, `Build`, `CI`, `Benchmark`, `Example`), even when it fixes or speeds up something.
 - Split unrelated changes so each commit carries its own release level.
 
@@ -125,18 +128,13 @@ Non-release defaults:
 Only changes to these files can release a version:
 
 - `packages/aronrepo/**`
-- `packages/commitlint-config/**`
-- `packages/conventional-changelog-config/**`
-- `packages/conventional-commits/**`
-- `packages/semantic-release-config/**`
-- `packages/semantic-release-pnpm/**`
 
 Excluding: `**/tests/**`, `**/test/**`, `**/__tests__/**`, `**/*.{test,spec}.*`, `**/benchmarks/**`, `**/examples/**`, `**/CHANGELOG.md`, `.github/**`, `.husky/**`.
 
 ### Before handing off commits
 
-- `pnpm exec aronrepo check --from origin/main --to HEAD`
-- `pnpm exec aronrepo explain`
+- `bun x aronrepo check --from origin/main --to HEAD`
+- `bun x aronrepo explain`
 
 `aronrepo explain` prints the next release level and the reason for each commit. Tell the user when it is not what they expect.
 <!-- aronrepo:commit-policy:end -->
