@@ -89,6 +89,8 @@ jobs:
     test:
         runs-on: ${{ matrix.os }}
         strategy:
+            # One platform failing must not cancel the others, so every failure shows in one run.
+            fail-fast: false
             matrix:
                 os: [ubuntu-latest, windows-latest, macos-latest]
                 node: [26]
