@@ -35,7 +35,10 @@ import {
     getStagedFiles,
     getVersionTags,
     loadProjectPolicy,
+    queryWorkspaceDirs,
     readJsonFile,
+    readWorkspacePackage,
+    readWorkspacePatterns,
     type PackageManager,
     type ProjectPolicy
 } from './project'
@@ -575,6 +578,24 @@ export async function doctor(options: CommonOptions): Promise<CommandResult> {
             : withoutRepository.length
                 ? { status: 'warn', message: `npm provenance needs a \`repository\` field: ${withoutRepository.map(({ name }) => name).join(', ')}.`, fix: 'Add `repository` to the root package.json.' }
                 : { status: 'pass', message: `\`aronrepo release\` publishes ${releasePackages.map(({ name }) => name).join(', ')}.` })
+    } catch (error) {
+        checks.push({ status: 'fail', message: (error as Error).message })
+    }
+
+    // Publishing a package nobody marked public could leak it, so such packages are only reported.
+    try {
+        const undecided = queryWorkspaceDirs(readWorkspacePatterns(cwd), cwd)
+            .filter((dir) => dir !== '.')
+            .map((dir) => readWorkspacePackage(cwd, dir))
+            .filter((manifest) => manifest.name && !manifest.private && !manifest.publishConfig?.access)
+            .map(({ name }) => name!)
+        if (undecided.length) {
+            checks.push({
+                status: 'warn',
+                message: `Workspace packages that are neither private nor published: ${undecided.join(', ')}. \`aronrepo release\` skips them, and their files never release.`,
+                fix: 'Add `"publishConfig": { "access": "public" }` to each package that ships, and `"private": true` to the others.'
+            })
+        }
     } catch (error) {
         checks.push({ status: 'fail', message: (error as Error).message })
     }

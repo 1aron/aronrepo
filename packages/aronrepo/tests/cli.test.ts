@@ -216,6 +216,10 @@ test('doctor lists missing setup with fixes', async () => {
 
     write(cwd, 'release.config.js', 'export default {}\n')
     expect((await doctor({ cwd })).output).toMatch(/Leftovers from semantic-release or commitlint: release\.config\.js/)
+
+    // A package that is neither private nor published is reported, never published on a guess.
+    write(cwd, 'packages/tool/package.json', JSON.stringify({ name: 'tool' }))
+    expect((await doctor({ cwd })).output).toContain('Workspace packages that are neither private nor published: tool.')
 })
 
 test('release --dry-run --json prints the plan', async () => {
