@@ -2,7 +2,9 @@
     "$schema": "https://turbo.build/schema.json",
     "globalDependencies": [
         "bun.lock",
-        "tsconfig.json"
+        "tsconfig.json",
+        "eslint.config.js",
+        "shared/**"
     ],
     "tasks": {
         "build": {

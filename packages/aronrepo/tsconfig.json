@@ -1,7 +1,9 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "outDir": "dist"
+        "outDir": "dist",
+        // tsdown builds dist; tsc only type-checks, so a bare `tsc` cannot emit stray files into dist.
+        "noEmit": true
     },
     "include": [
         "src/**/*.ts",
