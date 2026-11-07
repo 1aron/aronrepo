@@ -3,9 +3,10 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "dependencies": {
+      "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@types/node": "^26.6.6",
+        "aronrepo": "workspace:^",
         "eslint": "^10.14.0",
         "husky": "^9.1.7",
         "tsdown": "^0.23.5",
@@ -14,9 +15,6 @@
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.72.1",
         "vitest": "^5.1.0",
-      },
-      "devDependencies": {
-        "aronrepo": "workspace:^",
       },
     },
     "packages/aronrepo": {
@@ -32,7 +30,6 @@
         "tinyglobby": "^0.2.17",
       },
       "devDependencies": {
-        "@types/js-yaml": "^4.0.9",
         "@types/picomatch": "^4.0.3",
         "@types/semver": "^7.8.0",
       },
@@ -198,8 +195,6 @@
     "@types/esrecurse": ["@types/esrecurse@4.3.1", "", {}, "sha512-xJBAbDifo5hpffDBuHl0Y8ywswbiAp/Wi7Y/GtAgSlZyIABppyurxVueOPE8LUQOxdlgi6Zqce7uoEpqNTeiUw=="],
 
     "@types/estree": ["@types/estree@1.0.10", "", {}, "sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g=="],
-
-    "@types/js-yaml": ["@types/js-yaml@4.0.9", "", {}, "sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg=="],
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
 
