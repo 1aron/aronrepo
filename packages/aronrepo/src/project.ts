@@ -135,6 +135,7 @@ const lockfiles: Array<[string, PackageManager]> = [
     ['bun.lock', 'bun'],
     ['bun.lockb', 'bun'],
     ['pnpm-lock.yaml', 'pnpm'],
+    ['pnpm-workspace.yaml', 'pnpm'],
     ['yarn.lock', 'yarn'],
     ['package-lock.json', 'npm']
 ]
@@ -155,6 +156,17 @@ export function getCliCommand(packageManager: PackageManager) {
         yarn: 'yarn aronrepo',
         npm: 'npx aronrepo'
     }[packageManager]
+}
+
+/**
+ * How to run the aronrepo CLI in a repository: its `aronrepo` script when it has
+ * one, for example a workspace that builds aronrepo itself, or the installed binary.
+ */
+export function getProjectCliCommand(cwd: string, packageManager = detectPackageManager(cwd)) {
+    const rootPackage = path.join(cwd, 'package.json')
+    const scripts = fs.existsSync(rootPackage) ? readJson<PackageJson>(rootPackage).scripts as Record<string, string> | undefined : undefined
+    if (scripts?.aronrepo) return packageManager === 'npm' ? 'npm run aronrepo --' : `${packageManager} run aronrepo`
+    return getCliCommand(packageManager)
 }
 
 export interface ProjectPolicy {
@@ -179,7 +191,7 @@ export async function loadProjectPolicy(cwd = process.cwd(), overrides: Partial<
     return {
         cwd,
         packageManager,
-        cli: getCliCommand(packageManager),
+        cli: getProjectCliCommand(cwd, packageManager),
         config,
         ...(configFile ? { configFile } : {}),
         policy,

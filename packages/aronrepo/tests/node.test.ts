@@ -3,7 +3,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import {
+    detectPackageManager,
     explainRange,
+    getProjectCliCommand,
     getRangeCommits,
     loadProjectPolicy,
     resolveReleasePaths
@@ -80,4 +82,18 @@ test('explains a commit range with changed files', async () => {
 
     const auto = await explainRange(cwd, 'v1.0.0', 'HEAD', { mode: 'auto' })
     expect(auto.release).toBe('major')
+})
+
+test('detects the package manager and how to run the CLI', () => {
+    const cwd = createRepo()
+    expect(detectPackageManager(cwd)).toBe('pnpm')
+    expect(getProjectCliCommand(cwd)).toBe('pnpm exec aronrepo')
+
+    write(cwd, 'package.json', JSON.stringify({ private: true, packageManager: 'bun@1.4.4', scripts: { aronrepo: 'node cli.js' } }))
+    expect(detectPackageManager(cwd)).toBe('bun')
+    expect(getProjectCliCommand(cwd)).toBe('bun run aronrepo')
+
+    fs.rmSync(path.join(cwd, 'pnpm-workspace.yaml'))
+    write(cwd, 'package.json', JSON.stringify({ private: true }))
+    expect(getProjectCliCommand(cwd)).toBe('npx aronrepo')
 })
