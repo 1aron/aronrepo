@@ -158,6 +158,37 @@ test('resolves legacy types like their replacements and rejects them in new comm
     expect(resolveCommitRelease('Misc: Tidy up', explicit).release).toBe(false)
 })
 
+test('rejects a summary that ends with a period', () => {
+    expect(resolveCommitRelease('Fix(Core): Repair the cache.', explicit).violations).toEqual([
+        expect.objectContaining({ rule: 'subject-full-stop', suggestion: 'Fix(Core): Repair the cache' })
+    ])
+    expect(resolveCommitRelease('Fix(Core): Support v1.2', explicit).violations).toEqual([])
+})
+
+test('warns about missing blank lines without failing', () => {
+    const decision = resolveCommitRelease('Fix(Core): Repair the cache\nIt was stale.\nBREAKING CHANGE: Clear it.', auto)
+    expect(decision.release).toBe('major')
+    expect(decision.violations).toEqual([
+        expect.objectContaining({ rule: 'body-leading-blank', severity: 'warning' }),
+        expect.objectContaining({ rule: 'footer-leading-blank', severity: 'warning' })
+    ])
+})
+
+test('reads breaking notes from footers', () => {
+    expect(parseCommit([
+        'Bump(Major): Aronrepo v3',
+        '',
+        'BREAKING CHANGE: Releases default to explicit mode.',
+        'Set `release.mode` to keep the old behavior.',
+        '',
+        'BREAKING CHANGE: Remove the adapters.',
+        'Co-Authored-By: Someone <a@b.c>'
+    ].join('\n')).breakingNotes).toEqual([
+        'Releases default to explicit mode. Set `release.mode` to keep the old behavior.',
+        'Remove the adapters.'
+    ])
+})
+
 test('rejects Bump without a release scope', () => {
     expect(resolveCommitRelease('Bump: Aronrepo v3', explicit)).toMatchObject({
         release: false,

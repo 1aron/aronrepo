@@ -48,6 +48,17 @@ test('check rejects release types on unpublished paths with a suggested header',
     await expect(check({ cwd, message: 'Chore(Site): Speed up the homepage' })).resolves.toMatchObject({ code: 0 })
 })
 
+test('check prints warnings without failing', async () => {
+    const cwd = createRepo()
+    write(cwd, 'packages/core/index.js', 'export {}')
+    git(cwd, 'add', '-A')
+
+    const result = await check({ cwd, message: 'Fix(Core): Repair the cache\nIt was stale.' })
+    expect(result.code).toBe(0)
+    expect(result.output).toContain('! Leave a blank line between the header and the body.')
+    await expect(check({ cwd, message: 'Fix(Core): Repair the cache.' })).resolves.toMatchObject({ code: 1 })
+})
+
 test('check reads a commit-msg hook file and ignores comments', async () => {
     const cwd = createRepo()
     write(cwd, 'packages/core/index.js', 'export {}')
