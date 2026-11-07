@@ -67,8 +67,12 @@ async function project(options: CommonOptions): Promise<ProjectPolicy> {
     return loadProjectPolicy(options.cwd ?? process.cwd(), options.mode ? { mode: options.mode } : {})
 }
 
+function isError(violation: CommitViolation) {
+    return (violation.severity ?? 'error') === 'error'
+}
+
 function formatViolation(violation: CommitViolation) {
-    return `  ✗ ${violation.message}${violation.suggestion ? `\n    Suggested header: ${violation.suggestion}` : ''}`
+    return `  ${isError(violation) ? '✗' : '!'} ${violation.message}${violation.suggestion ? `\n    Suggested header: ${violation.suggestion}` : ''}`
 }
 
 function formatDecision(decision: CommitDecision) {
@@ -119,7 +123,7 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
                 ...(entry.files ? { files: entry.files } : {})
             })
         }))
-    const failures = results.filter(({ decision }) => decision.violations.length)
+    const failures = results.filter(({ decision }) => decision.violations.some(isError))
 
     if (options.json) {
         return {
@@ -131,7 +135,10 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
         return {
             code: 0,
             output: [
-                ...results.map(({ entry, decision }) => `✓ ${entry.label}: ${decision.release || 'none'} ← ${decision.header}`),
+                ...results.map(({ entry, decision }) => [
+                    `✓ ${entry.label}: ${decision.release || 'none'} ← ${decision.header}`,
+                    ...decision.violations.map(formatViolation)
+                ].join('\n')),
                 `${results.length} ${results.length === 1 ? 'header follows' : 'headers follow'} the Aronrepo ${policy.mode} release policy.`
             ].join('\n')
         }

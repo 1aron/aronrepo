@@ -91,6 +91,7 @@ function capRelease(release: ReleaseType, type: string | undefined, policy: Rele
 export const headerPattern = /^([A-Z]\w*)(?:\(([0-9A-Z`_#~].*)\))?: ([0-9A-Z`_#~].*)$/
 const breakingHeaderPattern = /^([A-Z]\w*)(?:\(([^)]*)\))?!: (.+)$/
 const breakingNotePattern = /^BREAKING[ -]CHANGE:/m
+const footerLinePattern = /^BREAKING[ -]CHANGE:/
 const githubRevertPattern = /^Revert "([\s\S]+)"$/
 const revertHashPattern = /This reverts commit ([0-9a-f]{7,40})/i
 
@@ -103,10 +104,36 @@ export interface ParsedCommit {
     subject?: string
     /** Where a breaking marker was found, if any. */
     breaking?: 'header' | 'footer'
+    /** Texts of `BREAKING CHANGE:` footers. */
+    breakingNotes?: string[]
+    /** Message layout problems that do not change the release. */
+    layout?: Array<'body-leading-blank' | 'footer-leading-blank'>
     revert?: {
         header?: string
         hash?: string
     }
+}
+
+const trailerPattern = /^[\w-]+: /
+
+/** `BREAKING CHANGE:` footer texts; each runs until a blank line, another footer, or a git trailer. */
+function readBreakingNotes(lines: string[]) {
+    const notes: string[] = []
+    let current: string[] | undefined
+    for (const line of lines) {
+        const start = /^BREAKING[ -]CHANGE:\s*(.*)$/.exec(line)
+        if (start) {
+            if (current) notes.push(current.join(' ').trim())
+            current = [start[1]]
+        } else if (current && line.trim() && !trailerPattern.test(line)) {
+            current.push(line.trim())
+        } else if (current) {
+            notes.push(current.join(' ').trim())
+            current = undefined
+        }
+    }
+    if (current) notes.push(current.join(' ').trim())
+    return notes.filter(Boolean)
 }
 
 export function parseCommit(message: string, hash?: string): ParsedCommit {
@@ -114,6 +141,13 @@ export function parseCommit(message: string, hash?: string): ParsedCommit {
     const [header = '', ...rest] = normalized.split('\n')
     const body = rest.join('\n').trim()
     const parsed: ParsedCommit = { header, body, ...(hash ? { hash } : {}) }
+
+    const layout: NonNullable<ParsedCommit['layout']> = []
+    if (rest.length && rest[0].trim()) layout.push('body-leading-blank')
+    if (rest.some((line, index) => index > 0 && footerLinePattern.test(line) && rest[index - 1].trim())) layout.push('footer-leading-blank')
+    if (layout.length) parsed.layout = layout
+    const breakingNotes = readBreakingNotes(rest)
+    if (breakingNotes.length) parsed.breakingNotes = breakingNotes
 
     const regular = headerPattern.exec(header)
     const match = regular ?? breakingHeaderPattern.exec(header)
@@ -137,10 +171,20 @@ export function parseCommit(message: string, hash?: string): ParsedCommit {
     return parsed
 }
 
-export type CommitViolationRule = 'header-format' | 'unknown-type' | 'legacy-type' | 'implicit-breaking' | 'release-paths'
+export type CommitViolationRule =
+    | 'header-format'
+    | 'subject-full-stop'
+    | 'unknown-type'
+    | 'legacy-type'
+    | 'implicit-breaking'
+    | 'release-paths'
+    | 'body-leading-blank'
+    | 'footer-leading-blank'
 
 export interface CommitViolation {
     rule: CommitViolationRule
+    /** Errors fail `aronrepo check`; warnings are printed only. Defaults to `error`. */
+    severity?: 'error' | 'warning'
     message: string
     /** A header that satisfies the policy, when one can be derived. */
     suggestion?: string
@@ -151,6 +195,9 @@ export interface CommitDecision {
     header: string
     type?: string
     scope?: string
+    subject?: string
+    /** Texts of `BREAKING CHANGE:` footers, kept for `Bump(Major)` release notes. */
+    breakingNotes?: string[]
     /** Effective release level after mode, breaking markers, reverts, and paths. */
     release: ReleaseType
     reasons: string[]
@@ -209,6 +256,8 @@ export function resolveCommitRelease(
         header: commit.header,
         ...(commit.type ? { type: commit.type } : {}),
         ...(commit.scope ? { scope: commit.scope } : {}),
+        ...(commit.subject ? { subject: commit.subject } : {}),
+        ...(commit.breakingNotes ? { breakingNotes: commit.breakingNotes } : {}),
         release: false,
         reasons: [],
         violations: []
@@ -238,6 +287,23 @@ export function resolveCommitRelease(
             message: `\`${commit.type}\` needs a scope: ${commits.filter(({ type }) => type === commit.type).map(({ type, scope }) => `\`${type}(${scope})\``).join(', ')}.`
         })
         return decision
+    }
+
+    if (commit.subject?.endsWith('.')) {
+        decision.violations.push({
+            rule: 'subject-full-stop',
+            message: 'The summary must not end with a period.',
+            suggestion: commit.header.replace(/\.+$/, '')
+        })
+    }
+    for (const rule of commit.layout ?? []) {
+        decision.violations.push({
+            rule,
+            severity: 'warning',
+            message: rule === 'body-leading-blank'
+                ? 'Leave a blank line between the header and the body.'
+                : 'Leave a blank line before a `BREAKING CHANGE:` footer.'
+        })
     }
 
     if (commit.type && legacyTypes.includes(commit.type)) {
