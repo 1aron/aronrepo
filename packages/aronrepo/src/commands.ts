@@ -12,10 +12,8 @@ import {
     defaultReleasePathExcludes,
     getAgentCommitPolicy,
     getReleaseTable,
-    parseCommit,
     renderAgentsBlock,
     renderReleaseNotes,
-    resolveCommitRelease,
     resolveRelease,
     toVersionTag,
     type CommitDecision,
@@ -187,15 +185,15 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
             .map((commit) => ({ ...commit, label: commit.hash.slice(0, 9), ignorable: true }))
     }
 
-    const results = entries
-        .filter(({ message, ignorable }) => !ignorable || !isIgnoredMessage(message))
-        .map((entry) => ({
-            entry,
-            decision: resolveCommitRelease(parseCommit(entry.message, entry.hash), policy, {
-                ...pathOptions,
-                ...(entry.files ? { files: entry.files } : {})
-            })
-        }))
+    const checked = entries.filter(({ message, ignorable }) => !ignorable || !isIgnoredMessage(message))
+    // One decision for the whole range, as `explain` and `release` make it, so a revert and the
+    // commit it reverts cancel each other here too.
+    const decisions = resolveRelease(checked.map(({ message, hash, files }) => ({
+        message,
+        ...(hash ? { hash } : {}),
+        ...(files ? { files } : {})
+    })), policy, pathOptions).commits
+    const results = checked.map((entry, index) => ({ entry, decision: decisions[index] }))
     const failures = results.filter(({ decision }) => decision.violations.some(isError))
 
     if (options.json) {

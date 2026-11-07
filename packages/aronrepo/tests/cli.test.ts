@@ -104,6 +104,17 @@ test('check validates every commit in a range and skips merge commits', async ()
     expect(JSON.parse(result.output).results).toHaveLength(2)
 })
 
+test('check accepts an empty revert of an unreleased Bump in a range and in a commit message', async () => {
+    const cwd = createRepo()
+    const bump = commit(cwd, 'Bump(Patch): Release the cache fix', {})
+    commit(cwd, `Revert "Bump(Patch): Release the cache fix"\n\nThis reverts commit ${bump}.`, {})
+    const result = await check({ cwd, from: 'v1.0.0' })
+    expect(result).toMatchObject({ code: 0 })
+    expect(result.output).toContain('none ← Revert "Bump(Patch): Release the cache fix"')
+    await expect(check({ cwd, message: `Revert "Bump(Patch): Release the cache fix"\n\nThis reverts commit ${bump}.`, files: [] })).resolves.toMatchObject({ code: 0 })
+    await expect(explain({ cwd })).resolves.toMatchObject({ output: expect.stringContaining('Next release: none') })
+})
+
 test('explain reports the next release from the latest tag', async () => {
     const cwd = createRepo()
     commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })

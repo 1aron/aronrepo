@@ -505,12 +505,15 @@ export function resolveRelease(
     // A revert and the commits it reverts cancel each other when both are unreleased.
     // Newest first, so reverting a revert cancels that pair and keeps the original commit.
     // A short hash that matches several commits cancels nothing.
+    // A cancelled commit releases nothing, so whether its type should release no longer matters.
     const cancelled = new Set<number>()
-    const cancel = (target: number, other: number) => {
-        cancelled.add(target)
-        decisions[target].release = false
-        decisions[target].reasons.push(`Cancelled by \`${parsed[other].header}\` in the same release.`)
+    const settle = (index: number, reason: string) => {
+        cancelled.add(index)
+        decisions[index].release = false
+        decisions[index].reasons.push(reason)
+        decisions[index].violations = decisions[index].violations.filter(({ rule }) => rule !== 'release-paths')
     }
+    const cancel = (target: number, other: number) => settle(target, `Cancelled by \`${parsed[other].header}\` in the same release.`)
     for (let index = parsed.length - 1; index >= 0; index--) {
         const hashes = parsed[index].revert?.hashes ?? []
         if (!hashes.length || cancelled.has(index)) continue
@@ -523,9 +526,7 @@ export function resolveRelease(
         // A revert that also reverts commits outside the range still releases for them.
         if (targets.every((target) => target !== undefined)) {
             const reverted = targets.map((target) => parsed[target!].header).join('`, `')
-            cancelled.add(index)
-            decisions[index].release = false
-            decisions[index].reasons.push(`Cancelled by \`${reverted}\` in the same release.`)
+            settle(index, `Cancelled by \`${reverted}\` in the same release.`)
         }
     }
 

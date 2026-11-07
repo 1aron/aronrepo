@@ -387,3 +387,21 @@ test('a revert of a header outside the policy releases like Revert', () => {
     expect(decision.reasons[0]).toBe('Reverts `Update the parser`, which is not an Aronrepo header; it releases patch like `Revert`.')
     expect(resolveCommitRelease('Revert "feature: X"', explicit, { ...paths, files: ['site/a.js'] })).toMatchObject({ release: false, violations: [] })
 })
+
+test('a revert and an unreleased Bump cancel without release path violations', () => {
+    const isReleasePath = (file: string) => file.startsWith('packages/')
+    const bump = 'a'.repeat(40)
+    const byHeader = resolveRelease([
+        { hash: bump, message: 'Bump(Patch): Release 2.0.4', files: [] },
+        { hash: 'b'.repeat(40), message: `Revert "Bump(Patch): Release 2.0.4"\n\nThis reverts commit ${bump}.`, files: [] }
+    ], explicit, { isReleasePath })
+    expect(byHeader.release).toBe(false)
+    expect(byHeader.commits.map(({ violations }) => violations)).toEqual([[], []])
+    // A revert written by hand names only the hash; the cancelled pair no longer asks for another type.
+    const byHash = resolveRelease([
+        { hash: bump, message: 'Bump(Minor): Release 2.1', files: [] },
+        { hash: 'b'.repeat(40), message: `Revert(Release): Hold the minor release\n\nThis reverts commit ${bump}.`, files: [] }
+    ], explicit, { isReleasePath })
+    expect(byHash.release).toBe(false)
+    expect(byHash.commits.map(({ violations }) => violations)).toEqual([[], []])
+})
