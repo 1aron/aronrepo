@@ -47,3 +47,11 @@ test('numbers prereleases and keeps their target version', () => {
     })).toBe('3.0.0-beta.4')
     expect(getNextVersion(channel, 'patch', { reachable: ['v3.0.0', 'v3.0.0-beta.4'], all: ['v3.0.0', 'v3.0.0-beta.4'] })).toBe('3.0.1-beta.1')
 })
+
+test('skips non-numeric prerelease ids and never targets a released stable version', () => {
+    expect(getNextVersion(beta, 'patch', { reachable: ['v1.0.0', 'v1.0.1-beta.x'], all: ['v1.0.0', 'v1.0.1-beta.x'] })).toBe('1.0.1-beta.1')
+    expect(getNextVersion(beta, 'patch', {
+        reachable: ['v1.0.0', 'v1.0.1-beta.1'],
+        all: ['v1.0.0', 'v1.0.1-beta.1', 'v1.0.1']
+    })).toBe('1.0.2-beta.1')
+})

@@ -102,9 +102,15 @@ export function getNextVersion(channel: ReleaseChannel, release: Exclude<Release
 
     const previous = highest(channelVersions(reachable, channel.prerelease)
         .filter((version) => !stable || semver.gt(version, stable)))
-    const core = previous && semver.gte(coreVersion(previous), target) ? coreVersion(previous) : target
-    const numbers = channelVersions(versionsOf(tags.all), channel.prerelease)
+    let core = previous && semver.gte(coreVersion(previous), target) ? coreVersion(previous) : target
+    // A stable release of the same version on another branch already shipped; a
+    // prerelease of it would sort below `latest`, so target the next version instead.
+    const all = versionsOf(tags.all)
+    const released = highest(stableVersions(all))
+    if (released && semver.lte(core, released)) core = semver.inc(released, release)!
+    const numbers = channelVersions(all, channel.prerelease)
         .filter((version) => coreVersion(version) === core)
-        .map((version) => Number(semver.prerelease(version)?.[1] ?? 0))
+        .map((version) => semver.prerelease(version)?.[1] ?? 0)
+        .filter((number): number is number => Number.isInteger(number))
     return `${core}-${channel.prerelease}.${Math.max(0, ...numbers) + 1}`
 }
