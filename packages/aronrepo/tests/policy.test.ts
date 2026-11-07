@@ -323,7 +323,6 @@ test('ignores breaking footers in code fences and keeps notes until the next tok
 test('suggests valid non-release headers', () => {
     const files = { files: ['site/a.js'], isReleasePath: (file: string) => file.startsWith('packages/') }
     expect(resolveCommitRelease('Fix(Site): Tweak.', explicit, files).violations.find(({ rule }) => rule === 'release-paths')?.suggestion).toBe('Chore(Site): Tweak')
-    expect(resolveCommitRelease('Revert "Bump(Major): Release 2.0"', explicit, files).violations[0].suggestion).toBe('Chore: Revert "Bump(Major): Release 2.0"')
     const breakingChore = resolveCommitRelease('Chore!: X', auto, files).violations[0]
     expect(breakingChore.message).toMatch(/only because of its breaking marker/)
     expect(breakingChore.suggestion).toBe('Chore: X')
@@ -361,4 +360,30 @@ test('freezes the commit type table', () => {
 test('validates release assets in the config', () => {
     expect(getReleasePolicy({ release: { assets: [{ path: 'dist/a.js', name: 'a-{tag}.js' }] } }).assets).toEqual([{ path: 'dist/a.js', name: 'a-{tag}.js' }])
     expect(() => getReleasePolicy({ release: { assets: [{ name: 'a.js' }] as never } })).toThrow(/`release.assets` must be an array/)
+})
+
+test('a revert with the reverted header ships only when its own files ship, without a violation', () => {
+    const paths = { isReleasePath: (file: string) => file.startsWith('packages/') }
+    const empty = { ...paths, files: [] }
+    const site = { ...paths, files: ['site/a.js'] }
+    const pkg = { ...paths, files: ['packages/core/a.js'] }
+    // An empty revert of a `Bump`, as `git revert` writes it for a release that should not happen.
+    expect(resolveCommitRelease('Revert "Bump(Patch): Release 2.0.4"\n\nThis reverts commit abcdef1.', explicit, empty)).toMatchObject({ release: false, violations: [] })
+    expect(resolveCommitRelease('Revert: Bump(Major): Release 2.0', explicit, site)).toMatchObject({ release: false, violations: [] })
+    expect(resolveCommitRelease('Revert "Bump(Major): Release 2.0"', explicit, pkg)).toMatchObject({ release: 'patch', violations: [] })
+    // The reason names what the reverted commit releases, then why the revert does not.
+    expect(resolveCommitRelease('Revert "Fix: A"', explicit, empty).reasons).toEqual([
+        'Reverts `Fix: A`, which releases patch.',
+        'The revert changes no release paths; no release.'
+    ])
+    // A revert written by hand still picks its type, so it still gets the suggestion.
+    expect(resolveCommitRelease('Revert(Core): Undo the cache', explicit, site).violations[0].suggestion).toBe('Chore(Core): Undo the cache')
+})
+
+test('a revert of a header outside the policy releases like Revert', () => {
+    const paths = { isReleasePath: (file: string) => file.startsWith('packages/') }
+    const decision = resolveCommitRelease('Revert "Update the parser"\n\nThis reverts commit abcdef1.', explicit, { ...paths, files: ['packages/core/parser.js'] })
+    expect(decision).toMatchObject({ release: 'patch', violations: [] })
+    expect(decision.reasons[0]).toBe('Reverts `Update the parser`, which is not an Aronrepo header; it releases patch like `Revert`.')
+    expect(resolveCommitRelease('Revert "feature: X"', explicit, { ...paths, files: ['site/a.js'] })).toMatchObject({ release: false, violations: [] })
 })

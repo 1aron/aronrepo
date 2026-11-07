@@ -410,10 +410,17 @@ export function resolveCommitRelease(
     }
 
     let release: ReleaseType
+    // git writes the header of a revert, so its own files, not a type, decide whether it ships.
+    const revertsHeader = decision.type === 'Revert' && Boolean(commit.revert?.header)
     if (decision.type === 'Revert' && commit.revert?.header) {
-        const reverted = resolveCommitRelease(commit.revert.header, policy, options)
+        // The reverted header on its own; the files of the revert are checked below.
+        const reverted = resolveCommitRelease(commit.revert.header, policy)
         const verb = commit.revert.reapply ? 'Reapplies' : 'Reverts'
-        if (reverted.type === 'Bump' && reverted.release) {
+        if (!reverted.type || reverted.violations.some(({ rule }) => rule === 'header-format' || rule === 'unknown-type')) {
+            // A commit from before the policy, or with an unknown type, may still have changed published code.
+            release = capRelease(findCommitRule('Revert')!.release, 'Revert', policy)
+            decision.reasons.push(`${verb} \`${commit.revert.header}\`, which is not an Aronrepo header; it releases ${formatRelease(release)} like \`Revert\`.`)
+        } else if (reverted.type === 'Bump' && reverted.release) {
             // Undoing a version bump does not raise the version again.
             release = 'patch'
             decision.reasons.push(`${verb} \`${commit.revert.header}\`; reverting a \`Bump\` releases patch.`)
@@ -448,7 +455,11 @@ export function resolveCommitRelease(
     const isBump = decision.type === 'Bump'
     if (release && !isBump && options.files && options.isReleasePath) {
         const releaseFiles = options.files.filter(options.isReleasePath)
-        if (!releaseFiles.length) {
+        if (!releaseFiles.length && revertsHeader) {
+            // Such as an empty revert of a `Bump`: it undoes a release decision and changes no published file.
+            decision.reasons.push('The revert changes no release paths; no release.')
+            release = false
+        } else if (!releaseFiles.length) {
             const label = `\`${decision.type}${decision.scope ? `(${decision.scope})` : ''}\``
             const onlyBreaking = commit.type !== undefined && findCommitRule(commit.type, commit.scope)?.release === false
             decision.reasons.push('No changed file ships in a published package; no release.')
