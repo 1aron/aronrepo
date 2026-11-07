@@ -195,3 +195,17 @@ test('explain --to starts from the latest version tag, not any tag', async () =>
     expect(result.output).toContain('Range: v1.0.0..HEAD')
     expect(result.output).toContain('Next release: patch')
 })
+
+test('the CLI rejects unknown options and extra arguments with usage', () => {
+    const cli = path.join(import.meta.dirname, '../dist/cli.js')
+    const run = (...args: string[]) => {
+        try {
+            execFileSync('node', [cli, ...args], { encoding: 'utf8', stdio: 'pipe' })
+            return 0
+        } catch (error) {
+            return (error as { status: number }).status
+        }
+    }
+    expect(run('policy', '--nope')).toBe(2)
+    expect(run('policy', 'extra')).toBe(2)
+})

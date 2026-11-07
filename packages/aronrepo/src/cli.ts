@@ -25,32 +25,41 @@ Options:
   --json                        machine-readable output
 `
 
+const options = {
+    cwd: { type: 'string' },
+    mode: { type: 'string' },
+    json: { type: 'boolean' },
+    markdown: { type: 'boolean' },
+    write: { type: 'boolean' },
+    file: { type: 'string' },
+    edit: { type: 'string' },
+    message: { type: 'string' },
+    title: { type: 'string' },
+    base: { type: 'string' },
+    head: { type: 'string' },
+    from: { type: 'string' },
+    to: { type: 'string' },
+    files: { type: 'string' },
+    'dry-run': { type: 'boolean' },
+    branch: { type: 'string' },
+    help: { type: 'boolean', short: 'h' }
+} as const
+
+function parse(argv: string[]) {
+    try {
+        return parseArgs({ args: argv, allowPositionals: true, options })
+    } catch (error) {
+        return error as Error
+    }
+}
+
 async function main(argv: string[]): Promise<CommandResult> {
-    const { positionals, values } = parseArgs({
-        args: argv,
-        allowPositionals: true,
-        options: {
-            cwd: { type: 'string' },
-            mode: { type: 'string' },
-            json: { type: 'boolean' },
-            markdown: { type: 'boolean' },
-            write: { type: 'boolean' },
-            check: { type: 'boolean' },
-            file: { type: 'string' },
-            edit: { type: 'string' },
-            message: { type: 'string' },
-            title: { type: 'string' },
-            base: { type: 'string' },
-            head: { type: 'string' },
-            from: { type: 'string' },
-            to: { type: 'string' },
-            files: { type: 'string' },
-            'dry-run': { type: 'boolean' },
-            branch: { type: 'string' },
-            help: { type: 'boolean', short: 'h' }
-        }
-    })
-    const [command] = positionals
+    const parsed = parse(argv)
+    // A usage error exits with 2 and shows the usage, like an unknown command.
+    if (parsed instanceof Error) return { code: 2, output: `${parsed.message}\n\n${help}` }
+    const { positionals, values } = parsed
+    const [command, ...extra] = positionals
+    if (extra.length) return { code: 2, output: `Unexpected argument "${extra[0]}".\n\n${help}` }
     if (!command || values.help) return { code: command || values.help ? 0 : 2, output: help }
     if (values.mode && !releaseModes.includes(values.mode as ReleaseMode)) {
         return { code: 2, output: `--mode must be one of: ${releaseModes.join(', ')}` }
