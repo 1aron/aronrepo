@@ -1,51 +1,40 @@
 # Project Map
 
-Aronrepo is a pnpm workspace with published TypeScript packages in `packages/*`. Packages are ESM-only and are built with `tsdown` into package-local `dist/` directories.
+Aronrepo is a Bun workspace with one published TypeScript package, `aronrepo`, in `packages/aronrepo`. It is ESM-only and built with `tsdown` into `dist/`.
 
 ## Root Layout
 
-- `package.json`: root scripts, Node/pnpm requirements, workspace dev dependencies, and release entrypoints.
+- `package.json`: root scripts, the Bun package manager and workspace pattern, Node requirement, and development dependencies.
+- `bun.lock`: the Bun lockfile.
 - `.node-version`: Node major version for fnm and other version managers.
-- `pnpm-workspace.yaml`: workspace package patterns and pnpm build allowances.
 - `turbo.json`: task graph for build, test, lint, and type-check.
 - `tsconfig.json`: shared strict TypeScript defaults.
 - `aronrepo.config.js`: this repository's release policy (`explicit` mode).
-- `commitlint.config.js`: root commitlint config for commit and PR title validation.
 - `eslint.config.js`: root ESLint config for repository linting.
-- `release.config.js`: semantic-release entrypoint using `@aronrepo/semantic-release-config`.
-- `.husky/commit-msg`: runs commitlint and `aronrepo check` on every commit.
+- `.husky/commit-msg`: runs `aronrepo check --edit` on every commit.
 - `shared/`: shared Vitest config and CI timeout helpers.
 - `.github/workflows/`: CI, release, and PR title validation workflows.
-- `packages/`: publishable workspace packages.
+- `packages/aronrepo/`: the published package.
 
-## Package Responsibilities
+## Package Layout
 
-- `aronrepo`: facade package and the `aronrepo` CLI (`check`, `explain`, `policy`, `agents`, `doctor`).
-- `@aronrepo/conventional-commits`: commit types, release levels, release modes, the release resolver (`resolveCommitRelease`, `resolveRelease`), release path matching, agent policy, and the generated AGENTS block. The `./node` subpath loads `aronrepo.config.js`, discovers workspaces, resolves release paths, and reads git history.
-- `@aronrepo/commitlint-config`: commitlint config built on Aronrepo conventional commits, including the `aronrepo/no-implicit-breaking` rule.
-- `@aronrepo/conventional-changelog-config`: conventional changelog preset, parser options, writer options, and policy-aware recommended bumps.
-- `@aronrepo/semantic-release-config`: semantic-release configuration, the Aronrepo commit analyzer (`./analyzer`), and public workspace package discovery.
-- `@aronrepo/semantic-release-pnpm`: semantic-release plugin that prepares and publishes pnpm workspace packages.
+`packages/aronrepo/src`:
 
-## Source and Test Locations
+- `commits.ts`: the fixed commit type table with release levels, descriptions, and release notes groups, plus the legacy types and their replacements.
+- `policy.ts`: release modes, release path matching, the commit parser, and the release resolver (`resolveCommitRelease`, `resolveRelease`) with every violation rule.
+- `agent.ts`: the agent policy and the generated AGENTS.md block.
+- `version.ts`: release branches and channels, version tags, release ranges, and next versions.
+- `notes.ts`: release notes rendering.
+- `project.ts`: `aronrepo.config.js` loading, package manager detection, workspace discovery, release paths, and git range helpers.
+- `release.ts`: the release engine (`planRelease`, `runRelease`): packing, npm publishing, auth, dist-tags, version tags, and GitHub releases.
+- `commands.ts` and `cli.ts`: the `check`, `explain`, `release`, `policy`, `agents`, and `doctor` commands.
+- `index.ts`: the `aronrepo` entry, which re-exports the modules without Node dependencies.
+- `node.ts`: the `aronrepo/node` entry, which re-exports `project.ts`, `commands.ts`, and `release.ts`.
 
-Each package follows the same basic shape:
-
-- Source: `packages/<name>/src/**/*.ts`
-- Tests: `packages/<name>/tests/**/*.ts`
-- Build config: `packages/<name>/tsdown.config.ts`
-- TypeScript config: `packages/<name>/tsconfig.json`
-- Vitest config: `packages/<name>/vitest.config.ts`
-- Package metadata and exports: `packages/<name>/package.json`
-
-Most package `vitest.config.ts` files import `../../shared/vitest.config`. Prefer changing the shared config when test behavior should apply across packages.
+Tests live in `packages/aronrepo/tests`, one file per module. Release tests run the engine against temporary git repositories with a fake npm registry and GitHub API.
 
 ## Common Ownership Pointers
 
-- Commit types and auto-mode levels live in `packages/conventional-commits/src/commits.ts`. Mode capping, breaking markers, reverts, and release paths live in `packages/conventional-commits/src/policy.ts`. Every consumer (commitlint rule, analyzer, recommended bump, CLI) calls `resolveCommitRelease`, so change release behavior there.
-- Agent rules and the AGENTS block live in `packages/conventional-commits/src/agent.ts`. After changing them, run `pnpm exec aronrepo agents --write`.
-- Commitlint behavior is owned by `packages/commitlint-config`.
-- Changelog parsing, grouping, and recommended bumps are owned by `packages/conventional-changelog-config`.
-- semantic-release defaults, the analyzer, and workspace package discovery are owned by `packages/semantic-release-config`.
-- pnpm package version writing, auth handling, dist-tag mapping, packing, and publishing behavior are owned by `packages/semantic-release-pnpm`.
+- Change commit types in `commits.ts`, and release behavior in `policy.ts`: every consumer (the commit hook, CI checks, `explain`, `release`) calls `resolveCommitRelease`. Run `bun x aronrepo agents --write` afterwards.
+- Change version numbering or branches in `version.ts`, and publishing in `release.ts`.
 - Shared test defaults are owned by `shared/vitest.config.ts` and `shared/vitest-ci-config.ts`.
