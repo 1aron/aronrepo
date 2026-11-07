@@ -24,6 +24,8 @@ export default {
 }
 ```
 
+A CommonJS package uses `aronrepo.config.mjs`; `aronrepo.config.cjs` and `aronrepo.config.ts` (Node 22.18+) work too.
+
 ```sh
 # .husky/commit-msg
 aronrepo check --edit "$1"
