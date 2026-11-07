@@ -331,6 +331,15 @@ export function getPriorVersionTags(cwd: string, ref: string) {
     return getVersionTags(cwd, ref).filter((tag) => !own.has(tag))
 }
 
+/** The author date of a commit as git's raw `<seconds> <offset>`, or `undefined` when it does not exist. */
+export function getCommitAuthorDate(cwd: string, ref = 'HEAD') {
+    try {
+        return git(cwd, ['log', '-1', '--no-show-signature', '--format=%ad', '--date=raw', ref, '--']).trim() || undefined
+    } catch {
+        return undefined
+    }
+}
+
 /** The full hash of the commit a ref points at. */
 export function getCommitHash(cwd: string, ref = 'HEAD') {
     return git(cwd, ['rev-parse', '--verify', `${ref}^{commit}`]).trim()

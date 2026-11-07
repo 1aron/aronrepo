@@ -23,6 +23,7 @@ import {
 import {
     detectPackageManager,
     getCliCommand,
+    getCommitAuthorDate,
     getCommitFiles,
     getCommitHash,
     getCurrentBranch,
@@ -96,6 +97,20 @@ export function readEditMessage(file: string, commentChar = '#') {
         .filter((line) => !line.startsWith(comment))
         .join('\n')
         .trim()
+}
+
+/**
+ * Whether a commit-msg hook runs for a commit that replaces HEAD, such as an amend or a
+ * reword, rather than a new commit. git gives the hook the author date of the commit it
+ * writes, which an amend keeps from HEAD and a new commit takes from the clock. Without that
+ * date, such as outside a hook, it assumes an amend, as earlier versions did.
+ */
+function rewritesHead(cwd: string, env: NodeJS.ProcessEnv = process.env) {
+    if (env.GIT_REFLOG_ACTION?.startsWith('rebase')) return true
+    const date = env.GIT_AUTHOR_DATE?.replace(/^@/, '').trim()
+    if (!date) return true
+    const head = getCommitAuthorDate(cwd, 'HEAD')
+    return head === undefined || head === date
 }
 
 async function project(cwd: string, options: CommonOptions): Promise<ProjectPolicy> {
@@ -172,8 +187,9 @@ export async function check(options: CheckOptions): Promise<CommandResult> {
             if (!message) return { code: 0, output: 'The commit message is empty; git aborts the commit.' }
         }
         let changed = files ?? getStagedFiles(cwd)
-        // `git commit --amend` with nothing staged and a reword in `git rebase -i` keep the files of HEAD.
-        if (!changed.length && !files && options.edit !== undefined) {
+        // `git commit --amend` with nothing staged and a reword in `git rebase -i` keep the files of HEAD;
+        // `git commit --allow-empty` changes none.
+        if (!changed.length && !files && options.edit !== undefined && rewritesHead(cwd)) {
             try {
                 changed = getCommitFiles(cwd, 'HEAD')
             } catch {

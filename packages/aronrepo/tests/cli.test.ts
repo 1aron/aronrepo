@@ -261,6 +261,32 @@ test('check --edit keeps the files of HEAD for an amend or reword with nothing s
     await expect(check({ cwd, edit: '.git/COMMIT_EDITMSG' })).resolves.toMatchObject({ code: 0 })
 })
 
+test('check --edit tells an amend from an empty commit by the author date git passes to the hook', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
+    write(cwd, '.git/COMMIT_EDITMSG', 'Fix(Core): Repair the cache\n')
+    const headDate = git(cwd, 'log', '-1', '--format=%ad', '--date=raw')
+    const run = async (env: NodeJS.ProcessEnv) => {
+        const previous = { GIT_AUTHOR_DATE: process.env.GIT_AUTHOR_DATE, GIT_REFLOG_ACTION: process.env.GIT_REFLOG_ACTION }
+        Object.assign(process.env, env)
+        try {
+            return await check({ cwd, edit: '.git/COMMIT_EDITMSG' })
+        } finally {
+            for (const [key, value] of Object.entries(previous)) {
+                if (value === undefined) delete process.env[key]
+                else process.env[key] = value
+            }
+        }
+    }
+    // `git commit --amend` keeps the author date of HEAD.
+    await expect(run({ GIT_AUTHOR_DATE: `@${headDate}` })).resolves.toMatchObject({ code: 0 })
+    await expect(run({ GIT_AUTHOR_DATE: '@1 +0000', GIT_REFLOG_ACTION: 'rebase (reword)' })).resolves.toMatchObject({ code: 0 })
+    // `git commit --allow-empty` gets a new date and changes no file.
+    const empty = await run({ GIT_AUTHOR_DATE: '@1 +0000' })
+    expect(empty.code).toBe(1)
+    expect(empty.output).toContain('changes no release paths')
+})
+
 test('check --edit reads core.commentChar and lets git abort an empty message', async () => {
     const cwd = createRepo()
     git(cwd, 'config', 'core.commentChar', ';')
