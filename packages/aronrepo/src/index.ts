@@ -1,3 +1,5 @@
 export * from './commits'
 export * from './policy'
 export * from './agent'
+export * from './version'
+export * from './notes'
