@@ -119,7 +119,9 @@ export function normalizeType(type: string | undefined) {
 export function findCommitRule(type: string | undefined, scope?: string): ConventionalCommitType | undefined {
     const current = normalizeType(type)
     if (!current) return undefined
+    // Without case, like commit headers: `bump(minor)` is `Bump(Minor)`.
+    const canonical = canonicalScope(type, scope)
 
-    return commits.find((commit) => commit.type === current && commit.scope === scope)
+    return commits.find((commit) => commit.type === current && commit.scope === canonical)
         ?? commits.find((commit) => commit.type === current && commit.scope === undefined)
 }

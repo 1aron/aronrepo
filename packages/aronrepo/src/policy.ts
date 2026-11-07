@@ -132,7 +132,7 @@ export function getReleaseType(type: string | undefined, scope?: string, policy:
 }
 
 function capRelease(release: ReleaseType, type: string | undefined, policy: ReleasePolicy): ReleaseType {
-    if (policy.mode === 'explicit' && type !== 'Bump' && (release === 'major' || release === 'minor')) return 'patch'
+    if (policy.mode === 'explicit' && normalizeType(type) !== 'Bump' && (release === 'major' || release === 'minor')) return 'patch'
     return release
 }
 

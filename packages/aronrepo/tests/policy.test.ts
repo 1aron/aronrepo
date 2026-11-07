@@ -405,3 +405,10 @@ test('a revert and an unreleased Bump cancel without release path violations', (
     expect(byHash.release).toBe(false)
     expect(byHash.commits.map(({ violations }) => violations)).toEqual([[], []])
 })
+
+test('reads types and scopes without case in getReleaseType', () => {
+    expect(getReleaseType('bump', 'Minor', explicit)).toBe('minor')
+    expect(getReleaseType('Bump', 'minor', explicit)).toBe('minor')
+    expect(getReleaseType('docs', 'readme', explicit)).toBe('patch')
+    expect(getReleaseType('feat', undefined, explicit)).toBe('patch')
+})
