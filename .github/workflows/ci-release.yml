@@ -25,20 +25,15 @@ jobs:
             - uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm --filter aronrepo... run build
-            - run: pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
-              env:
-                  BASE_SHA: ${{ github.event.pull_request.base.sha }}
-                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-            - run: pnpm exec aronrepo check --from "$BASE_SHA" --to "$HEAD_SHA"
+            - run: bun install --frozen-lockfile
+            - run: bun run build
+            - run: bun x aronrepo check --from "$BASE_SHA" --to "$HEAD_SHA"
               env:
                   BASE_SHA: ${{ github.event.pull_request.base.sha }}
                   HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -47,13 +42,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
             - uses: actions/cache@v6
               with:
                   path: .turbo/cache
@@ -61,20 +55,19 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-${{ github.ref_name }}-
                       ${{ runner.os }}-turbo-
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm run lint
+            - run: bun install --frozen-lockfile
+            - run: bun run lint
 
     type-check:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
             - uses: actions/cache@v6
               with:
                   path: .turbo/cache
@@ -82,8 +75,8 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-${{ github.ref_name }}-
                       ${{ runner.os }}-turbo-
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm run type-check
+            - run: bun install --frozen-lockfile
+            - run: bun run type-check
 
     test:
         runs-on: ${{ matrix.os }}
@@ -92,13 +85,12 @@ jobs:
                 os: [ubuntu-latest, windows-latest, macos-latest]
         steps:
             - uses: actions/checkout@v6
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
             - uses: actions/cache@v6
               with:
                   path: .turbo/cache
@@ -106,20 +98,19 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-${{ github.ref_name }}-
                       ${{ runner.os }}-turbo-
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm run test
+            - run: bun install --frozen-lockfile
+            - run: bun run test
 
     build:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
             - uses: actions/cache@v6
               with:
                   path: .turbo/cache
@@ -127,8 +118,8 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-${{ github.ref_name }}-
                       ${{ runner.os }}-turbo-
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm run build
+            - run: bun install --frozen-lockfile
+            - run: bun run build
 
     release:
         needs:
@@ -140,20 +131,17 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: write
-            issues: write
-            pull-requests: write
             id-token: write
         steps:
             - uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v6
+            - uses: oven-sh/setup-bun@v2
               with:
-                  version: 12.18.0
+                  bun-version: 1.4.4
             - uses: actions/setup-node@v6
               with:
                   node-version: 26
-                  cache: pnpm
             - uses: actions/cache@v6
               with:
                   path: .turbo/cache
@@ -161,10 +149,10 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-${{ github.ref_name }}-
                       ${{ runner.os }}-turbo-
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm run build
-            - run: pnpm exec aronrepo explain
-            - run: pnpm exec semantic-release
+            - run: bun install --frozen-lockfile
+            - run: bun run build
+            - run: bun x aronrepo explain
+            - run: bun x aronrepo release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
