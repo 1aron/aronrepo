@@ -283,9 +283,12 @@ function hasRegistryAuth(content: string, registry: string) {
     })
 }
 
+let npmrcCount = 0
+
 /**
- * npm environment for one package: existing `.npmrc` auth, then npm trusted
- * publishing through GitHub Actions OIDC, then `NPM_TOKEN`.
+ * npm environment for one npm command: existing `.npmrc` auth, then npm trusted
+ * publishing through GitHub Actions OIDC, then `NPM_TOKEN`. An OIDC token
+ * authorizes one registry route, so every command exchanges its own.
  */
 async function createNpmEnv(environment: ReleaseEnvironment, name: string, registry: string, directory: string) {
     const userconfig = environment.env.NPM_CONFIG_USERCONFIG ?? path.join(os.homedir(), '.npmrc')
@@ -296,7 +299,7 @@ async function createNpmEnv(environment: ReleaseEnvironment, name: string, regis
     if (!token) {
         throw new Error(`No npm auth for ${name}. Configure npm trusted publishing with \`id-token: write\`, set NPM_TOKEN, or add auth to .npmrc for ${registry}.`)
     }
-    const file = path.join(directory, `${name.replace(/[@/]/g, '_')}.npmrc`)
+    const file = path.join(directory, `${name.replace(/[@/]/g, '_')}-${++npmrcCount}.npmrc`)
     fs.writeFileSync(file, `${readNpmrc(userconfig).trim()}\n${nerfDart(registry)}:_authToken=${token}\n`, { mode: 0o600 })
     return { ...environment.env, NPM_CONFIG_USERCONFIG: file }
 }
@@ -527,11 +530,7 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
             log(`✓ Packed ${pkg.name}@${plan.version}`)
         }
 
-        const npmEnvs = new Map<string, NodeJS.ProcessEnv>()
-        const npmEnv = async (pkg: ReleasePackage) => {
-            if (!npmEnvs.has(pkg.name)) npmEnvs.set(pkg.name, await createNpmEnv(environment, pkg.name, getRegistry(pkg.manifest, environment.env), directory))
-            return npmEnvs.get(pkg.name)!
-        }
+        const npmEnv = (pkg: ReleasePackage) => createNpmEnv(environment, pkg.name, getRegistry(pkg.manifest, environment.env), directory)
 
         for (const pkg of plan.packages) {
             const registry = getRegistry(pkg.manifest, environment.env)
@@ -561,12 +560,11 @@ export async function runRelease(options: ReleaseOptions = {}, environmentOption
         for (const pkg of plan.packages) {
             const registry = getRegistry(pkg.manifest, environment.env)
             const tags = (await readPackument(environment, registry, pkg.name))?.['dist-tags'] ?? {}
-            const env = await npmEnv(pkg)
             if (tags[plan.channel.distTag] !== plan.version) {
-                await environment.run('npm', ['dist-tag', 'add', `${pkg.name}@${plan.version}`, plan.channel.distTag, '--registry', registry], { cwd, env })
+                await environment.run('npm', ['dist-tag', 'add', `${pkg.name}@${plan.version}`, plan.channel.distTag, '--registry', registry], { cwd, env: await npmEnv(pkg) })
             }
             if (tags[stagingDistTag]) {
-                await environment.run('npm', ['dist-tag', 'rm', pkg.name, stagingDistTag, '--registry', registry], { cwd, env })
+                await environment.run('npm', ['dist-tag', 'rm', pkg.name, stagingDistTag, '--registry', registry], { cwd, env: await npmEnv(pkg) })
                     .catch((error: Error) => log(`! Could not remove the ${stagingDistTag} dist-tag of ${pkg.name}: ${error.message}`))
             }
             log(`✓ ${pkg.name}@${plan.version} is on ${plan.channel.distTag}`)

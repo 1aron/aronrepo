@@ -273,3 +273,31 @@ test.skipIf(!hasBun)('packs Bun workspaces with workspace ranges resolved to the
     const packed = registry.published.find(({ manifest }) => manifest.name === '@fixture/cli')!
     expect(packed.manifest.dependencies).toEqual({ '@fixture/core': '^1.0.1' })
 })
+
+test('exchanges a new npm trusted publishing token for every npm command', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair the cache', { 'packages/core/index.js': 'export const core = 2\n' })
+    const registry = createRegistry()
+    const base = environment(cwd, registry)
+    delete base.env.NPM_TOKEN
+    base.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'https://oidc.test/token?api-version=2.0'
+    base.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'request-token'
+    let exchanged = 0
+    const used: string[] = []
+
+    await runRelease({ branch: 'main' }, {
+        ...base,
+        fetch: async (input, init) => {
+            if (input.startsWith('https://oidc.test/')) return Response.json({ value: 'identity' })
+            if (input.includes('/oidc/token/exchange/package/')) return Response.json({ token: `oidc-${++exchanged}` })
+            return registry.fetch(input, init)
+        },
+        run: async (command, args, options) => {
+            if (command === 'npm' && args[0] !== 'pack') used.push(/_authToken=(\S+)/.exec(fs.readFileSync(options.env.NPM_CONFIG_USERCONFIG!, 'utf8'))![1])
+            return registry.run(command, args, options)
+        }
+    })
+    // publish, dist-tag add, and dist-tag rm for each of the two packages
+    expect(used).toHaveLength(6)
+    expect(new Set(used).size).toBe(6)
+})
