@@ -35,6 +35,6 @@ Tests live in `packages/aronrepo/tests`, one file per module. Release tests run 
 
 ## Common Ownership Pointers
 
-- Change commit types in `commits.ts`, and release behavior in `policy.ts`: every consumer (the commit hook, CI checks, `explain`, `release`) calls `resolveCommitRelease`. Run `bun x aronrepo agents --write` afterwards.
+- Change commit types in `commits.ts`, and release behavior in `policy.ts`: every consumer (the commit hook, CI checks, `explain`, `release`) calls `resolveCommitRelease`. Run `bun run aronrepo agents --write` afterwards.
 - Change version numbering or branches in `version.ts`, and publishing in `release.ts`.
 - Shared test defaults are owned by `shared/vitest.config.ts` and `shared/vitest-ci-config.ts`.
