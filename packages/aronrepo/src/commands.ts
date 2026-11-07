@@ -245,7 +245,13 @@ export async function explain(options: ExplainOptions): Promise<CommandResult> {
 
     if (options.from === undefined && options.to === undefined) {
         // The release range of the branch, or of main when the branch does not release.
-        plan = await planRelease({ fallbackToMain: true, ...(options.mode ? { mode: options.mode } : {}) }, { cwd })
+        // The checked-out branch, so explaining never fails because GITHUB_REF_NAME names another branch.
+        const branch = getCurrentBranch(cwd)
+        plan = await planRelease({
+            fallbackToMain: true,
+            ...(branch ? { branch } : {}),
+            ...(options.mode ? { mode: options.mode } : {})
+        }, { cwd })
         from = plan.from
         to = 'HEAD'
     } else {

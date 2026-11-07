@@ -128,6 +128,19 @@ test('explain --to a merge commit starts from tags on every parent', async () =>
     expect(result.release).toBe(false)
 })
 
+test('explain plans the checked-out branch even when GITHUB_REF_NAME names another', async () => {
+    const cwd = createRepo()
+    commit(cwd, 'Fix(Core): Repair cache', { 'packages/core/cache.js': 'export {}' })
+    const previous = process.env.GITHUB_REF_NAME
+    process.env.GITHUB_REF_NAME = 'beta'
+    try {
+        await expect(explain({ cwd })).resolves.toMatchObject({ output: expect.stringContaining('Next release: patch (1.0.1)') })
+    } finally {
+        if (previous === undefined) delete process.env.GITHUB_REF_NAME
+        else process.env.GITHUB_REF_NAME = previous
+    }
+})
+
 test('explain reports the next release from the latest tag', async () => {
     const cwd = createRepo()
     commit(cwd, 'Feat(Core): Add a builder', { 'packages/core/builder.js': 'export {}' })
